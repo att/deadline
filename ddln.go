@@ -5,7 +5,7 @@ success:bool
 details: map[string] string 
 */
 
-
+/*
 package main
 
 import (
@@ -65,3 +65,4 @@ log.Fatal(http.ListenAndServe(:8080, nil)
 
 
 }
+*/
