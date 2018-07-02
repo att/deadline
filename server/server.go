@@ -1,14 +1,16 @@
 package server
 
-import "net/http"
-import "encoding/json"
-//import "net"
-import "fmt"
-import "log"
-//import "bufio"
-//import "strings" // only needed below for sample processing
+import  (
+"net/http"
+"encoding/json"
 
+"fmt"
+"log"
+
+)
 func main() {
+  fmt.Println("Launching server...")
+
 
 type event struct {
 
@@ -18,8 +20,6 @@ type event struct {
         }
 
 
-
-  fmt.Println("Launching server...")
 
   // listen on all interfaces
 //  ln, err := net.Listen("tcp", ":8081")
@@ -41,18 +41,21 @@ type event struct {
     // will listen for message to process ending in newline (\n)
     //message, _ := bufio.NewReader(conn).ReadString('\n')
     //output message received
-
    // fmt.Print("Message Received:", string(message))
-
     // sample process for string received
     //newmessage := strings.ToUpper(message)
     // send new string back to client
     //send struct back to client 
     //conn.Write([]byte(newmessage + "\n"))
-
 //  }
+
+
+
+
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		var e event 
+		//m = make(map[string]string)
+		var e event
 		if r.Body == nil {
 			http.Error(w, "Please send a request body", 400)
 			return
