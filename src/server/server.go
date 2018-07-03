@@ -21,9 +21,6 @@ type Event struct {
 
 
 
-
-//fmt.Println("Does it even go in here")
-
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		//m = make(map[string]string)
 		var e Event

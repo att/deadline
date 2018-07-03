@@ -6,6 +6,8 @@ import (
 "fmt"
 )
 //test for correct input, input at all 
+/*
+
 func TestParams (test *testing.T) {
 
 
@@ -41,5 +43,23 @@ func TestParams (test *testing.T) {
             test.Errorf("`%v` failed, got %v, expected %v", tc, res.StatusCode, tp.statusCode)
         }
     }
+
+}
+
+*/
+
+//-------------------
+
+
+func TestGoodParams (test *testing.T) {
+//good input, good output
+
+
+}
+
+func TestBadParams (test *testing.T) {
+//bad input, bad output 
+
+
 
 }
