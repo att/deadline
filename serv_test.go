@@ -3,10 +3,11 @@ import (
 "net/http"
 "net/http/httptest"
 "testing"
+"fmt"
 )
+//test for correct input, input at all 
 func TestParams (test *testing.T) {
 
-//come up with test cases
 
 
  cases := map[string]struct {
@@ -26,6 +27,7 @@ func TestParams (test *testing.T) {
     }
 
     for tc, tp := range cases {
+	fmt.Println("Goes through once")
         req, _ := http.NewRequest("GET", "/", nil)
         q := req.URL.Query()
         for k, v := range tp.params {
@@ -33,20 +35,11 @@ func TestParams (test *testing.T) {
         }
         req.URL.RawQuery = q.Encode()
         rec := httptest.NewRecorder()
-        //root(rec, req)
+        
         res := rec.Result()
         if res.StatusCode != tp.statusCode {
             test.Errorf("`%v` failed, got %v, expected %v", tc, res.StatusCode, tp.statusCode)
         }
     }
 
-
-
-
-
-
 }
-
-
-
-//parameters 
