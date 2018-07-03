@@ -1,7 +1,7 @@
 
 DESTDIR ?= ~
 
-server_file	        ?=	"cmd/deadline-server.go"
+server_file	        ?=	"cmd/main.go"
 server_output		?=	"deadline-server"
 
 threshold		?=	"10"
