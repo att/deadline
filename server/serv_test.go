@@ -3,7 +3,7 @@ package server
 import (
 	//"net/http"
 	//"net/http/httptest"
-	"deadline/common"
+	"egbitbucket.dtvops.net/deadline/common"
 	//"log"
 	"fmt"
 	"net/http"

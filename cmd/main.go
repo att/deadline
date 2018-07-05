@@ -2,9 +2,10 @@ package main
 
 import (
 	//"common"
+	"egbitbucket.dtvops.net/deadline/common"
 	"encoding/json"
-	"deadline/common"
 	"fmt"
+
 	//"log"
 	//"os/exec"
 	//"io"
@@ -16,7 +17,6 @@ import (
 
 //want to configure
 func start(d *common.DeadlineServer) {
-
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		//m = make(map[string]string)
