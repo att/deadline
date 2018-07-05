@@ -3,7 +3,8 @@ package server
 import (
 	//"net/http"
 	//"net/http/httptest"
-	//	"common"
+	"deadline/common"
+	//"log"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -38,16 +39,19 @@ func TestParams (test *testing.T) {
 }
 
 */
-var testserv deadlineServer
+var testserv common.DeadlineServer
 
 //-------------------
 func testParams() (code int) {
-
+	testserv.Serv1 = &http.Server{Addr: "8081"}
+	fmt.Println("Get here")
 	//for tc, tp := range cases {
-
-	req, err := http.NewRequest("GET", testserv.serv1.Addr, nil)
+	//http.HandleFunc("/", nil)
+	//log.Fatal(http.ListenAndServe(":8081", nil))
+	req, err := http.NewRequest("GET", testserv.Serv1.Addr, nil)
 	if err != nil {
 		fmt.Println("Something went wrong")
+		fmt.Println(testserv.Serv1.Addr)
 	}
 	q := req.URL.Query()
 	//	for k, v := range tp.params {

@@ -2,7 +2,8 @@ package main
 
 import (
 	//"common"
-	"deadline/server"
+	"encoding/json"
+	"deadline/common"
 	"fmt"
 	//"log"
 	//"os/exec"
@@ -14,12 +15,12 @@ import (
 //to be moved to server package
 
 //want to configure
-func start(d *deadlineServer) {
+func start(d *common.DeadlineServer) {
 
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		//m = make(map[string]string)
-		var e Event
+		var e common.Event
 		if r.Body == nil {
 			http.Error(w, "Please send a request body", 400)
 			return
@@ -30,18 +31,18 @@ func start(d *deadlineServer) {
 			return
 		}
 		fmt.Println(e.Name)
-	}
-	d.serv1 = &http.Server{Addr: d.serv1.Addr}
-	err := d.serv1.ListenAndServe //allow us to start accessing that test server
+	})
+	d.Serv1 = &http.Server{Addr: d.Serv1.Addr}
+	err := d.Serv1.ListenAndServe //allow us to start accessing that test server
 	if err != nil {
-		"We have a problem"
+		fmt.Println("We have a problem")
 	}
 	return
 }
 
-func stop(d *deadlineServer) {
+func stop(d *common.DeadlineServer) {
 
-	err := d.serv1.Close()
+	err := d.Serv1.Close()
 	if err != nil {
 	}
 	return
@@ -50,7 +51,7 @@ func stop(d *deadlineServer) {
 func main() {
 	//read files with things
 
-	dd := deadlineServer{}
+	dd := common.DeadlineServer{}
 
 	start(&dd)
 	fmt.Println("Got past initializing")

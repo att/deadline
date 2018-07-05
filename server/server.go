@@ -1,10 +1,10 @@
 package server
 
 import (
-	"net/http"
+//	"net/http"
 )
-
-type deadlineServer struct {
+/*
+type DeadlineServer struct {
 	serv1 *http.Server
 }
 
@@ -13,5 +13,7 @@ type Event struct {
 	Success bool              `json:"success"`
 	Details map[string]string `json:"details,omitempty"`
 }
+*/
 
-//log.Fatal(http.ListenAndServe(ds.serv1.Addr, nil))
+
+//log.Fatal(http.ListenAndServe(:8081, nil))
