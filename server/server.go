@@ -1,73 +1,17 @@
 package server
 
-import  (
-"net/http"
-"encoding/json"
-
-"fmt"
-"log"
-
+import (
+	"net/http"
 )
-func main() {
-  fmt.Println("Launching server...")
 
-
-type event struct {
-
-        Name string
-        Success bool
-        Details map[string]string
-        }
-
-
-
-  // listen on all interfaces
-//  ln, err := net.Listen("tcp", ":8081")
-//	if err != nil {
-//fmt.Println("We might have a problem")
-//log.Fatal(err)
-//}
-//fmt.Println("We get here")
-  // accept connection on port
-//  conn, err := ln.Accept()
-//if (err != nil) {
-//log.Fatal(err)
-
-//}
-//fmt.Print("We getto after the accept ")
-  // run loop forever (or until ctrl-c)
-//if conn != nil {} 
-// for {
-    // will listen for message to process ending in newline (\n)
-    //message, _ := bufio.NewReader(conn).ReadString('\n')
-    //output message received
-   // fmt.Print("Message Received:", string(message))
-    // sample process for string received
-    //newmessage := strings.ToUpper(message)
-    // send new string back to client
-    //send struct back to client 
-    //conn.Write([]byte(newmessage + "\n"))
-//  }
-
-
-
-
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		//m = make(map[string]string)
-		var e event
-		if r.Body == nil {
-			http.Error(w, "Please send a request body", 400)
-			return
-		}
-		err := json.NewDecoder(r.Body).Decode(&e)
-		if err != nil {
-			http.Error(w, err.Error(), 400)
-			return
-		}
-		fmt.Println(e.Name)
-	})
-	log.Fatal(http.ListenAndServe(":8081", nil))
-
-
+type deadlineServer struct {
+	serv1 *http.Server
 }
+
+type Event struct {
+	Name    string            `json:"name"`
+	Success bool              `json:"success"`
+	Details map[string]string `json:"details,omitempty"`
+}
+
+//log.Fatal(http.ListenAndServe(ds.serv1.Addr, nil))
