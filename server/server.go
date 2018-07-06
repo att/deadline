@@ -1,19 +1,31 @@
 package server
 
 import (
-//	"net/http"
+	"net/http"
+  "egbitbucket.dtvops.net/deadline/common"
+  "log"
+  "io/ioutil"
+  
 )
-/*
-type DeadlineServer struct {
-	serv1 *http.Server
+
+func eventHander( w http.ResponseWriter, r *http.Request)
+{
+  e := common.Event{} 
+  jsn, err := ioutil.ReadAll(r.Body)
+  if err != nil { log.Fatal("Error reading the body", err }
+  err = json.Unmarshal(jsn, &e)
+  if err != nil { log.Fatal("Could not decode" ,err) }
+  //see if we successfully got the struct
+  log.Printf("Received the following information: %v\n", e)   
+  checkParams(e)
+  //return 200/400/404
+  
 }
 
-type Event struct {
-	Name    string            `json:"name"`
-	Success bool              `json:"success"`
-	Details map[string]string `json:"details,omitempty"`
+func checkParams(event common.Event) () {
+  
+  //type, strings, xml, etc.
+   
 }
-*/
-
-
-//log.Fatal(http.ListenAndServe(:8081, nil))
+                            //func getQueryString ()(event common.Event) {
+                            //}
