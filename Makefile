@@ -6,10 +6,14 @@ server_output		?=	"deadline-server"
 
 threshold		?=	"10"
 
-all: verify test build
+all: init verify test build
+
+init:
+	dep ensure
 
 verify: 
-	@go vet ./...
+	@echo "Verifying..."
+	@go vet $(shell go list ./... | grep -v /vendor/)
 	#@sh scripts/check_complexity.sh -t ${threshold} -f ${server_file}
 
 
@@ -19,5 +23,5 @@ build: test
 
 test: verify
 	@echo "Testing..."
-	@go test ./...
+	@go test $(shell go list ./... | grep -v /vendor/)
 
