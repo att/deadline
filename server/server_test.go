@@ -14,9 +14,9 @@ var baseAddress = "http://localhost:8081"
 var eventApi = baseAddress + "/api/v1/event"
 
 func TestMain(m *testing.M) {
-	server.Start()
+	go server.Start()
 	exitVal := m.Run()
-	server.Stop()
+	go server.Stop()
 	os.Exit(exitVal)
 }
 

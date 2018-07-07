@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
@@ -42,17 +43,28 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 
 	if r.Body == nil {
 		log.Println("No request body sent")
-		http.Error(w, "", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&event)
-	if err != nil {
-		log.Println("Could not decode", err)
-		http.Error(w, "", http.StatusBadRequest)
+	valid := validateEvent(event)
+	if err != nil || valid != nil {
+		log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	log.Printf("Received the following information: %v\n", event)
 
 	w.WriteHeader(http.StatusOK)
 
+}
+
+func validateEvent(e common.Event) error {
+	if e.Name == "" {
+		return errors.New("Name cannot be empty.")
+	} else {
+		return nil
+	}
 }
