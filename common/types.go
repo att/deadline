@@ -1,16 +1,7 @@
 package common
-import "net/http"
 
 type Event struct {
-
-	Name string
-        Success bool
-        Details map[string]string
-
+	Name    string            `json:"name"`
+	Success bool              `json:"success"`
+	Details map[string]string `json:"details,omitempty"`
 }
-
-
-type DeadlineServer struct {
-        Serv1 *http.Server
-}
-
