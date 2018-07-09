@@ -3,15 +3,20 @@ package server
 import (
 	"net/http"
 	"os"
+	"io/ioutil"
 	"strings"
 	"testing"
-
+	"encoding/xml"
 	"github.com/stretchr/testify/assert"
+	"egbitbucket.dtvops.net/deadline/common"
 )
 
 var server = NewDeadlineServer()
 var baseAddress = "http://localhost:8081"
 var eventApi = baseAddress + "/api/v1/event"
+var badfile = "badfile.xml"
+var goodfile = "sample_schedule.xml"
+var testschedule common.Schedule 
 
 func TestMain(m *testing.M) {
 	go server.Start()
@@ -44,11 +49,25 @@ func TestBadParams(test *testing.T) {
 
 func TestGoodEvent(test *testing.T) {
 //give good and bad xml files 
-
+	xfile, err := os.Open(goodfile)
+	assert.Nil(test,err, "Error opening file")
+	bytes, err := ioutil.ReadAll(xfile)
+	assert.Nil(test, err, "Error getting bytes.")
+	assert.NotNil(test, xfile, "XML returns nil")
+	err = xml.Unmarshal(bytes, &testschedule)
+	assert.Nil(test, err,"Could not decode bytes.")
+	
 }
 
 func TestBadEvent(test *testing.T) {
 
+        xfile, err := os.Open(badfile)
+        assert.Nil(test,err, "Error opening file")
+        bytes, err := ioutil.ReadAll(xfile)
+        assert.Nil(test, err, "Error getting bytes.")
+        assert.NotNil(test, xfile, "XML returns nil")
+        err = xml.Unmarshal(bytes, &testschedule)
+        assert.NotNil(test, err,"Could not decode bytes.")
 
 
 
