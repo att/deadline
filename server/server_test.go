@@ -41,3 +41,15 @@ func TestBadParams(test *testing.T) {
 	assert.Equal(test, http.StatusBadRequest, response.StatusCode, "Response http status code not what it should be")
 
 }
+
+func TestGoodEvent(test *testing.T) {
+//give good and bad xml files 
+
+}
+
+func TestBadEvent(test *testing.T) {
+
+
+
+
+}

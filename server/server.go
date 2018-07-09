@@ -2,10 +2,13 @@ package server
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"log"
 	"net/http"
-
+	"os"
+	"fmt"
+	"io/ioutil"
 	"egbitbucket.dtvops.net/deadline/common"
 )
 
@@ -68,3 +71,33 @@ func validateEvent(e common.Event) error {
 		return nil
 	}
 }
+
+func getEvent (s common.Schedule)  error {
+
+	file, err := os.Open("sample_schedule.xml")
+	if err != nil { 
+		return errors.New("Could not open file.")
+	} 
+
+	defer file.Close()
+	
+	//read in the xml file
+	bytes, _ := ioutil.ReadAll(file)
+	err = xml.Unmarshal(bytes, &s)
+	if err != nil {
+		return errors.New("Could not make struct.")
+	}
+	
+	//then we will print all of the events in the schedule
+	fmt.Println("Looking at our schedule: ")
+	
+	for i := 0; i < len(s.Schedule); i++ {
+
+	fmt.Println (s.Schedule[i].Name)
+	}
+
+	return nil
+
+}
+
+
