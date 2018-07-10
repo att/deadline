@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"fmt"
-	"io/ioutil"
+
 	"egbitbucket.dtvops.net/deadline/common"
 )
 
@@ -43,7 +44,7 @@ func newDeadlineHandler() http.Handler {
 func eventHander(w http.ResponseWriter, r *http.Request) {
 
 	event := common.Event{}
-
+	//sched := common.Schedule{}
 	if r.Body == nil {
 		log.Println("No request body sent")
 		w.WriteHeader(http.StatusBadRequest)
@@ -51,6 +52,8 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&event)
+	//err2 := xml.NewDecoder(r.Body).Decode(&sched)
+
 	valid := validateEvent(event)
 	if err != nil || valid != nil {
 		log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
@@ -59,8 +62,35 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Received the following information: %v\n", event)
-
+	//log.Printf("%v\n",sched)
 	w.WriteHeader(http.StatusOK)
+
+}
+
+
+
+func eventXHandler(w http.ResponseWriter, r *http.Request) {
+
+	sched := common.Schedule{}
+
+        if r.Body == nil {
+                log.Println("No request body sent")
+                w.WriteHeader(http.StatusBadRequest)
+                return
+        }
+
+	err := xml.NewDecoder(r.Body).Decode(&sched)
+
+for i := 0; i< len(sched.Schedule); i++ {
+	valid := validateEvent(sched.Schedule[i])
+        if err != nil || valid != nil {
+                log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
+                w.WriteHeader(http.StatusBadRequest)
+                return
+        } }
+	log.Printf("Received the following information: %v\n", sched)
+	w.WriteHeader(http.StatusOK) 
+
 
 }
 
@@ -72,32 +102,31 @@ func validateEvent(e common.Event) error {
 	}
 }
 
-func getEvent (s common.Schedule)  error {
+func getEvent(s *common.Schedule) error {
 
 	file, err := os.Open("sample_schedule.xml")
-	if err != nil { 
+	if err != nil {
 		return errors.New("Could not open file.")
-	} 
+	}
 
 	defer file.Close()
-	
+
 	//read in the xml file
 	bytes, _ := ioutil.ReadAll(file)
 	err = xml.Unmarshal(bytes, &s)
 	if err != nil {
 		return errors.New("Could not make struct.")
 	}
-	
+
 	//then we will print all of the events in the schedule
 	fmt.Println("Looking at our schedule: ")
-	
-	for i := 0; i < len(s.Schedule); i++ {
+	//prints out the schedule of events (names only)
 
-	fmt.Println (s.Schedule[i].Name)
+	for i := 0; i < len(s.Schedule); i++ {
+		fmt.Println(i)
+		fmt.Println(s.Schedule[i].Name)
 	}
 
 	return nil
 
 }
-
-
