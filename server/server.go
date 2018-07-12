@@ -37,7 +37,7 @@ func (dlsvr *DeadlineServer) Stop() error {
 func newDeadlineHandler() http.Handler {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/api/v1/event", eventHander)
-
+	handler.HandleFunc("/api/v1/schedule",scheduleHandler)
 	return handler
 }
 
@@ -69,7 +69,7 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 
 
 
-func eventXHandler(w http.ResponseWriter, r *http.Request) {
+func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 
 	sched := common.Schedule{}
 

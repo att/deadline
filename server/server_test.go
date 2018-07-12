@@ -15,6 +15,7 @@ import (
 var server = NewDeadlineServer()
 var baseAddress = "http://localhost:8081"
 var eventApi = baseAddress + "/api/v1/event"
+var scheduleApi = baseAddress + "/api/v1/schedule" 
 var badfile = "badfile.xml"
 var goodfile = "sample_schedule.xml"
 var testschedule common.Schedule
@@ -48,7 +49,7 @@ func TestBadParams(test *testing.T) {
 
 }
 
-func TestGoodEvent(test *testing.T) {
+func TestGoodSchedule(test *testing.T) {
 	
 	xfile, err := os.Open(goodfile)
 	assert.Nil(test, err, "Error opening file")
@@ -60,7 +61,7 @@ func TestGoodEvent(test *testing.T) {
 	assert.Nil(test, err, "Could not decode bytes.")
 	
 	//post to server 
-	response, err := http.NewRequest("POST", eventApi, bytes.NewBuffer(b))
+	response, err := http.NewRequest("PUT", scheduleApi, bytes.NewBuffer(b))
 	assert.Nil(test, err, "Error getting ready for post")
 	assert.NotNil(test,response, "Response is nil")
 }
