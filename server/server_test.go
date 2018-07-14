@@ -66,7 +66,7 @@ func TestGoodSchedule(test *testing.T) {
 	assert.NotNil(test,response, "Response is nil")
 }
 
-func TestBadEvent(test *testing.T) {
+func TestBadSchedule(test *testing.T) {
 
 	xfile, err := os.Open(badfile)
 	assert.Nil(test, err, "Error opening file")
