@@ -3,7 +3,6 @@ package server
 import (
 	"bytes"
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -61,11 +60,14 @@ func TestGoodSchedule(test *testing.T) {
 	assert.NotNil(test, xfile, "XML returns nil")
 	err = xml.Unmarshal(b, &testschedule)
 	assert.Nil(test, err, "Could not decode bytes.")
-	fmt.Printf("We have the following struct: %#v\n", testschedule)
+
 	//post to server
 	response, err := http.NewRequest("PUT", scheduleApi, bytes.NewBuffer(b))
 	assert.Nil(test, err, "Error getting ready for post")
 	assert.NotNil(test, response, "Response is nil")
+	req, err := http.NewRequest("GET", scheduleApi, nil)
+	assert.Nil(test, err, "Error in GET method")
+	assert.NotNil(test, req, "Did not receive anything.")
 }
 
 func TestBadSchedule(test *testing.T) {
