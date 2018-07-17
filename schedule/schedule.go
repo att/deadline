@@ -15,19 +15,19 @@ import (
 //possibly use structable?
 
 type ScheduleDAO interface {
-	getByName() (common.Schedule, error)
+	getByName(string) (common.Schedule, error)
 	save(s common.Schedule) error
 }
 
 type fileDAO struct {
 }
 
-func (fd fileDAO) getByName() (common.Schedule, error) {
+func (fd fileDAO) getByName(name string) (common.Schedule, error) {
 
 	var s common.Schedule
 	//get a name from a directory
 
-	o, err := os.Open(s.Name + ".xml")
+	o, err := os.Open(name + ".xml")
 	if err != nil {
 		return common.Schedule{}, err
 	}
@@ -64,7 +64,7 @@ func (fd fileDAO) save(s common.Schedule) error {
 	return nil
 }
 
-func NewSchedule() ScheduleDAO {
+func NewScheduleDAO() ScheduleDAO {
 	// return some new object
 	//if wwe have the indicator we are using a datbase, return database struct
 	//eeelse we will use files

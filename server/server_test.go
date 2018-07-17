@@ -1,13 +1,15 @@
 package server
 
 import (
+	"bytes"
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
-	"bytes"
+
 	"egbitbucket.dtvops.net/deadline/common"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,7 +17,7 @@ import (
 var server = NewDeadlineServer()
 var baseAddress = "http://localhost:8081"
 var eventApi = baseAddress + "/api/v1/event"
-var scheduleApi = baseAddress + "/api/v1/schedule" 
+var scheduleApi = baseAddress + "/api/v1/schedule"
 var badfile = "badfile.xml"
 var goodfile = "sample_schedule.xml"
 var testschedule common.Schedule
@@ -50,20 +52,20 @@ func TestBadParams(test *testing.T) {
 }
 
 func TestGoodSchedule(test *testing.T) {
-	
+
 	xfile, err := os.Open(goodfile)
 	assert.Nil(test, err, "Error opening file")
 	b, err := ioutil.ReadAll(xfile)
-	
+
 	assert.Nil(test, err, "Error getting bytes.")
 	assert.NotNil(test, xfile, "XML returns nil")
 	err = xml.Unmarshal(b, &testschedule)
 	assert.Nil(test, err, "Could not decode bytes.")
-	
-	//post to server 
+	fmt.Printf("We have the following struct: %#v\n", testschedule)
+	//post to server
 	response, err := http.NewRequest("PUT", scheduleApi, bytes.NewBuffer(b))
 	assert.Nil(test, err, "Error getting ready for post")
-	assert.NotNil(test,response, "Response is nil")
+	assert.NotNil(test, response, "Response is nil")
 }
 
 func TestBadSchedule(test *testing.T) {
@@ -77,5 +79,3 @@ func TestBadSchedule(test *testing.T) {
 	assert.NotNil(test, err, "Could not decode bytes.")
 
 }
-
-
