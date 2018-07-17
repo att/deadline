@@ -37,7 +37,7 @@ func (dlsvr *DeadlineServer) Stop() error {
 func newDeadlineHandler() http.Handler {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/api/v1/event", eventHander)
-	handler.HandleFunc("/api/v1/schedule",scheduleHandler)
+	handler.HandleFunc("/api/v1/schedule", scheduleHandler)
 	return handler
 }
 
@@ -67,30 +67,28 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 
 }
 
-
-
 func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 
 	sched := common.Schedule{}
 
-        if r.Body == nil {
-                log.Println("No request body sent")
-                w.WriteHeader(http.StatusBadRequest)
-                return
-        }
+	if r.Body == nil {
+		log.Println("No request body sent")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	err := xml.NewDecoder(r.Body).Decode(&sched)
 
-for i := 0; i< len(sched.Schedule); i++ {
-	valid := validateEvent(sched.Schedule[i])
-        if err != nil || valid != nil {
-                log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
-                w.WriteHeader(http.StatusBadRequest)
-                return
-        } }
+	for i := 0; i < len(sched.Schedule); i++ {
+		valid := validateEvent(sched.Schedule[i])
+		if err != nil || valid != nil {
+			log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
 	log.Printf("Received the following information: %v\n", sched)
-	w.WriteHeader(http.StatusOK) 
-
+	w.WriteHeader(http.StatusOK)
 
 }
 
@@ -102,7 +100,7 @@ func validateEvent(e common.Event) error {
 	}
 }
 
-func getEvent(s *common.Schedule) error {
+func GetEvent(s *common.Schedule) error {
 
 	file, err := os.Open("sample_schedule.xml")
 	if err != nil {
