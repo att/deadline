@@ -20,6 +20,7 @@ type Schedule struct {
 	Timing   string  `xml:"timing,attr" stbl:"timing"`
 	Name     string  `xml:"name,attr"  stbl:"name"`
 	Schedule []Event `xml:"event" stbl:"event"`
+	ReceivedEvents []Event  
 }
 
 type Handler struct {
@@ -31,3 +32,5 @@ type Handler struct {
 type Error struct {
 	To string `xml:"to,attr" stbl:"to"`
 }
+
+

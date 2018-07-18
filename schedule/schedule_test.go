@@ -13,8 +13,38 @@ import (
 //create a new database
 //assert
 
+
+//var dbdriver string
+var m scheduleManager
+var e1 = common.Event{
+	Name: "first",
+}
+var e2 = common.Event{
+        Name: "second",
+}
+
+var e3 = common.Event{
+        Name: "third",
+}
+
+var s1 = common.Schedule {
+	Schedule: []common.Event{e1, e2},
+
+}
+
+var s2 = common.Schedule {
+        Schedule: []common.Event{e1, e3},
+
+}
+
+var s3 = common.Schedule {
+        Schedule: []common.Event{e2},
+
+}
+
+
+
 /*
-var dbdriver string
 
 func TestGoodDB (test *testing.T) {
 
@@ -64,3 +94,19 @@ func TestGetFile(test *testing.T) {
 	//will get sample schedule from directory
 
 }
+
+func TestManager(test *testing.T) {
+	updateEvents(&m,e1)
+	updateEvents(&m,e2)
+	updateEvents(&m,e3)
+	updateSchedule(&m,s1)
+	updateSchedule(&m,s2)
+	updateSchedule(&m,s3)
+
+
+
+
+	
+
+}
+
