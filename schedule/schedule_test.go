@@ -94,7 +94,7 @@ func TestGetFile(test *testing.T) {
 	//will get sample schedule from directory
 
 }
-
+/*
 func TestManager(test *testing.T) {
 	updateEvents(&m,e1)
 	updateEvents(&m,e2)
@@ -109,4 +109,4 @@ func TestManager(test *testing.T) {
 	
 
 }
-
+*/

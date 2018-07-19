@@ -20,14 +20,14 @@ type scheduleManager struct {
 }
 
 type ScheduleDAO interface {
-	getByName(string) (common.Schedule, error)
-	save(s common.Schedule) error
+	GetByName(string) (common.Schedule, error)
+	Save(s common.Schedule) error
 }
 
 type fileDAO struct {
 }
 
-func (fd fileDAO) getByName(name string) (common.Schedule, error) {
+func (fd fileDAO) GetByName(name string) (common.Schedule, error) {
 
 	var s common.Schedule
 	//get a name from a directory
@@ -52,7 +52,7 @@ func (fd fileDAO) getByName(name string) (common.Schedule, error) {
 
 }
 
-func (fd fileDAO) save(s common.Schedule) error {
+func (fd fileDAO) Save(s common.Schedule) error {
 
 	f, err := os.Create(s.Name + ".xml")
 	if err != nil {
@@ -75,7 +75,7 @@ func NewScheduleDAO() ScheduleDAO {
 	//eeelse we will use files
 	return &fileDAO{}
 }
-
+/*
 func updateEvents(m *scheduleManager, e common.Event) {
 //once you receive an event, tell every schedule that you have it by adding it to their array
 var scheds[]common.Schedule = m.Manager[e.Name]
@@ -102,12 +102,12 @@ func updateSchedule(m *scheduleManager, s common.Schedule) {
 		m.Manager[s.Schedule[i].Name]=scheds
 
         }
-       
+     
 //print the map that we have
 
 }
 
-
+*/
 
 //type dbDAO struct {}
 

@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-
+	"egbitbucket.dtvops.net/deadline/schedule"
 	"egbitbucket.dtvops.net/deadline/common"
 )
 
@@ -61,7 +61,7 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Received the following information: %v\n", event)
+	log.Printf("Received the following information in the event handler: %v\n", event)
 	//log.Printf("%v\n",sched)
 	w.WriteHeader(http.StatusOK)
 
@@ -78,7 +78,8 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := xml.NewDecoder(r.Body).Decode(&sched)
-
+	if err != nil {w.WriteHeader(http.StatusBadRequest)
+	return}
 	for i := 0; i < len(sched.Schedule); i++ {
 		valid := validateEvent(sched.Schedule[i])
 		if err != nil || valid != nil {
@@ -87,7 +88,10 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	log.Printf("Received the following information: %v\n", sched)
+	log.Printf("Received the following information in schedule handler: %v\n", sched)
+	var fd = database.NewScheduleDAO()
+	fd.Save(sched)
+	
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -102,7 +106,7 @@ func validateEvent(e common.Event) error {
 
 func GetEvent(s *common.Schedule) error {
 
-	file, err := os.Open("sample_schedule.xml")
+	file, err := os.Open("sampe_schedule.xml")
 	if err != nil {
 		return errors.New("Could not open file.")
 	}
