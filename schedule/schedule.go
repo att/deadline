@@ -5,6 +5,8 @@ import (
 	//"database/sql"
 	"encoding/xml"
 	"fmt"
+//	"net/http"
+	"strings"
 	"io/ioutil"
 	"os"
 //	"cloud.google.com/go/pubsub"
@@ -21,6 +23,7 @@ type scheduleManager struct {
 
 type ScheduleDAO interface {
 	GetByName(string) (common.Schedule, error)
+	//	Save(common.Schedule, []byte) error
 	Save(s common.Schedule) error
 }
 
@@ -31,8 +34,9 @@ func (fd fileDAO) GetByName(name string) (common.Schedule, error) {
 
 	var s common.Schedule
 	//get a name from a directory
-
-	o, err := os.Open(name + ".xml")
+	str := name + ".xml"
+	strg := strings.Replace(str,"'","",-1)
+	o, err := os.Open(strg)
 	if err != nil {
 		return common.Schedule{}, err
 	}
@@ -53,13 +57,13 @@ func (fd fileDAO) GetByName(name string) (common.Schedule, error) {
 }
 
 func (fd fileDAO) Save(s common.Schedule) error {
-
-	f, err := os.Create(s.Name + ".xml")
+	str := s.Name + ".xml"
+	f, err := os.Create(str)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-
+	
 	encoder := xml.NewEncoder(f)
 	err = encoder.Encode(s)
 
@@ -84,7 +88,7 @@ if scheds == nil {return}
        	sched.ReceivedEvents = append(sched.ReceivedEvents,e)
     }
 
-}
+
 
 
 func updateSchedule(m *scheduleManager, s common.Schedule) {

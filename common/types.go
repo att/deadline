@@ -9,7 +9,7 @@ type Event struct {
 	XMLName   xml.Name          `xml:"event"`
 	Name      string            `json:"name" xml:"name,attr" stbl:"id"`
 	Success   bool              `json:"success" xml:"success" stbl:"success"`
-	Details   map[string]string `json:"details,omitempty" xml:"details" stbl:"details"`
+	Details   map[string]string `json:"details,omitempty" xml:"details,omitempty" stbl:"details"`
 	ReceiveBy string            `xml:"receive-by,attr" stbl:"receive_by"`
 }
 
@@ -20,7 +20,7 @@ type Schedule struct {
 	Timing   string  `xml:"timing,attr" stbl:"timing"`
 	Name     string  `xml:"name,attr"  stbl:"name"`
 	Schedule []Event `xml:"event" stbl:"event"`
-	ReceivedEvents []Event  
+	ReceivedEvents []Event `xml:"receivedevents" stbl:"receivedevents"` 
 }
 
 type Handler struct {

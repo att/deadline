@@ -76,10 +76,58 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	if r.Method == "GET" {
+		
+	
+	file, err := os.Open("sample_schedule.xml")
+        if err != nil {
+		fmt.Println("Could not open")
+                return
 
+        	}
+	fmt.Println("We could open it!")
+        defer file.Close()
+	
+
+	//read in the xml file
+        bytes, err := ioutil.ReadAll(file)
+	     if err != nil {
+             fmt.Println("Could not read file")
+              return
+
+                }
+	 w.Header().Set("Content-Type", "application/xml")
+
+	_,err = w.Write(bytes)
+
+	             if err != nil {
+             fmt.Println("Could not send bytes")
+              return
+
+                }
+
+
+	//w.Header().Set("Content-Type", "application/xml")
+       
+        //then we will print all of the events in the schedule
+        //io.WriteString(w,"Looking at our schedule: ")
+        //prints out the schedule of events (names only)
+	/*
+        for i := 0; i < len(sched.Schedule); i++ {
+                fmt.Println(i)
+                fmt.Println(sched.Schedule[i].Name)
+        }
+	*/
+
+	w.WriteHeader(http.StatusOK)
+	return
+	}
+        
 	err := xml.NewDecoder(r.Body).Decode(&sched)
-	if err != nil {w.WriteHeader(http.StatusBadRequest)
-	return}
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	for i := 0; i < len(sched.Schedule); i++ {
 		valid := validateEvent(sched.Schedule[i])
 		if err != nil || valid != nil {
@@ -89,9 +137,12 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	log.Printf("Received the following information in schedule handler: %v\n", sched)
-	var fd = database.NewScheduleDAO()
-	fd.Save(sched)
 	
+	var fd = database.NewScheduleDAO()
+	err = fd.Save(sched)
+	if err != nil {
+		log.Println(err)
+	}
 	w.WriteHeader(http.StatusOK)
 
 }
