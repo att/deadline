@@ -1,1 +1,0 @@
-<schedule timing="daily" name="samp_schedule"><handler name="email handler"><address>jo424n@att.com</address></handler><event name="first event" receive-by="14:00:00"><success>false</success></event><event name="second event" receive-by="16:00:00"><success>false</success></event><event name="third event" receive-by="18:00:00"><success>false</success></event></schedule>

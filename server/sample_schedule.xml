@@ -1,4 +1,4 @@
-<schedule name="samp schedule" timing="daily" >
+<schedule name="samp1schedule" timing="daily" >
 
 	<event name="first event" receive-by="14:00:00">
 		<error to="email handler"/>

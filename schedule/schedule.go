@@ -5,7 +5,7 @@ import (
 	//"database/sql"
 	"encoding/xml"
 	"fmt"
-	"strings"
+	//"strings"
 	"io/ioutil"
 	"os"
 	"egbitbucket.dtvops.net/deadline/common"
@@ -26,35 +26,35 @@ func NewManager() *scheduleManager {
 }
 
 type ScheduleDAO interface {
-	GetByName(string) (common.Schedule, error)
+	GetByName(string) ([]byte, error)
 	Save(s common.Schedule) error
 }
 
 type fileDAO struct {
 }
 
-func (fd fileDAO) GetByName(name string) (common.Schedule, error) {
+func (fd fileDAO) GetByName(name string) ([]byte, error) {
 
-	var s common.Schedule
-	str := name + ".xml"
-	strg := strings.Replace(str,"'","",-1)
-	o, err := os.Open(strg)
-	if err != nil {
-		return common.Schedule{}, err
-	}
+//	var s common.Schedule
+	
+                file, err := os.Open(name + ".xml")
+                if err != nil {
+                        
+                        return nil,err
 
-	defer o.Close()
+                        }
+                fmt.Println("We could open it!")
+                defer file.Close()
 
-	//read in the xml file
-	bytes, _ := ioutil.ReadAll(o)
-	err = xml.Unmarshal(bytes, &s)
 
-	if err != nil {
-		return common.Schedule{}, err
-	}
+                //read in the xml file
+                bytes, err := ioutil.ReadAll(file)
+                if err != nil {
+                        
+                 	return nil,err
 
-	//fmt.Printf("We have the following struct: %#v\n", s)
-	return s, nil
+                        }
+	return bytes, nil
 }
 
 func (fd fileDAO) Save(s common.Schedule) error {

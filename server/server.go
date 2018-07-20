@@ -5,10 +5,10 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
+//	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
+//	"os"
 	"egbitbucket.dtvops.net/deadline/schedule"
 	"egbitbucket.dtvops.net/deadline/common"
 )
@@ -67,6 +67,7 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 
 	sched := common.Schedule{}
+	var fd = database.NewScheduleDAO()
 
 	if r.Body == nil {
 		log.Println("No request body sent")
@@ -78,25 +79,16 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 		if ! ok || len(keys[0]) < 1 {
 			log.Println("You didn't have a parameter")
 		}
-		//GetByName(string(keys[0]))
-		file, err := os.Open(string(keys[0]) + ".xml")
-        	if err != nil { 
-			fmt.Println("Could not open")
-                	return
 
-        		}
-		fmt.Println("We could open it!")
-        	defer file.Close()
-	
 
-		//read in the xml file
-        	bytes, err := ioutil.ReadAll(file)
-	     	if err != nil {
-             		fmt.Println("Could not read file")
-             	 return
+		bytes,err := fd.GetByName(string(keys[0]))
+		if err != nil {
+			log.Println(err)
+			return
+		}
+ 	
 
-                	}
-	 	w.Header().Set("Content-Type", "application/xml")
+		w.Header().Set("Content-Type", "application/xml")
 
 		_,err = w.Write(bytes)
 
@@ -109,7 +101,7 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
-        
+	if r.Method == "PUT" {         
 	err := xml.NewDecoder(r.Body).Decode(&sched)
 	if err != nil {
 		log.Println(err)
@@ -125,10 +117,11 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Received the following information in schedule handler: %v\n", sched)
 	
-	var fd = database.NewScheduleDAO()
+	//var fd = database.NewScheduleDAO()
 	err = fd.Save(sched)
 	if err != nil {
 		log.Println(err)
+	}
 	}
 	w.WriteHeader(http.StatusOK)
 
