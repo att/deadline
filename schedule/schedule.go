@@ -5,25 +5,28 @@ import (
 	//"database/sql"
 	"encoding/xml"
 	"fmt"
-//	"net/http"
 	"strings"
 	"io/ioutil"
 	"os"
-//	"cloud.google.com/go/pubsub"
 	"egbitbucket.dtvops.net/deadline/common"
-	//"github.com/Masterminds/structable"
 )
 
-//possibly use structable?
 type scheduleManager struct {
 
 	Manager map[string][]common.Schedule
 
 }
 
+func NewManager() *scheduleManager {
+	return &scheduleManager{
+	Manager: make(map[string][]common.Schedule),
+
+	}
+
+}
+
 type ScheduleDAO interface {
 	GetByName(string) (common.Schedule, error)
-	//	Save(common.Schedule, []byte) error
 	Save(s common.Schedule) error
 }
 
@@ -33,7 +36,6 @@ type fileDAO struct {
 func (fd fileDAO) GetByName(name string) (common.Schedule, error) {
 
 	var s common.Schedule
-	//get a name from a directory
 	str := name + ".xml"
 	strg := strings.Replace(str,"'","",-1)
 	o, err := os.Open(strg)
@@ -51,9 +53,8 @@ func (fd fileDAO) GetByName(name string) (common.Schedule, error) {
 		return common.Schedule{}, err
 	}
 
-	fmt.Printf("We have the following struct: %#v\n", s)
+	//fmt.Printf("We have the following struct: %#v\n", s)
 	return s, nil
-
 }
 
 func (fd fileDAO) Save(s common.Schedule) error {
@@ -79,7 +80,7 @@ func NewScheduleDAO() ScheduleDAO {
 	//eeelse we will use files
 	return &fileDAO{}
 }
-/*
+
 func updateEvents(m *scheduleManager, e common.Event) {
 //once you receive an event, tell every schedule that you have it by adding it to their array
 var scheds[]common.Schedule = m.Manager[e.Name]
@@ -89,7 +90,7 @@ if scheds == nil {return}
     }
 
 
-
+}
 
 func updateSchedule(m *scheduleManager, s common.Schedule) {
 //loop through array and subscribe to every event, and then add itself to the map for every event
@@ -100,45 +101,21 @@ func updateSchedule(m *scheduleManager, s common.Schedule) {
                 var scheds[]common.Schedule = m.Manager[(s.Schedule[i].Name)]
 		if scheds == nil {
 		m.Manager[(s.Schedule[i].Name)]=[]common.Schedule{s}
-		fmt.Println(m.Manager[(s.Schedule[i].Name)])
+		continue
 		}
 		scheds = append(scheds,s)
 		m.Manager[s.Schedule[i].Name]=scheds
 
         }
-     
+    	fmt.Println("-----------------------------------------------------------") 
 //print the map that we have
+	fmt.Printf("%#v\n", m.Manager)
+	fmt.Println("-----------------------------------------------------------")
 
 }
 
-*/
+
+
 
 //type dbDAO struct {}
 
-/*
-
-func (d dbDAO) getByName common.Schedule, error {
-
-
-//get a row, return a struct
-var s common.Schedule
-//get a name from a directory
-
-
-err := db.QueryRow("SELECT * from s")
-for rows.Next() {
-        err := rows.StructScan(&s)
-        if err != nil {return &common.Schedule{}, err}
-	}
-}
-
-func (d dbDAO) save(s common.Schedule) error {
-
-//insert/update a row based on the schedule given
-//r := structable.New(db, "sqlite3").Bind("test_table", s)
-//err := r.Insert()
-
-
-
-}
-*/

@@ -15,12 +15,12 @@ type Event struct {
 
 type Schedule struct {
 	XMLName xml.Name `xml:"schedule"`
-	Handler Handler  `xml:"handler" json:"handler" stbl:"handler"`
+	Handler Handler  `xml:"handler,omitempty" json:"handler" stbl:"handler"`
 	//XMLName xml.Name 	`xml:"schedule"`
-	Timing   string  `xml:"timing,attr" stbl:"timing"`
-	Name     string  `xml:"name,attr"  stbl:"name"`
-	Schedule []Event `xml:"event" stbl:"event"`
-	ReceivedEvents []Event `xml:"receivedevents" stbl:"receivedevents"` 
+	Timing   string  `xml:"timing,attr,omitempty" stbl:"timing"`
+	Name     string  `xml:"name,attr,omitempty"  stbl:"name"`
+	Schedule []Event `xml:"event,omitempty" stbl:"event"`
+	ReceivedEvents []Event `xml:"receivedevents,omitempty" stbl:"receivedevents"` 
 }
 
 type Handler struct {

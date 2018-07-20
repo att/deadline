@@ -44,7 +44,6 @@ func newDeadlineHandler() http.Handler {
 func eventHander(w http.ResponseWriter, r *http.Request) {
 
 	event := common.Event{}
-	//sched := common.Schedule{}
 	if r.Body == nil {
 		log.Println("No request body sent")
 		w.WriteHeader(http.StatusBadRequest)
@@ -52,7 +51,6 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&event)
-	//err2 := xml.NewDecoder(r.Body).Decode(&sched)
 
 	valid := validateEvent(event)
 	if err != nil || valid != nil {
@@ -62,7 +60,6 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Received the following information in the event handler: %v\n", event)
-	//log.Printf("%v\n",sched)
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -77,50 +74,40 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == "GET" {
-		
-	
-	file, err := os.Open("sample_schedule.xml")
-        if err != nil {
-		fmt.Println("Could not open")
-                return
+		keys, ok := r.URL.Query()["name"]
+		if ! ok || len(keys[0]) < 1 {
+			log.Println("You didn't have a parameter")
+		}
+		//GetByName(string(keys[0]))
+		file, err := os.Open(string(keys[0]) + ".xml")
+        	if err != nil { 
+			fmt.Println("Could not open")
+                	return
 
-        	}
-	fmt.Println("We could open it!")
-        defer file.Close()
+        		}
+		fmt.Println("We could open it!")
+        	defer file.Close()
 	
 
-	//read in the xml file
-        bytes, err := ioutil.ReadAll(file)
-	     if err != nil {
-             fmt.Println("Could not read file")
-              return
+		//read in the xml file
+        	bytes, err := ioutil.ReadAll(file)
+	     	if err != nil {
+             		fmt.Println("Could not read file")
+             	 return
+
+                	}
+	 	w.Header().Set("Content-Type", "application/xml")
+
+		_,err = w.Write(bytes)
+
+	        if err != nil {
+             		fmt.Println("Could not send bytes")
+              		return
 
                 }
-	 w.Header().Set("Content-Type", "application/xml")
 
-	_,err = w.Write(bytes)
-
-	             if err != nil {
-             fmt.Println("Could not send bytes")
-              return
-
-                }
-
-
-	//w.Header().Set("Content-Type", "application/xml")
-       
-        //then we will print all of the events in the schedule
-        //io.WriteString(w,"Looking at our schedule: ")
-        //prints out the schedule of events (names only)
-	/*
-        for i := 0; i < len(sched.Schedule); i++ {
-                fmt.Println(i)
-                fmt.Println(sched.Schedule[i].Name)
-        }
-	*/
-
-	w.WriteHeader(http.StatusOK)
-	return
+		w.WriteHeader(http.StatusOK)
+		return
 	}
         
 	err := xml.NewDecoder(r.Body).Decode(&sched)
@@ -155,31 +142,3 @@ func validateEvent(e common.Event) error {
 	}
 }
 
-func GetEvent(s *common.Schedule) error {
-
-	file, err := os.Open("sampe_schedule.xml")
-	if err != nil {
-		return errors.New("Could not open file.")
-	}
-
-	defer file.Close()
-
-	//read in the xml file
-	bytes, _ := ioutil.ReadAll(file)
-	err = xml.Unmarshal(bytes, &s)
-	if err != nil {
-		return errors.New("Could not make struct.")
-	}
-
-	//then we will print all of the events in the schedule
-	fmt.Println("Looking at our schedule: ")
-	//prints out the schedule of events (names only)
-
-	for i := 0; i < len(s.Schedule); i++ {
-		fmt.Println(i)
-		fmt.Println(s.Schedule[i].Name)
-	}
-
-	return nil
-
-}
