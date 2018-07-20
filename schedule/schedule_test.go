@@ -73,17 +73,19 @@ func TestGetFile(test *testing.T) {
 }
 
 func TestManager(test *testing.T) {
-	updateEvents(m,e1)
-	updateEvents(m,e2)
-	updateEvents(m,e3)
+//	updateEvents(m,e1)
+//	updateEvents(m,e2)
+//	updateEvents(m,e3)
 	updateSchedule(m,s1)
 	updateSchedule(m,s2)
 	updateSchedule(m,s3)
+        updateEvents(m,e1)
+        updateEvents(m,e2)
 
 
 
-
-	
+	//these are not test cases, just here for the purpose of seeing output
+	log.Printf("%#v\n", m.Manager)
 
 }
 

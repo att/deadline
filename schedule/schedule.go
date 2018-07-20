@@ -1,13 +1,11 @@
 package database
 
 import (
-	//"github.com/mattn/go-sqlite3"
-	//"database/sql"
 	"encoding/xml"
 	"fmt"
-	//"strings"
 	"io/ioutil"
 	"os"
+	"log"
 	"egbitbucket.dtvops.net/deadline/common"
 )
 
@@ -76,17 +74,21 @@ func (fd fileDAO) Save(s common.Schedule) error {
 
 func NewScheduleDAO() ScheduleDAO {
 	// return some new object
-	//if wwe have the indicator we are using a datbase, return database struct
-	//eeelse we will use files
+	//if we have the indicator we are using a datbase, return database struct
 	return &fileDAO{}
 }
 
 func updateEvents(m *scheduleManager, e common.Event) {
 //once you receive an event, tell every schedule that you have it by adding it to their array
 var scheds[]common.Schedule = m.Manager[e.Name]
-if scheds == nil {return}
+if scheds == nil {
+
+    log.Println("No subscribers.") 
+}
+
+
     for _, sched := range scheds {
-       	sched.ReceivedEvents = append(sched.ReceivedEvents,e)
+       	sched.EventOccurred(e)
     }
 
 
@@ -107,15 +109,6 @@ func updateSchedule(m *scheduleManager, s common.Schedule) {
 		m.Manager[s.Schedule[i].Name]=scheds
 
         }
-    	fmt.Println("-----------------------------------------------------------") 
-//print the map that we have
-	fmt.Printf("%#v\n", m.Manager)
-	fmt.Println("-----------------------------------------------------------")
 
 }
-
-
-
-
-//type dbDAO struct {}
 
