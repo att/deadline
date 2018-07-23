@@ -2,11 +2,15 @@ package server
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"errors"
+	"fmt"
+	//	"io/ioutil"
 	"log"
 	"net/http"
-
+	//	"os"
 	"egbitbucket.dtvops.net/deadline/common"
+	"egbitbucket.dtvops.net/deadline/schedule"
 )
 
 type DeadlineServer struct {
@@ -33,14 +37,13 @@ func (dlsvr *DeadlineServer) Stop() error {
 func newDeadlineHandler() http.Handler {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/api/v1/event", eventHander)
-
+	handler.HandleFunc("/api/v1/schedule", scheduleHandler)
 	return handler
 }
 
 func eventHander(w http.ResponseWriter, r *http.Request) {
 
 	event := common.Event{}
-
 	if r.Body == nil {
 		log.Println("No request body sent")
 		w.WriteHeader(http.StatusBadRequest)
@@ -48,6 +51,7 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&event)
+
 	valid := validateEvent(event)
 	if err != nil || valid != nil {
 		log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
@@ -55,8 +59,68 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Received the following information: %v\n", event)
+	log.Printf("Received the following information in the event handler: %v\n", event)
+	w.WriteHeader(http.StatusOK)
 
+}
+
+func scheduleHandler(w http.ResponseWriter, r *http.Request) {
+
+	sched := schedule.Schedule{}
+	var fd = schedule.NewScheduleDAO()
+
+	if r.Body == nil {
+		log.Println("No request body sent")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if r.Method == "GET" {
+		keys, ok := r.URL.Query()["name"]
+		if !ok || len(keys[0]) < 1 {
+			log.Println("You didn't have a parameter")
+		}
+
+		bytes, err := fd.GetByName(string(keys[0]))
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/xml")
+
+		_, err = w.Write(bytes)
+
+		if err != nil {
+			fmt.Println("Could not send bytes")
+			return
+
+		}
+
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	if r.Method == "PUT" {
+		err := xml.NewDecoder(r.Body).Decode(&sched)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		for i := 0; i < len(sched.Schedule); i++ {
+			valid := validateEvent(sched.Schedule[i])
+			if err != nil || valid != nil {
+				log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+		log.Printf("Received the following information in schedule handler: %v\n", sched)
+
+		//var fd = sched.NewScheduleDAO()
+		err = fd.Save(sched)
+		if err != nil {
+			log.Println(err)
+		}
+	}
 	w.WriteHeader(http.StatusOK)
 
 }
