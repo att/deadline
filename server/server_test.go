@@ -17,8 +17,8 @@ var server = NewDeadlineServer()
 var baseAddress = "http://localhost:8081"
 var eventApi = baseAddress + "/api/v1/event"
 var scheduleApi = baseAddress + "/api/v1/schedule"
-var badfile = "badfile.xml"
-var goodfile = "sample_schedule.xml"
+var badfile = "testdata/badfile.xml"
+var goodfile = "testdata/sample_schedule.xml"
 var testschedule common.Schedule
 
 func TestMain(m *testing.M) {
