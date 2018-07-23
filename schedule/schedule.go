@@ -1,68 +1,66 @@
-package database
+package schedule
 
 import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"log"
+	"os"
+	"time"
+
 	"egbitbucket.dtvops.net/deadline/common"
 )
 
-type scheduleManager struct {
+func (s Schedule) EventOccurred(e common.Event) {
+	//loop through schedule, find event, mark it as true
 
-	Manager map[string][]common.Schedule
+	for i := 0; i < len(s.Schedule); i++ {
+		if e.Name == s.Schedule[i].Name {
+			s.Schedule[i].IsLive = true
+			s.Schedule[i].ReceiveAt = time.Now().Format("2006-01-02 15:04:05")
+		}
+	}
 
 }
 
 func NewManager() *scheduleManager {
 	return &scheduleManager{
-	Manager: make(map[string][]common.Schedule),
-
+		subscriptionTable: make(map[string][]Schedule),
 	}
 
 }
 
-type ScheduleDAO interface {
-	GetByName(string) ([]byte, error)
-	Save(s common.Schedule) error
-}
-
-type fileDAO struct {
-}
-
 func (fd fileDAO) GetByName(name string) ([]byte, error) {
 
-//	var s common.Schedule
-	
-                file, err := os.Open(name + ".xml")
-                if err != nil {
-                        
-                        return nil,err
+	//	var s Schedule
 
-                        }
-                fmt.Println("We could open it!")
-                defer file.Close()
+	file, err := os.Open(name + ".xml")
+	if err != nil {
 
+		return nil, err
 
-                //read in the xml file
-                bytes, err := ioutil.ReadAll(file)
-                if err != nil {
-                        
-                 	return nil,err
+	}
+	fmt.Println("We could open it!")
+	defer file.Close()
 
-                        }
+	//read in the xml file
+	bytes, err := ioutil.ReadAll(file)
+	if err != nil {
+
+		return nil, err
+
+	}
 	return bytes, nil
 }
 
-func (fd fileDAO) Save(s common.Schedule) error {
+func (fd fileDAO) Save(s Schedule) error {
 	str := s.Name + ".xml"
 	f, err := os.Create(str)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	
+
 	encoder := xml.NewEncoder(f)
 	err = encoder.Encode(s)
 
@@ -79,36 +77,33 @@ func NewScheduleDAO() ScheduleDAO {
 }
 
 func updateEvents(m *scheduleManager, e common.Event) {
-//once you receive an event, tell every schedule that you have it by adding it to their array
-var scheds[]common.Schedule = m.Manager[e.Name]
-if scheds == nil {
+	//once you receive an event, tell every schedule that you have it by adding it to their array
+	var scheds []Schedule = m.subscriptionTable[e.Name]
+	if scheds == nil {
 
-    log.Println("No subscribers.") 
-}
+		log.Println("No subscribers.")
+	}
 
-
-    for _, sched := range scheds {
-       	sched.EventOccurred(e)
-    }
-
+	for _, sched := range scheds {
+		sched.EventOccurred(e)
+	}
 
 }
 
-func updateSchedule(m *scheduleManager, s common.Schedule) {
-//loop through array and subscribe to every event, and then add itself to the map for every event
+func updateSchedule(m *scheduleManager, s Schedule) {
+	//loop through array and subscribe to every event, and then add itself to the map for every event
 
-        for i := 0; i < len(s.Schedule); i++ {
-                //subscribe to every event
-                //put into map
-                var scheds[]common.Schedule = m.Manager[(s.Schedule[i].Name)]
+	for i := 0; i < len(s.Schedule); i++ {
+		//subscribe to every event
+		//put into map
+		var scheds []Schedule = m.subscriptionTable[(s.Schedule[i].Name)]
 		if scheds == nil {
-		m.Manager[(s.Schedule[i].Name)]=[]common.Schedule{s}
-		continue
+			m.subscriptionTable[(s.Schedule[i].Name)] = []Schedule{s}
+			continue
 		}
-		scheds = append(scheds,s)
-		m.Manager[s.Schedule[i].Name]=scheds
+		scheds = append(scheds, s)
+		m.subscriptionTable[s.Schedule[i].Name] = scheds
 
-        }
+	}
 
 }
-

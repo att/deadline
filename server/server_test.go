@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"egbitbucket.dtvops.net/deadline/common"
+	sched "egbitbucket.dtvops.net/deadline/schedule"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +19,7 @@ var eventApi = baseAddress + "/api/v1/event"
 var scheduleApi = baseAddress + "/api/v1/schedule"
 var badfile = "testdata/badfile.xml"
 var goodfile = "testdata/sample_schedule.xml"
-var testschedule common.Schedule
+var testschedule sched.Schedule
 
 func TestMain(m *testing.M) {
 	go server.Start()
