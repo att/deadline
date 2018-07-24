@@ -2,7 +2,7 @@ package schedule
 
 import (
 	"encoding/xml"
-	"fmt"
+	//	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -32,15 +32,12 @@ func NewManager() *scheduleManager {
 
 func (fd fileDAO) GetByName(name string) ([]byte, error) {
 
-	//	var s Schedule
-
 	file, err := os.Open(name + ".xml")
 	if err != nil {
 
 		return nil, err
 
 	}
-	fmt.Println("We could open it!")
 	defer file.Close()
 
 	//read in the xml file
@@ -76,7 +73,7 @@ func NewScheduleDAO() ScheduleDAO {
 	return &fileDAO{}
 }
 
-func updateEvents(m *scheduleManager, e common.Event) {
+func UpdateEvents(m *scheduleManager, e common.Event, fd ScheduleDAO) {
 	//once you receive an event, tell every schedule that you have it by adding it to their array
 	var scheds []Schedule = m.subscriptionTable[e.Name]
 	if scheds == nil {
@@ -86,11 +83,12 @@ func updateEvents(m *scheduleManager, e common.Event) {
 
 	for _, sched := range scheds {
 		sched.EventOccurred(e)
+		fd.Save(sched)
 	}
-
+	log.Println("Current map: ", m.subscriptionTable)
 }
 
-func updateSchedule(m *scheduleManager, s Schedule) {
+func UpdateSchedule(m *scheduleManager, s Schedule) {
 	//loop through array and subscribe to every event, and then add itself to the map for every event
 
 	for i := 0; i < len(s.Schedule); i++ {
@@ -105,5 +103,5 @@ func updateSchedule(m *scheduleManager, s Schedule) {
 		m.subscriptionTable[s.Schedule[i].Name] = scheds
 
 	}
-
+	log.Println("Current map: ", m.subscriptionTable)
 }

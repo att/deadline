@@ -13,6 +13,9 @@ import (
 	"egbitbucket.dtvops.net/deadline/schedule"
 )
 
+var m = schedule.NewManager()
+var fd = schedule.NewScheduleDAO()
+
 type DeadlineServer struct {
 	server *http.Server
 }
@@ -60,6 +63,7 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Received the following information in the event handler: %v\n", event)
+	schedule.UpdateEvents(m, event, fd)
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -67,7 +71,6 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 
 	sched := schedule.Schedule{}
-	var fd = schedule.NewScheduleDAO()
 
 	if r.Body == nil {
 		log.Println("No request body sent")
@@ -120,6 +123,7 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println(err)
 		}
+		schedule.UpdateSchedule(m, sched)
 	}
 	w.WriteHeader(http.StatusOK)
 

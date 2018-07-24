@@ -1,7 +1,7 @@
 package schedule
 
 import (
-	"log"
+//	"log"
 	"testing"
 
 	"egbitbucket.dtvops.net/deadline/common"
@@ -62,7 +62,7 @@ func TestGetFile(test *testing.T) {
 	f, err := fd.GetByName("sample_schedule")
 	assert.Nil(test, err, "Could not find the file.")
 	assert.NotNil(test, f, "Could not find the file.")
-	log.Printf("Received the following information: %#v\n", f)
+//	log.Printf("Received the following information: %#v\n", f)
 	//will get sample schedule from directory
 
 }
@@ -71,13 +71,13 @@ func TestManager(test *testing.T) {
 	//	updateEvents(m,e1)
 	//	updateEvents(m,e2)
 	//	updateEvents(m,e3)
-	updateSchedule(m, s1)
-	updateSchedule(m, s2)
-	updateSchedule(m, s3)
-	updateEvents(m, e1)
-	updateEvents(m, e2)
+	UpdateSchedule(m, s1)
+	UpdateSchedule(m, s2)
+	UpdateSchedule(m, s3)
+	UpdateEvents(m, e1)
+	UpdateEvents(m, e2)
 
 	//these are not test cases, just here for the purpose of seeing output
-	log.Printf("%#v\n", m.subscriptionTable)
+	//log.Printf("%#v\n", m.subscriptionTable)
 
 }
