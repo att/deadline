@@ -27,13 +27,20 @@ var e3 = common.Event{
 }
 
 var s1 = Schedule{
-	Name:     "First Schedule",
-	Schedule: []common.Event{e1, e2},
+	Name: "First Schedule",
+	Schedule: []byte(`<event name="first event" receive-by="16:00:00" receive-at="">
+			<success>false</success>
+			<islive>false</islive>
+			</event>
+			
+			<event name="second event" receive-by="18:00:00" receive-at="">
+                        <success>false</success>
+                        <islive>false</islive>
+                        </event>`),
 }
 
 var s2 = Schedule{
-	Name:     "Second Schedule",
-	Schedule: []common.Event{e1, e3},
+	Name: "Second Schedule",
 }
 
 var s3 = Schedule{

@@ -1,1 +1,0 @@
-<schedule name="Second Schedule"><handler name=""><address></address></handler><event name="first event" receive-by="" receive-at="2018-07-25 09:29:06"><success>false</success><islive>true</islive></event><event name="third event" receive-by="" receive-at=""><success>false</success><islive>false</islive></event></schedule>

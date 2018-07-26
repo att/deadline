@@ -11,7 +11,14 @@ type Schedule struct {
 	Handler  common.Handler `xml:"handler,omitempty"`
 	Timing   string         `xml:"timing,attr,omitempty"`
 	Name     string         `xml:"name,attr,omitempty"`
-	Schedule []common.Event `xml:"event,omitempty"`
+	Schedule []byte         `xml:",innerxml"`
+	Start    Node
+	End      Node
+}
+
+type Node struct {
+	Event common.Event `xml:"event"`
+	Nodes []Node       `xml:",any"`
 }
 
 type scheduleManager struct {

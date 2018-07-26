@@ -1,33 +1,43 @@
 package schedule
 
 import (
+	"egbitbucket.dtvops.net/deadline/common"
 	"encoding/xml"
-	//	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"time"
-
-	"egbitbucket.dtvops.net/deadline/common"
 )
 
 func (s Schedule) EventOccurred(e common.Event) {
-	//loop through schedule, find event, mark it as true
+	//go through schedule tree, find event, mark it as true
+	if findEvent(s.Start, e.Name) {
+		log.Println("We were able to locate and mark the event as true.")
+	}
+}
 
-	for i := 0; i < len(s.Schedule); i++ {
-		if e.Name == s.Schedule[i].Name {
-			s.Schedule[i].IsLive = true
-			s.Schedule[i].ReceiveAt = time.Now().Format("2006-01-02 15:04:05")
+func findEvent(start Node, name string) bool {
+	log.Print("Looking at children under " + start.Event.Name)
+	if start.Event.Name == name {
+		log.Println("Found " + start.Event.Name)
+		start.Event.IsLive = true
+		start.Event.ReceiveAt = time.Now().Format("2006-01-02 15:04:05")
+		return true
+	}
+	for j := 0; j < len(start.Nodes); j++ {
+		f := findEvent(start.Nodes[j], name)
+		if f == true {
+			return true
 		}
 	}
-
+	log.Println("Could not find " + name + " under " + start.Event.Name)
+	return false
 }
 
 func NewManager() *scheduleManager {
 	return &scheduleManager{
 		subscriptionTable: make(map[string][]Schedule),
 	}
-
 }
 
 func (fd fileDAO) GetByName(name string) ([]byte, error) {
@@ -91,17 +101,16 @@ func UpdateEvents(m *scheduleManager, e common.Event, fd ScheduleDAO) {
 func UpdateSchedule(m *scheduleManager, s Schedule) {
 	//loop through array and subscribe to every event, and then add itself to the map for every event
 
-	for i := 0; i < len(s.Schedule); i++ {
+	for i := 0; i < len(s.Start.Nodes); i++ {
 		//subscribe to every event
 		//put into map
-		var scheds []Schedule = m.subscriptionTable[(s.Schedule[i].Name)]
+		var scheds []Schedule = m.subscriptionTable[(s.Start.Nodes[i].Event.Name)]
 		if scheds == nil {
-			m.subscriptionTable[(s.Schedule[i].Name)] = []Schedule{s}
+			m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = []Schedule{s}
 			continue
 		}
 		scheds = append(scheds, s)
-		m.subscriptionTable[s.Schedule[i].Name] = scheds
-
+		m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = scheds
 	}
 	log.Println("Current map: ", m.subscriptionTable)
 }
