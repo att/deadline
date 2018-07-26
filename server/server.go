@@ -63,7 +63,7 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Received the following information in the event handler: %v\n", event)
-	schedule.UpdateEvents(m, event, fd)
+	schedule.UpdateEvents(m, &event, fd)
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -135,7 +135,7 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println(err)
 		}
-		schedule.UpdateSchedule(m, sched)
+		schedule.UpdateSchedule(m, &sched)
 	}
 	w.WriteHeader(http.StatusOK)
 

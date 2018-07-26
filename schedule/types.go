@@ -17,12 +17,12 @@ type Schedule struct {
 }
 
 type Node struct {
-	Event common.Event `xml:"event"`
-	Nodes []Node       `xml:",any"`
+	Event *common.Event `xml:"event"`
+	Nodes []Node        `xml:",any"`
 }
 
 type scheduleManager struct {
-	subscriptionTable map[string][]Schedule
+	subscriptionTable map[string][]*Schedule
 }
 
 type Error struct {

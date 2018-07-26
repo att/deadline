@@ -11,22 +11,34 @@ import (
 	"egbitbucket.dtvops.net/deadline/common"
 )
 
-func (s Schedule) EventOccurred(e common.Event) {
+func (s Schedule) EventOccurred(e *common.Event) {
 	//loop through schedule, find event, mark it as true
 	if findEvent(s.Start, e.Name) {
 		log.Println("We were able to locate and mark the event as true.")
+		for i := 0; i < len(s.Start.Nodes); {
+			log.Println("Is " + s.Start.Nodes[i].Event.Name + " alive?")
+			log.Println(s.Start.Nodes[i].Event.IsLive)
+			i++
+		}
 	}
 
 }
 
 func findEvent(start Node, name string) bool {
-	log.Print("Looking at children under " + start.Event.Name)
-	if start.Event.Name == name {
-		log.Println("Found " + start.Event.Name)
-		start.Event.IsLive = true
-		start.Event.ReceiveAt = time.Now().Format("2006-01-02 15:04:05")
-		return true
+
+	if start.Event != nil {
+		if start.Event.Name == name {
+			log.Println("Found " + start.Event.Name)
+			start.Event.IsLive = true
+			start.Event.ReceiveAt = time.Now().Format("2006-01-02 15:04:05")
+
+			return true
+		}
+
+	} else {
+		log.Println("This is a start to a schedule.")
 	}
+
 	for j := 0; j < len(start.Nodes); j++ {
 		f := findEvent(start.Nodes[j], name)
 		if f == true {
@@ -40,7 +52,7 @@ func findEvent(start Node, name string) bool {
 
 func NewManager() *scheduleManager {
 	return &scheduleManager{
-		subscriptionTable: make(map[string][]Schedule),
+		subscriptionTable: make(map[string][]*Schedule),
 	}
 
 }
@@ -88,7 +100,7 @@ func NewScheduleDAO() ScheduleDAO {
 	return &fileDAO{}
 }
 
-func UpdateEvents(m *scheduleManager, e common.Event, fd ScheduleDAO) {
+func UpdateEvents(m *scheduleManager, e *common.Event, fd ScheduleDAO) {
 	//once you receive an event, tell every schedule that you have it by adding it to their array
 	scheds := m.subscriptionTable[e.Name]
 	if scheds == nil {
@@ -98,12 +110,12 @@ func UpdateEvents(m *scheduleManager, e common.Event, fd ScheduleDAO) {
 
 	for _, sched := range scheds {
 		sched.EventOccurred(e)
-		fd.Save(sched)
+
 	}
-	log.Println("Current map: ", m.subscriptionTable)
+	log.Println("Onto next event.")
 }
 
-func UpdateSchedule(m *scheduleManager, s Schedule) {
+func UpdateSchedule(m *scheduleManager, s *Schedule) {
 	//loop through array and subscribe to every event, and then add itself to the map for every event
 
 	for i := 0; i < len(s.Start.Nodes); i++ {
@@ -111,12 +123,12 @@ func UpdateSchedule(m *scheduleManager, s Schedule) {
 		//put into map
 		scheds := m.subscriptionTable[(s.Start.Nodes[i].Event.Name)]
 		if scheds == nil {
-			m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = []Schedule{s}
+			m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = []*Schedule{s}
 			continue
 		}
 		scheds = append(scheds, s)
 		m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = scheds
 
 	}
-	log.Println("Current map: ", m.subscriptionTable)
+
 }
