@@ -1,14 +1,14 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
-	//	"io/ioutil"
 	"log"
 	"net/http"
-	//	"os"
+
 	"egbitbucket.dtvops.net/deadline/common"
 	"egbitbucket.dtvops.net/deadline/schedule"
 )
@@ -108,17 +108,29 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 			return
 		}
-		for i := 0; i < len(sched.Schedule); i++ {
-			valid := validateEvent(sched.Schedule[i])
+
+		buf := bytes.NewBuffer(sched.Schedule)
+		dec := xml.NewDecoder(buf)
+		var f common.Event
+		for dec.Decode(&f) == nil {
+
+			valid := validateEvent(f)
 			if err != nil || valid != nil {
 				log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-		}
-		log.Printf("Received the following information in schedule handler: %v\n", sched)
 
-		//var fd = sched.NewScheduleDAO()
+			log.Printf("Received the following information in schedule handler: %v\n", sched)
+			//until we hit eof
+			fmt.Println(f)
+			node1 := schedule.Node{
+				Event: f,
+				Nodes: []schedule.Node{},
+			}
+			sched.Start.Nodes = append(sched.Start.Nodes, node1)
+		}
+		fmt.Println(sched.Start.Nodes)
 		err = fd.Save(sched)
 		if err != nil {
 			log.Println(err)

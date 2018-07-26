@@ -1,1 +1,1 @@
-<schedule timing="daily" name="sample_schedule"><handler name="email handler"><address>kp755d@att.com</address></handler></schedule>
+<schedule timing="daily" name="sample_schedule"><handler name="email handler"><address>kp755d@att.com</address></handler><Start><event name="" receive-by="" receive-at=""><success>false</success><islive>false</islive></event></Start><End><event name="" receive-by="" receive-at=""><success>false</success><islive>false</islive></event></End></schedule>
