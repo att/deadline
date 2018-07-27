@@ -15,7 +15,9 @@ func (s Schedule) EventOccurred(e *common.Event) {
 	//loop through schedule, find event, mark it as true
 	if s.Start.findEvent(e.Name) {
 		log.Println("We were able to locate and mark the event as true.")
+		s.Start.OkTo = &s.End
 	}
+	s.Start.ErrorTo = &s.Error
 
 }
 
@@ -26,7 +28,6 @@ func (start Node) findEvent(name string) bool {
 			log.Println("Found " + start.Event.Name)
 			start.Event.IsLive = true
 			start.Event.ReceiveAt = time.Now().Format("2006-01-02 15:04:05")
-
 			return true
 		}
 

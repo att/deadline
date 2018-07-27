@@ -14,6 +14,7 @@ type Schedule struct {
 	Schedule []byte         `xml:",innerxml"`
 	Start    Node           `xml:"-"`
 	End      Node           `xml:"-"`
+	Error    Node           `xml:"-"`
 }
 
 type Node struct {
