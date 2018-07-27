@@ -45,7 +45,7 @@ var s1 = Schedule{
 var s2 = Schedule{
 	Name: "Second Schedule",
 	Start: Node{
-		Nodes: []Node{
+		Nodes: []Node{ 
 			Node{
 
 				Event: &e1,

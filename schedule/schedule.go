@@ -13,18 +13,13 @@ import (
 
 func (s Schedule) EventOccurred(e *common.Event) {
 	//loop through schedule, find event, mark it as true
-	if findEvent(s.Start, e.Name) {
+	if s.Start.findEvent(e.Name) {
 		log.Println("We were able to locate and mark the event as true.")
-		for i := 0; i < len(s.Start.Nodes); {
-			log.Println("Is " + s.Start.Nodes[i].Event.Name + " alive?")
-			log.Println(s.Start.Nodes[i].Event.IsLive)
-			i++
-		}
 	}
 
 }
 
-func findEvent(start Node, name string) bool {
+func (start Node) findEvent(name string) bool {
 
 	if start.Event != nil {
 		if start.Event.Name == name {
@@ -40,13 +35,12 @@ func findEvent(start Node, name string) bool {
 	}
 
 	for j := 0; j < len(start.Nodes); j++ {
-		f := findEvent(start.Nodes[j], name)
+		f := start.Nodes[j].findEvent(name)
 		if f == true {
 			return true
 		}
 	}
 
-	log.Println("Could not find " + name + " under " + start.Event.Name)
 	return false
 }
 
@@ -70,9 +64,7 @@ func (fd fileDAO) GetByName(name string) ([]byte, error) {
 	//read in the xml file
 	bytes, err := ioutil.ReadAll(file)
 	if err != nil {
-
 		return nil, err
-
 	}
 	return bytes, nil
 }
@@ -112,12 +104,23 @@ func UpdateEvents(m *scheduleManager, e *common.Event, fd ScheduleDAO) {
 		sched.EventOccurred(e)
 
 	}
+	e1schd := m.subscriptionTable[e.Name]
+	log.Println("Looking at " + e.Name)
+	for i := 0; i < len(e1schd); {
+		for a := 0; a < len(e1schd[i].Start.Nodes); {
+			log.Println("Is " + e1schd[i].Start.Nodes[a].Event.Name + " alive?")
+			log.Println(e1schd[i].Start.Nodes[a].Event.IsLive)
+			a++
+		}
+		i++
+	}
 	log.Println("Onto next event.")
 }
 
 func UpdateSchedule(m *scheduleManager, s *Schedule) {
 	//loop through array and subscribe to every event, and then add itself to the map for every event
-
+	log.Println("Address of " + s.Name)
+	log.Printf("%p\n", s)
 	for i := 0; i < len(s.Start.Nodes); i++ {
 		//subscribe to every event
 		//put into map
@@ -130,5 +133,25 @@ func UpdateSchedule(m *scheduleManager, s *Schedule) {
 		m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = scheds
 
 	}
-
+	//below is purely for testing
+	e1schd := m.subscriptionTable["first event"]
+	e2schd := m.subscriptionTable["second event"]
+	log.Println("First event:")
+	for i := 0; i < len(e1schd); {
+		for a := 0; a < len(e1schd[i].Start.Nodes); {
+			log.Println("Is " + e1schd[i].Start.Nodes[a].Event.Name + " alive?")
+			log.Println(e1schd[i].Start.Nodes[a].Event.IsLive)
+			a++
+		}
+		i++
+	}
+	log.Println("Second event:")
+	for j := 0; j < len(e2schd); {
+		for b := 0; b < len(e2schd[j].Start.Nodes); {
+			log.Println("Is " + e2schd[j].Start.Nodes[b].Event.Name + " alive?")
+			log.Println(e2schd[j].Start.Nodes[b].Event.IsLive)
+			b++
+		}
+		j++
+	}
 }

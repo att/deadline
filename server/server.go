@@ -108,28 +108,32 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 			return
 		}
+		var f common.Event
 
 		buf := bytes.NewBuffer(sched.Schedule)
 		dec := xml.NewDecoder(buf)
-		var f common.Event
-		for dec.Decode(&f) == nil {
 
-			valid := validateEvent(f)
+		for dec.Decode(&f) == nil {
+			e := f
+			valid := validateEvent(e)
+			fmt.Println("Address of an event:")
+			fmt.Printf("%p\n", &e)
 			if err != nil || valid != nil {
 				log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-
-			log.Printf("Received the following information in schedule handler: %v\n", sched)
 			//until we hit eof
-			fmt.Println(f)
+
 			node1 := schedule.Node{
-				Event: f,
+				Event: &e,
 				Nodes: []schedule.Node{},
 			}
 			sched.Start.Nodes = append(sched.Start.Nodes, node1)
+
 		}
+		log.Println("Received the following information in schedule handler: \n", sched)
+		fmt.Println("Then we have the nodes that are connected to start")
 		fmt.Println(sched.Start.Nodes)
 		err = fd.Save(sched)
 		if err != nil {

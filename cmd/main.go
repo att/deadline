@@ -8,7 +8,6 @@ import (
 
 func main() {
 	dlsvr := server.NewDeadlineServer()
-
 	err := dlsvr.Start()
 	if err != nil {
 		fmt.Println("Server exited with error:", err)
