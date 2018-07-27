@@ -8,6 +8,26 @@ import (
 	"os"
 	"time"
 )
+/*
+func converTime(time string) time.Time {
+
+
+}
+*/
+
+func (s Schedule) EvaluateEvent(e *common.Event) {
+	//success wll be determined by this boolean value 
+	//want to check receive by  and receive at
+	//change the string to time values 
+	if (e.ReceiveAt > e.ReceiveBy) {
+		e.Success = false
+	}
+
+	//switch cases for daily,monthly, maybe a counter
+	e.Success = true
+	return 
+
+}
 
 func (s Schedule) EventOccurred(e *common.Event) {
 	//loop through schedule, find event, mark it as true
@@ -19,6 +39,15 @@ func (s Schedule) EventOccurred(e *common.Event) {
 		}
 	}
 	s.Start.ErrorTo = &s.Error
+
+}
+
+func (err Node) throwError() {
+	log.Println("This event did not have success")
+	//and other things that kill the event 
+	//log fatal? etc
+	
+
 
 }
 
