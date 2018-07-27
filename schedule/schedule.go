@@ -11,22 +11,31 @@ import (
 
 func (s Schedule) EventOccurred(e *common.Event) {
 	//loop through schedule, find event, mark it as true
-	if s.Start.findEvent(e.Name) {
+	ev := s.Start.findEvent(e.Name)
+	if  ev != nil {
+		if makeLive(ev) != nil {
 		log.Println("We were able to locate and mark the event as true.")
 		s.Start.OkTo = &s.End
+		}
 	}
 	s.Start.ErrorTo = &s.Error
 
 }
 
-func (start Node) findEvent(name string) bool {
+func makeLive(e *common.Event) error{
+
+	log.Println("Found " + e.Name)
+	e.IsLive = true
+	e.ReceiveAt = time.Now().Format("2006-01-02 15:04:05")
+	return nil
+}
+
+func (start Node) findEvent(name string) *common.Event {
 
 	if start.Event != nil {
 		if start.Event.Name == name {
 			log.Println("Found " + start.Event.Name)
-			start.Event.IsLive = true
-			start.Event.ReceiveAt = time.Now().Format("2006-01-02 15:04:05")
-			return true
+			return start.Event
 		}
 
 	} else {
@@ -35,12 +44,12 @@ func (start Node) findEvent(name string) bool {
 
 	for j := 0; j < len(start.Nodes); j++ {
 		f := start.Nodes[j].findEvent(name)
-		if f == true {
-			return true
+		if f != nil {
+			return f
 		}
 	}
 
-	return false
+	return nil
 }
 
 func NewManager() *scheduleManager {
