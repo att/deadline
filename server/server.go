@@ -2,14 +2,15 @@ package server
 
 import (
 	"bytes"
-	"egbitbucket.dtvops.net/deadline/common"
-	"egbitbucket.dtvops.net/deadline/schedule"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+
+	"egbitbucket.dtvops.net/deadline/common"
+	"egbitbucket.dtvops.net/deadline/schedule"
 )
 
 var m = schedule.NewManager()
@@ -62,7 +63,7 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Received the following information in the event handler: %v\n", event)
-	schedule.UpdateEvents(m, event, fd)
+	schedule.UpdateEvents(m, &event, fd)
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -107,33 +108,38 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 			return
 		}
+		var f common.Event
 
 		buf := bytes.NewBuffer(sched.Schedule)
 		dec := xml.NewDecoder(buf)
-		var f common.Event
-		for dec.Decode(&f) == nil {
 
-			valid := validateEvent(f)
+		for dec.Decode(&f) == nil {
+			e := f
+			valid := validateEvent(e)
+			fmt.Println("Address of an event:")
+			fmt.Printf("%p\n", &e)
 			if err != nil || valid != nil {
 				log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
 			//until we hit eof
-			fmt.Println(f)
+
 			node1 := schedule.Node{
-				Event: f,
+				Event: &e,
 				Nodes: []schedule.Node{},
 			}
 			sched.Start.Nodes = append(sched.Start.Nodes, node1)
+
 		}
+		log.Println("Received the following information in schedule handler: \n", sched)
+		fmt.Println("Then we have the nodes that are connected to start")
 		fmt.Println(sched.Start.Nodes)
-		log.Printf("Received the following information in schedule handler: %v\n", sched)
 		err = fd.Save(sched)
 		if err != nil {
 			log.Println(err)
 		}
-		schedule.UpdateSchedule(m, sched)
+		schedule.UpdateSchedule(m, &sched)
 	}
 	w.WriteHeader(http.StatusOK)
 }

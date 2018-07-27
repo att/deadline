@@ -9,34 +9,43 @@ import (
 	"time"
 )
 
-func (s Schedule) EventOccurred(e common.Event) {
-	//go through schedule tree, find event, mark it as true
-	if findEvent(s.Start, e.Name) {
+func (s Schedule) EventOccurred(e *common.Event) {
+	//loop through schedule, find event, mark it as true
+	if s.Start.findEvent(e.Name) {
 		log.Println("We were able to locate and mark the event as true.")
+		s.Start.OkTo = &s.End
 	}
+	s.Start.ErrorTo = &s.Error
+
 }
 
-func findEvent(start Node, name string) bool {
-	log.Print("Looking at children under " + start.Event.Name)
-	if start.Event.Name == name {
-		log.Println("Found " + start.Event.Name)
-		start.Event.IsLive = true
-		start.Event.ReceiveAt = time.Now().Format("2006-01-02 15:04:05")
-		return true
+func (start Node) findEvent(name string) bool {
+
+	if start.Event != nil {
+		if start.Event.Name == name {
+			log.Println("Found " + start.Event.Name)
+			start.Event.IsLive = true
+			start.Event.ReceiveAt = time.Now().Format("2006-01-02 15:04:05")
+			return true
+		}
+
+	} else {
+		log.Println("This is a start to a schedule.")
 	}
+
 	for j := 0; j < len(start.Nodes); j++ {
-		f := findEvent(start.Nodes[j], name)
+		f := start.Nodes[j].findEvent(name)
 		if f == true {
 			return true
 		}
 	}
-	log.Println("Could not find " + name + " under " + start.Event.Name)
+
 	return false
 }
 
 func NewManager() *scheduleManager {
 	return &scheduleManager{
-		subscriptionTable: make(map[string][]Schedule),
+		subscriptionTable: make(map[string][]*Schedule),
 	}
 }
 
@@ -53,9 +62,7 @@ func (fd fileDAO) GetByName(name string) ([]byte, error) {
 	//read in the xml file
 	bytes, err := ioutil.ReadAll(file)
 	if err != nil {
-
 		return nil, err
-
 	}
 	return bytes, nil
 }
@@ -83,9 +90,9 @@ func NewScheduleDAO() ScheduleDAO {
 	return &fileDAO{}
 }
 
-func UpdateEvents(m *scheduleManager, e common.Event, fd ScheduleDAO) {
+func UpdateEvents(m *scheduleManager, e *common.Event, fd ScheduleDAO) {
 	//once you receive an event, tell every schedule that you have it by adding it to their array
-	var scheds []Schedule = m.subscriptionTable[e.Name]
+	scheds := m.subscriptionTable[e.Name]
 	if scheds == nil {
 
 		log.Println("No subscribers.")
@@ -93,24 +100,55 @@ func UpdateEvents(m *scheduleManager, e common.Event, fd ScheduleDAO) {
 
 	for _, sched := range scheds {
 		sched.EventOccurred(e)
-		fd.Save(sched)
+
 	}
-	log.Println("Current map: ", m.subscriptionTable)
+	e1schd := m.subscriptionTable[e.Name]
+	log.Println("Looking at " + e.Name)
+	for i := 0; i < len(e1schd); {
+		for a := 0; a < len(e1schd[i].Start.Nodes); {
+			log.Println("Is " + e1schd[i].Start.Nodes[a].Event.Name + " alive?")
+			log.Println(e1schd[i].Start.Nodes[a].Event.IsLive)
+			a++
+		}
+		i++
+	}
+	log.Println("Onto next event.")
 }
 
-func UpdateSchedule(m *scheduleManager, s Schedule) {
+func UpdateSchedule(m *scheduleManager, s *Schedule) {
 	//loop through array and subscribe to every event, and then add itself to the map for every event
-
+	log.Println("Address of " + s.Name)
+	log.Printf("%p\n", s)
 	for i := 0; i < len(s.Start.Nodes); i++ {
 		//subscribe to every event
 		//put into map
-		var scheds []Schedule = m.subscriptionTable[(s.Start.Nodes[i].Event.Name)]
+		scheds := m.subscriptionTable[(s.Start.Nodes[i].Event.Name)]
 		if scheds == nil {
-			m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = []Schedule{s}
+			m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = []*Schedule{s}
 			continue
 		}
 		scheds = append(scheds, s)
 		m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = scheds
 	}
-	log.Println("Current map: ", m.subscriptionTable)
+	//below is purely for testing
+	e1schd := m.subscriptionTable["first event"]
+	e2schd := m.subscriptionTable["second event"]
+	log.Println("First event:")
+	for i := 0; i < len(e1schd); {
+		for a := 0; a < len(e1schd[i].Start.Nodes); {
+			log.Println("Is " + e1schd[i].Start.Nodes[a].Event.Name + " alive?")
+			log.Println(e1schd[i].Start.Nodes[a].Event.IsLive)
+			a++
+		}
+		i++
+	}
+	log.Println("Second event:")
+	for j := 0; j < len(e2schd); {
+		for b := 0; b < len(e2schd[j].Start.Nodes); {
+			log.Println("Is " + e2schd[j].Start.Nodes[b].Event.Name + " alive?")
+			log.Println(e2schd[j].Start.Nodes[b].Event.IsLive)
+			b++
+		}
+		j++
+	}
 }
