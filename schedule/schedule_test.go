@@ -17,14 +17,23 @@ import (
 //var dbdriver string
 var m = NewManager()
 var e1 = common.Event{
-	Name: "first event",
+	Name:      "first event",
+	ReceiveBy: "18:00:00",
+	ReceiveAt: "19:00:00",
+	Success:   true,
 }
 var e2 = common.Event{
-	Name: "second event",
+	Name:      "second event",
+	ReceiveBy: "18:00:00",
+	ReceiveAt: "17:00:00",
+	Success:   true,
 }
 
 var e3 = common.Event{
-	Name: "third event",
+	Name:      "third event",
+	ReceiveBy: "18:00:00",
+	ReceiveAt: "18:00:00",
+	Success:   true,
 }
 
 var s1 = Schedule{
@@ -45,7 +54,7 @@ var s1 = Schedule{
 var s2 = Schedule{
 	Name: "Second Schedule",
 	Start: Node{
-		Nodes: []Node{ 
+		Nodes: []Node{
 			Node{
 
 				Event: &e1,
@@ -103,41 +112,69 @@ func TestManager(test *testing.T) {
 	log.Println("Current map: ", m.subscriptionTable)
 	UpdateEvents(m, &e1, fd)
 	UpdateEvents(m, &e2, fd)
+	/*
+		//these are not test cases, just here for the purpose of seeing output
+		log.Println("---------------------------------------------")
+		log.Println("Here lies the subscription map:")
+		e1schd := m.subscriptionTable["first event"]
+		e2schd := m.subscriptionTable["second event"]
+		e3schd := m.subscriptionTable["third event"]
+		//gigantic inefficient loops that are not good, pls fix later
+		log.Println("First event:")
+		for i := 0; i < len(e1schd); {
+			for a := 0; a < len(e1schd[i].Start.Nodes); {
+				log.Println("Is " + e1schd[i].Start.Nodes[a].Event.Name + " alive?")
+				log.Println(e1schd[i].Start.Nodes[a].Event.IsLive)
+				a++
+			}
+			i++
+		}
+		log.Println("Second event:")
+		for j := 0; j < len(e2schd); {
+			for b := 0; b < len(e2schd[j].Start.Nodes); {
+				log.Println("Is " + e2schd[j].Start.Nodes[b].Event.Name + " alive?")
+				log.Println(e2schd[j].Start.Nodes[b].Event.IsLive)
+				b++
+			}
+			j++
+		}
+		log.Println("Third event:")
+		for k := 0; k < len(e3schd); {
+			for c := 0; c < len(e3schd[k].Start.Nodes); {
+				log.Println("Is " + e3schd[k].Start.Nodes[c].Event.Name + " alive?")
+				log.Println(e3schd[k].Start.Nodes[c].Event.IsLive)
+				c++
+			}
+			k++
+		}
 
-	//these are not test cases, just here for the purpose of seeing output
-	log.Println("---------------------------------------------")
-	log.Println("Here lies the subscription map:")
-	e1schd := m.subscriptionTable["first event"]
-	e2schd := m.subscriptionTable["second event"]
-	e3schd := m.subscriptionTable["third event"]
-	//gigantic inefficient loops that are not good, pls fix later
-	log.Println("First event:")
-	for i := 0; i < len(e1schd); {
-		for a := 0; a < len(e1schd[i].Start.Nodes); {
-			log.Println("Is " + e1schd[i].Start.Nodes[a].Event.Name + " alive?")
-			log.Println(e1schd[i].Start.Nodes[a].Event.IsLive)
-			a++
-		}
-		i++
-	}
-	log.Println("Second event:")
-	for j := 0; j < len(e2schd); {
-		for b := 0; b < len(e2schd[j].Start.Nodes); {
-			log.Println("Is " + e2schd[j].Start.Nodes[b].Event.Name + " alive?")
-			log.Println(e2schd[j].Start.Nodes[b].Event.IsLive)
-			b++
-		}
-		j++
-	}
-	log.Println("Third event:")
-	for k := 0; k < len(e3schd); {
-		for c := 0; c < len(e3schd[k].Start.Nodes); {
-			log.Println("Is " + e3schd[k].Start.Nodes[c].Event.Name + " alive?")
-			log.Println(e3schd[k].Start.Nodes[c].Event.IsLive)
-			c++
-		}
-		k++
-	}
+		log.Println("---------------------------------------------")
+	*/
+}
 
-	log.Println("---------------------------------------------")
+var f1 = common.Event{
+	Name:      "first event",
+	ReceiveBy: "18:00:00",
+	ReceiveAt: "19:00:00",
+	Success:   true,
+}
+var f2 = common.Event{
+	Name:      "second event",
+	ReceiveBy: "18:00:00",
+	ReceiveAt: "17:00:00",
+	Success:   true,
+}
+
+var f3 = common.Event{
+	Name:      "third event",
+	ReceiveBy: "18:00:00",
+	ReceiveAt: "18:00:00",
+	Success:   true,
+}
+
+func TestEvaluation(test *testing.T) {
+	assert.False(test, EvaluateEvent(&f1), "It is coming back as true")
+	assert.True(test, EvaluateEvent(&f2), "Came back as false")
+	assert.False(test, EvaluateEvent(&f3), "Came back as true")
+
 }

@@ -1,69 +1,97 @@
 package schedule
 
 import (
-	"egbitbucket.dtvops.net/deadline/common"
 	"encoding/xml"
 	"io/ioutil"
 	"log"
 	"os"
 	"time"
+
+	"egbitbucket.dtvops.net/deadline/common"
+	"github.com/jasonlvhit/gocron"
 )
-/*
-func converTime(time string) time.Time {
 
+func EvaluateTime(by string, at string) bool {
+	//get string value, convert it
+	//parse for the following: 15:04:05
+	byParse, err := time.Parse("15:04:05", by)
+	if err != nil {
+		log.Println("Could not find receive by time")
+	}
+	if at == "" {
+		if time.Now().After(byParse) {
+			//if it has passed the time, return that it's late
+			log.Println("The event is late")
+			return false
+		}
 
-}
-*/
-
-func (s Schedule) EvaluateEvent(e *common.Event) {
-	//success wll be determined by this boolean value 
-	//want to check receive by  and receive at
-	//change the string to time values 
-	if (e.ReceiveAt > e.ReceiveBy) {
-		e.Success = false
+	}
+	atParse, err := time.Parse("15:04:05", at)
+	if err != nil {
+		log.Println("Could not find receive at time")
 	}
 
-	//switch cases for daily,monthly, maybe a counter
-	e.Success = true
-	return 
-
+	return atParse.Before(byParse)
+}
+func EvaluateSuccess(e *common.Event) bool {
+	return e.Success
+}
+func EvaluateEvent(e *common.Event) bool {
+	//want to check receive by  and receive at
+	if (EvaluateTime(e.ReceiveBy, e.ReceiveAt) == true) && (EvaluateSuccess(e) == true) {
+		return true
+	}
+	return false
 }
 
 func (s Schedule) EventOccurred(e *common.Event) {
 	//loop through schedule, find event, mark it as true
 	ev := s.Start.findEvent(e.Name)
-	if  ev != nil {
+	if ev != nil {
 		if makeLive(ev) != nil {
-		log.Println("We were able to locate and mark the event as true.")
-		s.Start.OkTo = &s.End
+			log.Println("We were able to locate and mark the event as true.")
+			s.Start.OkTo = &s.End
 		}
 	}
 	s.Start.ErrorTo = &s.Error
 
 }
 
-func (err Node) throwError() {
-	log.Println("This event did not have success")
-	//and other things that kill the event 
-	//log fatal? etc
-	
+func EvaluateAll(m *scheduleManager) {
+	for a := range m.subscriptionTable {
+		s := m.subscriptionTable[a]
+		for b := 0; b < len(s); b++ {
+			f := s[b].Start.findEvent(a)
+			if f == nil {
+				log.Println("Couldn't find the event in the schedule")
+				return
+			} else {
+				EvaluateEvent(f)
+			}
+		}
 
+	}
 
 }
 
-func makeLive(e *common.Event) error{
+//could be a function of this interface later
+
+func (err Node) throwError() {
+	log.Println("This event did not have success")
+	//and other things that kill the event
+	//log fatal? etc
+}
+func makeLive(e *common.Event) error {
 
 	log.Println("Found " + e.Name)
 	e.IsLive = true
-	e.ReceiveAt = time.Now().Format("2006-01-02 15:04:05")
+	e.ReceiveAt = time.Now().Format("15:04:05")
 	return nil
 }
-
 func (start Node) findEvent(name string) *common.Event {
 
 	if start.Event != nil {
 		if start.Event.Name == name {
-			log.Println("Found " + start.Event.Name)
 			return start.Event
 		}
 
@@ -130,27 +158,15 @@ func NewScheduleDAO() ScheduleDAO {
 
 func UpdateEvents(m *scheduleManager, e *common.Event, fd ScheduleDAO) {
 	//once you receive an event, tell every schedule that you have it by adding it to their array
+	gocron.Every(10).Seconds().Do(EvaluateAll, m)
 	scheds := m.subscriptionTable[e.Name]
 	if scheds == nil {
 
 		log.Println("No subscribers.")
 	}
-
 	for _, sched := range scheds {
 		sched.EventOccurred(e)
-
 	}
-	e1schd := m.subscriptionTable[e.Name]
-	log.Println("Looking at " + e.Name)
-	for i := 0; i < len(e1schd); {
-		for a := 0; a < len(e1schd[i].Start.Nodes); {
-			log.Println("Is " + e1schd[i].Start.Nodes[a].Event.Name + " alive?")
-			log.Println(e1schd[i].Start.Nodes[a].Event.IsLive)
-			a++
-		}
-		i++
-	}
-	log.Println("Onto next event.")
 }
 
 func UpdateSchedule(m *scheduleManager, s *Schedule) {
@@ -169,24 +185,28 @@ func UpdateSchedule(m *scheduleManager, s *Schedule) {
 		m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = scheds
 	}
 	//below is purely for testing
-	e1schd := m.subscriptionTable["first event"]
-	e2schd := m.subscriptionTable["second event"]
-	log.Println("First event:")
-	for i := 0; i < len(e1schd); {
-		for a := 0; a < len(e1schd[i].Start.Nodes); {
-			log.Println("Is " + e1schd[i].Start.Nodes[a].Event.Name + " alive?")
-			log.Println(e1schd[i].Start.Nodes[a].Event.IsLive)
-			a++
-		}
-		i++
-	}
-	log.Println("Second event:")
-	for j := 0; j < len(e2schd); {
-		for b := 0; b < len(e2schd[j].Start.Nodes); {
-			log.Println("Is " + e2schd[j].Start.Nodes[b].Event.Name + " alive?")
-			log.Println(e2schd[j].Start.Nodes[b].Event.IsLive)
-			b++
-		}
-		j++
-	}
+	/* 	e1schd := m.subscriptionTable["first event"]
+	   	e2schd := m.subscriptionTable["second event"]
+	   	log.Println("First event:")
+	   	for i := 0; i < len(e1schd); {
+	   		for a := 0; a < len(e1schd[i].Start.Nodes); {
+	   			log.Println("Is " + e1schd[i].Start.Nodes[a].Event.Name + " alive?")
+	   			log.Println(e1schd[i].Start.Nodes[a].Event.IsLive)
+	   			a++
+	   		}
+	   		i++
+	   	}
+	   	log.Println("Second event:")
+	   	for j := 0; j < len(e2schd); {
+	   		for b := 0; b < len(e2schd[j].Start.Nodes); {
+	   			log.Println("Is " + e2schd[j].Start.Nodes[b].Event.Name + " alive?")
+	   			log.Println(e2schd[j].Start.Nodes[b].Event.IsLive)
+	   			if e2schd[j].Start.Nodes[b].Event.IsLive {
+	   				log.Println(e2schd[j].Start.Nodes[b].Event.ReceiveAt)
+	   			}
+	   			b++
+	   		}
+	   		j++
+	   	} */
+
 }
