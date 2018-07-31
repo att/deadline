@@ -2,6 +2,7 @@ package schedule
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -14,23 +15,30 @@ import (
 func EvaluateTime(by string, at string) bool {
 	//get string value, convert it
 	//parse for the following: 15:04:05
-	byParse, err := time.Parse("15:04:05", by)
+	loc, err := time.LoadLocation("America/Los_Angeles")
+    if err != nil {
+        panic(err)
+    }
+	
+	byParse, err := time.ParseInLocation("15:04:05", by, loc)
 	if err != nil {
 		log.Println("Could not find receive by time")
 	}
-	if at == "" {
+	byParse = byParse.AddDate(2018,6,30)
+	log.Println(byParse)
+	atParse, err := time.Parse("15:04:05", at)
+	if err != nil {
+		log.Println(time.Now())
 		if time.Now().After(byParse) {
 			//if it has passed the time, return that it's late
 			log.Println("The event is late")
 			return false
 		}
+		log.Println("Could not find receive at time, but the time has not come yet.")
+		return true
 
-	}
-	atParse, err := time.Parse("15:04:05", at)
-	if err != nil {
-		log.Println("Could not find receive at time")
-	}
-
+	}	
+	log.Println("----------------------------------------------")
 	return atParse.Before(byParse)
 }
 func EvaluateSuccess(e *common.Event) bool {
@@ -58,14 +66,19 @@ func (s Schedule) EventOccurred(e *common.Event) {
 }
 
 func EvaluateAll(m *scheduleManager) {
+	log.Println("We are evaluating")
 	for a := range m.subscriptionTable {
 		s := m.subscriptionTable[a]
 		for b := 0; b < len(s); b++ {
+			log.Println("----------------------")
 			f := s[b].Start.findEvent(a)
+			log.Println("----------------------")
 			if f == nil {
-				log.Println("Couldn't find the event in the schedule")
+				fmt.Println("Couldn't find the event in the schedule")
 				return
 			} else {
+				log.Println("----------------------------------------------")
+				log.Println(f.Name)
 				EvaluateEvent(f)
 			}
 		}
@@ -91,17 +104,19 @@ func makeLive(e *common.Event) error {
 func (start Node) findEvent(name string) *common.Event {
 
 	if start.Event != nil {
+		log.Println("Checking " + name)
 		if start.Event.Name == name {
 			return start.Event
 		}
-
+		
 	} else {
 		log.Println("This is a start to a schedule.")
 	}
-
+	
 	for j := 0; j < len(start.Nodes); j++ {
 		f := start.Nodes[j].findEvent(name)
 		if f != nil {
+			log.Println("Found " + name + " in traversal for event evaluation.")
 			return f
 		}
 	}
@@ -110,6 +125,8 @@ func (start Node) findEvent(name string) *common.Event {
 }
 
 func NewManager() *scheduleManager {
+
+	
 	return &scheduleManager{
 		subscriptionTable: make(map[string][]*Schedule),
 	}
@@ -134,6 +151,7 @@ func (fd fileDAO) GetByName(name string) ([]byte, error) {
 }
 
 func (fd fileDAO) Save(s Schedule) error {
+	
 	str := s.Name + ".xml"
 	f, err := os.Create(str)
 	if err != nil {
@@ -158,7 +176,7 @@ func NewScheduleDAO() ScheduleDAO {
 
 func UpdateEvents(m *scheduleManager, e *common.Event, fd ScheduleDAO) {
 	//once you receive an event, tell every schedule that you have it by adding it to their array
-	gocron.Every(10).Seconds().Do(EvaluateAll, m)
+
 	scheds := m.subscriptionTable[e.Name]
 	if scheds == nil {
 
@@ -171,6 +189,8 @@ func UpdateEvents(m *scheduleManager, e *common.Event, fd ScheduleDAO) {
 
 func UpdateSchedule(m *scheduleManager, s *Schedule) {
 	//loop through array and subscribe to every event, and then add itself to the map for every event
+	go gocron.Every(10).Seconds().Do(EvaluateAll, m)
+	go gocron.Start()
 	log.Println("Address of " + s.Name)
 	log.Printf("%p\n", s)
 	for i := 0; i < len(s.Start.Nodes); i++ {

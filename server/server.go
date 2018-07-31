@@ -11,6 +11,7 @@ import (
 
 	"egbitbucket.dtvops.net/deadline/common"
 	"egbitbucket.dtvops.net/deadline/schedule"
+	
 )
 
 var m = schedule.NewManager()
@@ -38,6 +39,7 @@ func (dlsvr *DeadlineServer) Stop() error {
 }
 
 func newDeadlineHandler() http.Handler {
+	
 	handler := http.NewServeMux()
 	handler.HandleFunc("/api/v1/event", eventHander)
 	handler.HandleFunc("/api/v1/schedule", scheduleHandler)
@@ -62,7 +64,7 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Received the following information in the event handler: %v\n", event)
+	//log.Printf("Received the following information in the event handler: %v\n", event)
 	schedule.UpdateEvents(m, &event, fd)
 	w.WriteHeader(http.StatusOK)
 
@@ -132,7 +134,7 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 			sched.Start.Nodes = append(sched.Start.Nodes, node1)
 
 		}
-		log.Println("Received the following information in schedule handler: \n", sched)
+		//log.Println("Received the following information in schedule handler: \n", sched)
 		fmt.Println("Then we have the nodes that are connected to start")
 		fmt.Println(sched.Start.Nodes)
 		err = fd.Save(sched)

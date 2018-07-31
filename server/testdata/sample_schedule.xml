@@ -1,6 +1,6 @@
 <schedule name="samp1schedule" timing="daily" >
 
-	<event name="first event" receive-by="14:00:00">
+	<event name="first event" receive-by="10:09:00">
 		<error to="email handler"/>
 	</event>
 
