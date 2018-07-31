@@ -27,7 +27,7 @@ func EvaluateTime(by string, at string) bool {
 	var m = int(time.Now().Month())
 	byParse = byParse.AddDate(time.Now().Year(),m-1,time.Now().Day()-1)
 	log.Println(byParse)
-	atParse, err := time.Parse("15:04:05", at)
+	atParse, err := time.ParseInLocation("15:04:05", at, loc)
 	if err != nil {
 		log.Println(time.Now())
 		if time.Now().After(byParse) {
@@ -39,8 +39,13 @@ func EvaluateTime(by string, at string) bool {
 		return true
 
 	}	
-	log.Println("----------------------------------------------")
-	return atParse.Before(byParse)
+	atParse = atParse.AddDate(time.Now().Year(),m-1,time.Now().Day()-1)
+	if atParse.Before(byParse){
+		log.Println("The event is here and it is not late!")
+		return true
+	}
+	log.Println("The event was received, but it was late.")
+	return false
 }
 func EvaluateSuccess(e *common.Event) bool {
 	return e.Success
@@ -81,6 +86,7 @@ func EvaluateAll(m *scheduleManager) {
 				log.Println("----------------------------------------------")
 				log.Println(f.Name)
 				EvaluateEvent(f)
+				
 			}
 		}
 
@@ -186,6 +192,31 @@ func UpdateEvents(m *scheduleManager, e *common.Event, fd ScheduleDAO) {
 	for _, sched := range scheds {
 		sched.EventOccurred(e)
 	}
+
+	e1schd := m.subscriptionTable["first event"]
+	e2schd := m.subscriptionTable["second event"]
+	log.Println("First event:")
+	for i := 0; i < len(e1schd); {
+		for a := 0; a < len(e1schd[i].Start.Nodes); {
+			log.Println("Is " + e1schd[i].Start.Nodes[a].Event.Name + " alive?")
+			log.Println(e1schd[i].Start.Nodes[a].Event.IsLive)
+			a++
+		}
+		i++
+	}
+	log.Println("Second event:")
+	for j := 0; j < len(e2schd); {
+		for b := 0; b < len(e2schd[j].Start.Nodes); {
+			log.Println("Is " + e2schd[j].Start.Nodes[b].Event.Name + " alive?")
+			log.Println(e2schd[j].Start.Nodes[b].Event.IsLive)
+			if e2schd[j].Start.Nodes[b].Event.IsLive {
+				log.Println(e2schd[j].Start.Nodes[b].Event.ReceiveAt)
+			}
+			b++
+		}
+		j++
+	} 
+
 }
 
 func UpdateSchedule(m *scheduleManager, s *Schedule) {
@@ -206,28 +237,6 @@ func UpdateSchedule(m *scheduleManager, s *Schedule) {
 		m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = scheds
 	}
 	//below is purely for testing
-	/* 	e1schd := m.subscriptionTable["first event"]
-	   	e2schd := m.subscriptionTable["second event"]
-	   	log.Println("First event:")
-	   	for i := 0; i < len(e1schd); {
-	   		for a := 0; a < len(e1schd[i].Start.Nodes); {
-	   			log.Println("Is " + e1schd[i].Start.Nodes[a].Event.Name + " alive?")
-	   			log.Println(e1schd[i].Start.Nodes[a].Event.IsLive)
-	   			a++
-	   		}
-	   		i++
-	   	}
-	   	log.Println("Second event:")
-	   	for j := 0; j < len(e2schd); {
-	   		for b := 0; b < len(e2schd[j].Start.Nodes); {
-	   			log.Println("Is " + e2schd[j].Start.Nodes[b].Event.Name + " alive?")
-	   			log.Println(e2schd[j].Start.Nodes[b].Event.IsLive)
-	   			if e2schd[j].Start.Nodes[b].Event.IsLive {
-	   				log.Println(e2schd[j].Start.Nodes[b].Event.ReceiveAt)
-	   			}
-	   			b++
-	   		}
-	   		j++
-	   	} */
+	/**/
 
 }
