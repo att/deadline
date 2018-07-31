@@ -15,7 +15,7 @@ import (
 func EvaluateTime(by string, at string) bool {
 	//get string value, convert it
 	//parse for the following: 15:04:05
-	loc, err := time.LoadLocation("America/Los_Angeles")
+	loc, err := time.LoadLocation("Local")
     if err != nil {
         panic(err)
     }
@@ -24,7 +24,8 @@ func EvaluateTime(by string, at string) bool {
 	if err != nil {
 		log.Println("Could not find receive by time")
 	}
-	byParse = byParse.AddDate(2018,6,30)
+	var m = int(time.Now().Month())
+	byParse = byParse.AddDate(time.Now().Year(),m-1,time.Now().Day()-1)
 	log.Println(byParse)
 	atParse, err := time.Parse("15:04:05", at)
 	if err != nil {
