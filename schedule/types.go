@@ -8,7 +8,7 @@ import (
 
 type Schedule struct {
 	XMLName  xml.Name       `xml:"schedule"`
-	Handler  common.Handler `xml:"handler,omitempty"`
+	Handler  Handler 		`xml:"handler,omitempty"`
 	Timing   string         `xml:"timing,attr,omitempty"`
 	Name     string         `xml:"name,attr,omitempty"`
 	Schedule []byte         `xml:",innerxml"`
@@ -40,6 +40,10 @@ type Error struct {
 	To string `xml:"to,attr"`
 }
 
+type Handler struct {
+	Name string `xml:"name,attr"`
+	Address string `xml:"address"`
+}
 type ScheduleDAO interface {
 	GetByName(string) ([]byte, error)
 	Save(s Schedule) error

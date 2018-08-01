@@ -13,7 +13,7 @@ func (w Webhook) Send(msg string) {
 	if err != nil {
 		log.Println("Could not encode.")
 	}
-	_ , err = http.Post(w.Addr+"/api/v1/msg","application/json", bytes.NewBuffer(jv))
+	_ , err = http.Post(w.Addr,"application/json", bytes.NewBuffer(jv))
 
 	if err != nil {
 		log.Println(err)
@@ -22,14 +22,14 @@ func (w Webhook) Send(msg string) {
 
 }
 //make a different function for each type 
-func NewNotifyHandler(nh string) NotifyHandler{
+func NewNotifyHandler(nh string,addr string) NotifyHandler{
 
 	switch nh {
 	case "WEBHOOK":	
 		//add to map 
 		//s := handlers[nh]
 		w := &Webhook{
-			Addr: "http://localhost:8081",
+			Addr: addr,
 		}
 		//s = append(s, w)
 		//handlers[nh] = s

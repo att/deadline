@@ -14,8 +14,8 @@
         </event>
 
 
-        <handler name="email handler">
-                <address>kp755d@att.com</address>
+        <handler name="WEBHOOK">
+                <address>http://localhost:8081/api/v1/msg</address>
         </handler>
 
 </schedule>

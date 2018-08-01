@@ -12,10 +12,10 @@ import (
 	"egbitbucket.dtvops.net/deadline/notifier"
 	"github.com/jasonlvhit/gocron"
 )
-var h = notifier.NewNotifyHandler("WEBHOOK")
 
 
-func EvaluateTime(by string, at string) bool {
+
+func EvaluateTime(by string, at string,h notifier.NotifyHandler) bool {
 
 	loc, err := time.LoadLocation("Local")
     if err != nil {
@@ -52,9 +52,9 @@ func EvaluateTime(by string, at string) bool {
 func EvaluateSuccess(e *common.Event) bool {
 	return e.Success
 }
-func EvaluateEvent(e *common.Event) bool {
+func EvaluateEvent(e *common.Event,h notifier.NotifyHandler) bool {
 
-	if (EvaluateTime(e.ReceiveBy, e.ReceiveAt) == true) && (EvaluateSuccess(e) == true) {
+	if (EvaluateTime(e.ReceiveBy, e.ReceiveAt,h) == true) && (EvaluateSuccess(e) == true) {
 		return true
 	}
 	return false
@@ -76,7 +76,7 @@ func EvaluateAll(m *scheduleManager) {
 	for a := range m.subscriptionTable {
 		s := m.subscriptionTable[a]
 		for b := 0; b < len(s); b++ {
-
+			var h = notifier.NewNotifyHandler(s[b].Handler.Name,s[b].Handler.Address)
 			f := s[b].Start.findEvent(a)
 			if f == nil {
 				fmt.Println("Couldn't find the event in the schedule")
@@ -84,7 +84,7 @@ func EvaluateAll(m *scheduleManager) {
 			} else {
 				log.Println("----------------------------------------------")
 				log.Println(f.Name)
-				EvaluateEvent(f)
+				EvaluateEvent(f,h)
 				
 			}
 		}
@@ -187,7 +187,7 @@ func UpdateEvents(m *scheduleManager, e *common.Event, fd ScheduleDAO) {
 }
 
 func UpdateSchedule(m *scheduleManager, s *Schedule) {
-
+	
 	/*
 	switch s.Timing {
 	case "daily":
