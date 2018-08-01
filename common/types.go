@@ -11,7 +11,6 @@ type Event struct {
 	Details   map[string]string `json:"details,omitempty" xml:"details,omitempty"`
 	ReceiveBy string            `xml:"receive-by,attr"`
 	ReceiveAt string            `xml:"receive-at,attr"`
-	//receives will have to be time values in the future
 	IsLive bool `xml:"islive"`
 }
 

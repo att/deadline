@@ -38,7 +38,6 @@ func TestGoodParams(test *testing.T) {
 	assert.Equal(test, http.StatusOK, response.StatusCode, "Response http status code not what it should be")
 
 }
-
 func TestBadParams(test *testing.T) {
 
 	badReqeust := "{}"
@@ -61,7 +60,6 @@ func TestGoodSchedule(test *testing.T) {
 	err = xml.Unmarshal(b, &testschedule)
 	assert.Nil(test, err, "Could not decode bytes.")
 
-	//post to server
 	response, err := http.NewRequest("PUT", scheduleApi, bytes.NewBuffer(b))
 	assert.Nil(test, err, "Error getting ready for post")
 	assert.NotNil(test, response, "Response is nil")

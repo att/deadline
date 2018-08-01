@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
+	
 	"egbitbucket.dtvops.net/deadline/common"
 	"egbitbucket.dtvops.net/deadline/schedule"
 	
@@ -43,7 +43,23 @@ func newDeadlineHandler() http.Handler {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/api/v1/event", eventHander)
 	handler.HandleFunc("/api/v1/schedule", scheduleHandler)
+	handler.HandleFunc("/api/v1/msg", notifyHandler)
 	return handler
+}
+
+func notifyHandler(w http.ResponseWriter, r *http.Request) {
+	msg := ""
+	if r.Body == nil {
+		log.Println("No request body sent")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	err := json.NewDecoder(r.Body).Decode(&msg)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println(msg)
+	w.WriteHeader(http.StatusOK)
 }
 
 func eventHander(w http.ResponseWriter, r *http.Request) {
@@ -63,8 +79,6 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	//log.Printf("Received the following information in the event handler: %v\n", event)
 	schedule.UpdateEvents(m, &event, fd)
 	w.WriteHeader(http.StatusOK)
 
@@ -125,7 +139,6 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			//until we hit eof
 
 			node1 := schedule.Node{
 				Event: &e,
@@ -134,7 +147,6 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 			sched.Start.Nodes = append(sched.Start.Nodes, node1)
 
 		}
-		//log.Println("Received the following information in schedule handler: \n", sched)
 		fmt.Println("Then we have the nodes that are connected to start")
 		fmt.Println(sched.Start.Nodes)
 		err = fd.Save(sched)
