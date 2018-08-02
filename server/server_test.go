@@ -8,12 +8,12 @@ import (
 	"os"
 	"strings"
 	"testing"
-
+	"egbitbucket.dtvops.net/deadline/config"
 	sched "egbitbucket.dtvops.net/deadline/schedule"
 	"github.com/stretchr/testify/assert"
 )
-
-var server = NewDeadlineServer()
+var c = config.Config{}
+var server = NewDeadlineServer(&c)
 var baseAddress = "http://localhost:8081"
 var eventApi = baseAddress + "/api/v1/event"
 var scheduleApi = baseAddress + "/api/v1/schedule"

@@ -8,25 +8,24 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	//"github.com/davecgh/go-spew/spew"
+	"egbitbucket.dtvops.net/deadline/config"
 	"egbitbucket.dtvops.net/deadline/common"
 	"egbitbucket.dtvops.net/deadline/schedule"
 	
 )
 
-var m = schedule.NewManager()
-var fd = schedule.NewScheduleDAO()
+var M *schedule.ScheduleManager
+var Fd schedule.ScheduleDAO
 
 type DeadlineServer struct {
 	server *http.Server
 }
 
-func NewDeadlineServer() *DeadlineServer {
+
+func NewDeadlineServer(c *config.Config) *DeadlineServer {
+	
 	return &DeadlineServer{
-		server: &http.Server{
-			Addr:    ":8081",
-			Handler: newDeadlineHandler(),
-		},
+		server: &c.Server,
 	}
 }
 
@@ -79,13 +78,13 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	schedule.UpdateEvents(m, &event, fd)
+	schedule.UpdateEvents(M, &event, Fd)
 	w.WriteHeader(http.StatusOK)
 
 }
 
 func scheduleHandler(w http.ResponseWriter, r *http.Request) {
-
+	
 	sched := schedule.Schedule{}
 
 	if r.Body == nil {
@@ -99,7 +98,7 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println("You didn't have a parameter")
 		}
 
-		bytes, err := fd.GetByName(string(keys[0]))
+		bytes, err := Fd.GetByName(string(keys[0]))
 		if err != nil {
 			log.Println(err)
 			return
@@ -147,11 +146,11 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 
 		}
 
-		err = fd.Save(sched)
+		err = Fd.Save(sched)
 		if err != nil {
 			log.Println(err)
 		}
-		schedule.UpdateSchedule(m, &sched)
+		schedule.UpdateSchedule(M, &sched)
 	}
 	w.WriteHeader(http.StatusOK)
 }

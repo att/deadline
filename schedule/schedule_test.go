@@ -3,13 +3,14 @@ package schedule
 import (
 	"log"
 	"testing"
-
+	"egbitbucket.dtvops.net/deadline/config"
 	"egbitbucket.dtvops.net/deadline/common"
 	"egbitbucket.dtvops.net/deadline/notifier"
 	"github.com/stretchr/testify/assert"
 )
 
 var m = NewManager()
+var c = config.Config{} 
 var e1 = common.Event{
 	Name:      "first event",
 	ReceiveBy: "18:00:00",
@@ -77,7 +78,7 @@ var s3 = Schedule{
 	},
 }
 
-var fd = NewScheduleDAO()
+var fd = NewScheduleDAO(&c)
 var s = Schedule{
 	Name:   "sample_schedule",
 	Timing: "daily",

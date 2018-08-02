@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 	"time"
-
+	"egbitbucket.dtvops.net/deadline/config"
 	"egbitbucket.dtvops.net/deadline/common"
 	"egbitbucket.dtvops.net/deadline/notifier"
 	"github.com/jasonlvhit/gocron"
@@ -28,16 +28,13 @@ func EvaluateTime(by string, at string,h notifier.NotifyHandler) bool {
 	}
 	var m = int(time.Now().Month())
 	byParse = byParse.AddDate(time.Now().Year(),m-1,time.Now().Day()-1)
-	//log.Println(byParse)
 	atParse, err := time.ParseInLocation("15:04:05", at, loc)
 	if err != nil {
-		//log.Println(time.Now())
 		if time.Now().After(byParse) {
 		
 			h.Send("The event is late. Never arrived.")
 			return false
 		}
-		//log.Println("Could not find receive at time, but the time has not come yet.")
 		return true
 
 	}	
@@ -46,7 +43,6 @@ func EvaluateTime(by string, at string,h notifier.NotifyHandler) bool {
 		h.Send("The event is here and it is not late!")
 		return true
 	}
-	//log.Println("The event was received, but it was late.")
 	return false
 }
 func EvaluateSuccess(e *common.Event) bool {
@@ -72,7 +68,7 @@ func (s Schedule) EventOccurred(e *common.Event) {
 
 }
 
-func EvaluateAll(m *scheduleManager) {
+func EvaluateAll(m *ScheduleManager) {
 	for a := range m.subscriptionTable {
 		s := m.subscriptionTable[a]
 		for b := 0; b < len(s); b++ {
@@ -107,19 +103,18 @@ func makeLive(e *common.Event) error {
 }
 func (start Node) findEvent(name string) *common.Event {
 	if start.Event != nil {
-		//log.Println("Checking " + name)
+		
 		if start.Event.Name == name {
 			return start.Event
 		}
 		
 	} else {
-		//log.Println("This is a start to a schedule.")
+		
 	}
 	
 	for j := 0; j < len(start.Nodes); j++ {
 		f := start.Nodes[j].findEvent(name)
-		if f != nil {
-			//log.Println("Found " + name + " in traversal for event evaluation.")
+		if f != nil {		
 			return f
 		}
 	}
@@ -127,10 +122,10 @@ func (start Node) findEvent(name string) *common.Event {
 	return nil
 }
 
-func NewManager() *scheduleManager {
+func NewManager() *ScheduleManager {
 
 	
-	return &scheduleManager{
+	return &ScheduleManager{
 		subscriptionTable: make(map[string][]*Schedule),
 	}
 }
@@ -168,11 +163,14 @@ func (fd fileDAO) Save(s Schedule) error {
 	return nil
 }
 
-func NewScheduleDAO() ScheduleDAO {
-	return &fileDAO{}
+func NewScheduleDAO(c *config.Config) ScheduleDAO {
+	if (c.DAO == "file"){
+	return &fileDAO{} 
+}
+	return &dbDAO{}
 }
 
-func UpdateEvents(m *scheduleManager, e *common.Event, fd ScheduleDAO) {
+func UpdateEvents(m *ScheduleManager, e *common.Event, fd ScheduleDAO) {
 	scheds := m.subscriptionTable[e.Name]
 	if scheds == nil {
 
@@ -184,7 +182,7 @@ func UpdateEvents(m *scheduleManager, e *common.Event, fd ScheduleDAO) {
 
 }
 
-func UpdateSchedule(m *scheduleManager, s *Schedule) {
+func UpdateSchedule(m *ScheduleManager, s *Schedule) {
 	
 	go gocron.Every(10).Seconds().Do(EvaluateAll, m)
 	go gocron.Start()
@@ -199,4 +197,13 @@ func UpdateSchedule(m *scheduleManager, s *Schedule) {
 		m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = scheds
 	}
 
+}
+
+func (db dbDAO) GetByName(name string) ([]byte, error) {
+	return []byte{},nil
+}
+
+func (db dbDAO) Save(s Schedule) error {
+	
+	return nil
 }

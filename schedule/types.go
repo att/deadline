@@ -32,7 +32,7 @@ type End struct {
 	Node
 }
 
-type scheduleManager struct {
+type ScheduleManager struct {
 	subscriptionTable map[string][]*Schedule
 }
 
@@ -49,4 +49,10 @@ type ScheduleDAO interface {
 	Save(s Schedule) error
 }
 
-type fileDAO struct{}
+type fileDAO struct{
+
+
+}
+
+type dbDAO struct {
+}

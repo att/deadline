@@ -5,13 +5,33 @@ import (
 "errors"
 )
 
-func validateConfig(c Config) error{
-    if c.Port == 0 {
-        return errors.New("Not a valid port")
-    }
+var DefaultConfig = Config{
+    FileConfig: DefaultFileConfig,
+}
 
-    if c.Path == "" {
-        return errors.New("No path was given")
+var DefaultFileConfig = FileConfig{
+    Port: "8080",
+    Path: "goodfile.toml",
+    Host: "localhost:",
+
+
+}
+
+
+var DefaultDBConfig = DBConfig{
+    Name: "General",
+    Host: "localhost",
+    Username: "user",
+    Password: "pw",
+
+}
+
+func validateConfig(c Config) error{
+    if (c.FileConfig.Port == "" && c.FileConfig.Path == "") && (c.DBConfig.Port == "" && c.DBConfig.Path == "") {
+        return errors.New("no valid configs, using a default config")
+    }
+    if c.DAO == "" {
+        return errors.New("DAO not specified")
     }
     return nil
     //db checks later 
@@ -26,11 +46,12 @@ func LoadConfig(file string) (*Config,error) {
 
     var conf Config
     if _, err := toml.DecodeFile(file, &conf); err != nil {
-        return nil, err
+        return &DefaultConfig, err
     }
     err = validateConfig(conf)
     if err != nil {
-        return nil, errors.New("the struct was empty")
+
+        return &DefaultConfig, errors.New("the struct was empty")
     }
 	return  &conf,nil
 }
