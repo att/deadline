@@ -11,8 +11,6 @@ type NotifyHandler interface {
 
 type TypeHandler struct {
 	Name string
-	Message string 
-
 }
 type Webhook struct {
 	TH 	 TypeHandler

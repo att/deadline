@@ -1,0 +1,12 @@
+
+port = 1234
+path = "somepath"
+[fileconfig]
+
+[dbconfig]
+    name = "some db"
+    username = "kp"
+    password = "xxxx"
+    host     = "localhost"
+
+

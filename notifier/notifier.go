@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 )
-//way of keeping track if there is a handler made for it
+
 
 func (w Webhook) Send(msg string) {
 	str := msg
@@ -26,13 +26,12 @@ func NewNotifyHandler(nh string,addr string) NotifyHandler{
 
 	switch nh {
 	case "WEBHOOK":	
-		//add to map 
-		//s := handlers[nh]
+
 		w := &Webhook{
 			Addr: addr,
 		}
-		//s = append(s, w)
-		//handlers[nh] = s
+		w.TH.Name = nh
+
 		return w
 	}
 	log.Println("Did not give a valid handler.")

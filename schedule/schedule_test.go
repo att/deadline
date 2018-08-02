@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"egbitbucket.dtvops.net/deadline/common"
-
+	"egbitbucket.dtvops.net/deadline/notifier"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,6 +43,11 @@ var s1 = Schedule{
 			},
 		},
 	},
+	Handler: Handler{
+			Name: "WEBHOOK",
+			Address: "http://localhost:8081/api/v1/msg",
+	},
+
 }
 
 var s2 = Schedule{
@@ -76,7 +81,7 @@ var fd = NewScheduleDAO()
 var s = Schedule{
 	Name:   "sample_schedule",
 	Timing: "daily",
-	Handler: common.Handler{
+	Handler: Handler{
 		Name:    "email handler",
 		Address: "kp755d@att.com",
 	},
@@ -124,8 +129,8 @@ var f3 = common.Event{
 }
 
 func TestEvaluation(test *testing.T) {
-	assert.False(test, EvaluateEvent(&f1), "It is coming back as true")
-	assert.True(test, EvaluateEvent(&f2), "Came back as false")
-	assert.False(test, EvaluateEvent(&f3), "Came back as true")
+	assert.False(test, EvaluateEvent(&f1,notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "It is coming back as true")
+	assert.True(test, EvaluateEvent(&f2,notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "Came back as false")
+	assert.False(test, EvaluateEvent(&f3,notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "Came back as true")
 
 }

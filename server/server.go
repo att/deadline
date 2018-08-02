@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	
+	//"github.com/davecgh/go-spew/spew"
 	"egbitbucket.dtvops.net/deadline/common"
 	"egbitbucket.dtvops.net/deadline/schedule"
 	
@@ -132,8 +132,7 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 		for dec.Decode(&f) == nil {
 			e := f
 			valid := validateEvent(e)
-			fmt.Println("Address of an event:")
-			fmt.Printf("%p\n", &e)
+
 			if err != nil || valid != nil {
 				log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
 				w.WriteHeader(http.StatusBadRequest)
@@ -147,8 +146,7 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 			sched.Start.Nodes = append(sched.Start.Nodes, node1)
 
 		}
-		fmt.Println("Then we have the nodes that are connected to start")
-		fmt.Println(sched.Start.Nodes)
+
 		err = fd.Save(sched)
 		if err != nil {
 			log.Println(err)

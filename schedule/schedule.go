@@ -139,9 +139,7 @@ func (fd fileDAO) GetByName(name string) ([]byte, error) {
 
 	file, err := os.Open(name + ".xml")
 	if err != nil {
-
 		return nil, err
-
 	}
 	defer file.Close()
 
@@ -187,24 +185,6 @@ func UpdateEvents(m *scheduleManager, e *common.Event, fd ScheduleDAO) {
 }
 
 func UpdateSchedule(m *scheduleManager, s *Schedule) {
-	
-	/*
-	switch s.Timing {
-	case "daily":
-		go gocron.Every(1).Day().Do(EvaluateAll, m)
-	case "hourly":
-		go gocron.Every(1).Hour().Do(EvaluateAll, m)
-	case "weekly":
-		go gocron.Every(1).Weeks().Do(EvaluateAll, m)
-	case "monthly":
-		go gocron.Every(30).Days().Do(EvaluateAll, m)
-	case "annually":
-		go gocron.Every(48).Weeks().Do(EvaluateAll, m)
-	default:
-		log.Println("Not a valid scheduling time.")
-	}
-	*/
-	
 	
 	go gocron.Every(10).Seconds().Do(EvaluateAll, m)
 	go gocron.Start()
