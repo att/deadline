@@ -1,29 +1,30 @@
 package config
 
-import "net/http"
+//import "net/http"
+
+import "egbitbucket.dtvops.net/deadline/common"
 
 type Config struct {
-	FileConfig 	FileConfig		`toml:"fileconfig"`
-	DBConfig	DBConfig		`toml:"dbconfig"`
-	DAO			string			`toml:"dao"`
-	Server 		http.Server		`toml:"server"`			//fix pls
-
+	FileConfig  FileConfig  `toml:"fileconfig"`
+	DBConfig    DBConfig    `toml:"dbconfig"`
+	DAO         string      `toml:"dao"`
+	Server      ServConfig  `toml:"serverconfig"`
+	EmailConfig EmailConfig `toml:"emailconfig"`
 }
 
 type FileConfig struct {
-	Port 		string			`toml:"port"`
-	Path		string 			`toml:"path"`
-	Host 		string 			`toml:"host"`
-	
+	Directory string `toml:"directory"`
 }
-
 type DBConfig struct {
-	Port 		string			`toml:"port"`
-	Name		string 			`toml:"name"`
-	Username	string 			`toml:"username"`
-	Password	string 			`toml:"password"`
-	Host 		string 			`toml:"host"`
-	Path		string 			`toml:"path"`
-
+	Connection_String string `toml:"connection_string"`
 }
 
+type ServConfig struct {
+	Port string `toml:"port"`
+}
+
+type EmailConfig struct {
+	From       string `toml:"from"`
+	Relay_Host string `toml:"relay_host"`
+	Relay_Port int    `toml:"relay_port"`
+}

@@ -2,16 +2,15 @@ package server
 
 import (
 	"bytes"
+	"egbitbucket.dtvops.net/deadline/common"
+	"egbitbucket.dtvops.net/deadline/config"
+	"egbitbucket.dtvops.net/deadline/schedule"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"egbitbucket.dtvops.net/deadline/config"
-	"egbitbucket.dtvops.net/deadline/common"
-	"egbitbucket.dtvops.net/deadline/schedule"
-	
 )
 
 var M *schedule.ScheduleManager
@@ -21,11 +20,13 @@ type DeadlineServer struct {
 	server *http.Server
 }
 
-
 func NewDeadlineServer(c *config.Config) *DeadlineServer {
-	
+
 	return &DeadlineServer{
-		server: &c.Server,
+		server: &http.Server{
+			Addr:    c.Server.Addr,
+			Handler: newDeadlineHandler(),
+		},
 	}
 }
 
@@ -38,7 +39,7 @@ func (dlsvr *DeadlineServer) Stop() error {
 }
 
 func newDeadlineHandler() http.Handler {
-	
+
 	handler := http.NewServeMux()
 	handler.HandleFunc("/api/v1/event", eventHander)
 	handler.HandleFunc("/api/v1/schedule", scheduleHandler)
@@ -84,7 +85,7 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 }
 
 func scheduleHandler(w http.ResponseWriter, r *http.Request) {
-	
+
 	sched := schedule.Schedule{}
 
 	if r.Body == nil {

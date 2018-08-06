@@ -1,57 +1,59 @@
 package config
+
 import (
-"github.com/BurntSushi/toml"
-"os"
-"errors"
+	"errors"
+	"github.com/BurntSushi/toml"
+	"os"
 )
 
 var DefaultConfig = Config{
-    FileConfig: DefaultFileConfig,
+	FileConfig: DefaultFileConfig,
 }
 
 var DefaultFileConfig = FileConfig{
-    Port: "8080",
-    Path: "goodfile.toml",
-    Host: "localhost:",
-
-
+	Port: "8080",
+	Path: "goodfile.toml",
+	Host: "localhost:",
 }
-
 
 var DefaultDBConfig = DBConfig{
-    Name: "General",
-    Host: "localhost",
-    Username: "user",
-    Password: "pw",
 
+	Username: "user",
+	Password: "pw",
 }
 
-func validateConfig(c Config) error{
-    if (c.FileConfig.Port == "" && c.FileConfig.Path == "") && (c.DBConfig.Port == "" && c.DBConfig.Path == "") {
-        return errors.New("no valid configs, using a default config")
-    }
-    if c.DAO == "" {
-        return errors.New("DAO not specified")
-    }
-    return nil
-    //db checks later 
+var DefaultEmailConfig = EmailConfig{}
+
+var DefaultServerConfig = ServerConfig{
+	Port: 8081,
 }
 
-func LoadConfig(file string) (*Config,error) {
+func validateConfig(c Config) error {
+	if (c.FileConfig.Port == "" && c.FileConfig.Path == "") && (c.DBConfig.Port == "" && c.DBConfig.Path == "") {
+		return errors.New("no valid configs, using a default config")
+	}
+	if c.DAO == "" {
+		return errors.New("DAO not specified")
+	}
+	return nil
+	//db checks later
+}
 
-    _, err := os.Stat(file)
-    if err != nil {
-        return nil, err
-    }
+func LoadConfig(file string) (*Config, error) {
 
-    var conf Config
-    if _, err := toml.DecodeFile(file, &conf); err != nil {
-        return &DefaultConfig, err
-    }
-    err = validateConfig(conf)
-    if err != nil {
+	_, err := os.Stat(file)
+	if err != nil {
+		return nil, err
+	}
 
-        return &DefaultConfig, errors.New("the struct was empty")
-    }
-	return  &conf,nil
+	var conf Config
+	if _, err := toml.DecodeFile(file, &conf); err != nil {
+		return &DefaultConfig, err
+	}
+	err = validateConfig(conf)
+	if err != nil {
+
+		return &DefaultConfig, errors.New("the struct was empty")
+	}
+	return &conf, nil
 }
