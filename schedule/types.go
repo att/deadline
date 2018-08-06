@@ -50,7 +50,7 @@ type ScheduleDAO interface {
 }
 
 type fileDAO struct{
-
+	Path string
 
 }
 

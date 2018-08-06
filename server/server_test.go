@@ -9,17 +9,26 @@ import (
 	"strings"
 	"testing"
 	"egbitbucket.dtvops.net/deadline/config"
-	sched "egbitbucket.dtvops.net/deadline/schedule"
+	"egbitbucket.dtvops.net/deadline/schedule"
 	"github.com/stretchr/testify/assert"
 )
-var c = config.Config{}
+var c = config.Config{
+	FileConfig: config.FileConfig{
+		Directory: "/home/kaelapolintz/go/src/egbitbucket.dtvops.net/deadline/server",
+	},
+	DAO: "file",
+	Server: config.ServConfig{
+		Port: "8081",
+	},
+
+}
 var server = NewDeadlineServer(&c)
 var baseAddress = "http://localhost:8081"
 var eventApi = baseAddress + "/api/v1/event"
 var scheduleApi = baseAddress + "/api/v1/schedule"
 var badfile = "testdata/badfile.xml"
 var goodfile = "testdata/sample_schedule.xml"
-var testschedule sched.Schedule
+var testschedule schedule.Schedule
 
 func TestMain(m *testing.M) {
 	go server.Start()
@@ -29,7 +38,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestGoodParams(test *testing.T) {
-
+	M = schedule.NewManager()
+	Fd = schedule.NewScheduleDAO(&c)
 	goodRequest := "{\"name\": \"kaela\", \"success\": true}"
 	response, err := http.Post(eventApi, "application/json", strings.NewReader(goodRequest))
 

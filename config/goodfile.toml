@@ -1,12 +1,8 @@
 
-port = 1234
-path = "somepath"
+dao = "file"
 [fileconfig]
-
+    directory = ".gfds"
 [dbconfig]
-    name = "some db"
-    username = "kp"
-    password = "xxxx"
-    host     = "localhost"
-
-
+    connection_string = "somethintoo"
+[serverconfig]
+    port = "8081"

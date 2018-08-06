@@ -2,7 +2,7 @@ package config
 
 //import "net/http"
 
-import "egbitbucket.dtvops.net/deadline/common"
+//import "egbitbucket.dtvops.net/deadline/common"
 
 type Config struct {
 	FileConfig  FileConfig  `toml:"fileconfig"`
@@ -16,15 +16,21 @@ type FileConfig struct {
 	Directory string `toml:"directory"`
 }
 type DBConfig struct {
-	Connection_String string `toml:"connection_string"`
+	ConnectionString string `toml:"connection_string"`
 }
 
 type ServConfig struct {
 	Port string `toml:"port"`
 }
 
+type HandlerConfig struct {
+	EmailConfig EmailConfig `toml:"emailconfig"`
+	//hipchat, slack, etc.
+	
+}
+
 type EmailConfig struct {
 	From       string `toml:"from"`
-	Relay_Host string `toml:"relay_host"`
-	Relay_Port int    `toml:"relay_port"`
+	RelayHost string `toml:"relay_host"`
+	RelayPort int    `toml:"relay_port"`
 }

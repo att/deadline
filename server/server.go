@@ -24,7 +24,7 @@ func NewDeadlineServer(c *config.Config) *DeadlineServer {
 
 	return &DeadlineServer{
 		server: &http.Server{
-			Addr:    c.Server.Addr,
+			Addr:    ":" + c.Server.Port,
 			Handler: newDeadlineHandler(),
 		},
 	}

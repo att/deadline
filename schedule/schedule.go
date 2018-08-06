@@ -132,7 +132,7 @@ func NewManager() *ScheduleManager {
 
 func (fd fileDAO) GetByName(name string) ([]byte, error) {
 
-	file, err := os.Open(name + ".xml")
+	file, err := os.Open(fd.Path + "/" + name + ".xml")
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (fd fileDAO) GetByName(name string) ([]byte, error) {
 func (fd fileDAO) Save(s Schedule) error {
 	
 	str := s.Name + ".xml"
-	f, err := os.Create(str)
+	f, err := os.Create(fd.Path + "/" +  str)
 	if err != nil {
 		return err
 	}
@@ -165,7 +165,9 @@ func (fd fileDAO) Save(s Schedule) error {
 
 func NewScheduleDAO(c *config.Config) ScheduleDAO {
 	if (c.DAO == "file"){
-	return &fileDAO{} 
+	return &fileDAO{
+		Path: c.FileConfig.Directory,
+	} 
 }
 	return &dbDAO{}
 }

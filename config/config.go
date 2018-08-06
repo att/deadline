@@ -4,40 +4,44 @@ import (
 	"errors"
 	"github.com/BurntSushi/toml"
 	"os"
+	"fmt"
 )
 
 var DefaultConfig = Config{
 	FileConfig: DefaultFileConfig,
+	Server:		DefaultServerConfig,
+	DAO:		"file",
 }
 
 var DefaultFileConfig = FileConfig{
-	Port: "8080",
-	Path: "goodfile.toml",
-	Host: "localhost:",
+	Directory: ".",
+	
 }
 
 var DefaultDBConfig = DBConfig{
 
-	Username: "user",
-	Password: "pw",
+	ConnectionString: "wearenotworkingwithdatabasesyet",
 }
 
-var DefaultEmailConfig = EmailConfig{}
+var DefaultEmailConfig = EmailConfig{
 
-var DefaultServerConfig = ServerConfig{
-	Port: 8081,
+}
+
+var DefaultServerConfig = ServConfig{
+	Port: "8081",
 }
 
 func validateConfig(c Config) error {
-	if (c.FileConfig.Port == "" && c.FileConfig.Path == "") && (c.DBConfig.Port == "" && c.DBConfig.Path == "") {
-		return errors.New("no valid configs, using a default config")
-	}
-	if c.DAO == "" {
-		return errors.New("DAO not specified")
+
+	if (c.DAO == "") || (c.DAO != "DB" && c.DAO != "file") {
+
+		return errors.New("DAO not specified, used default")
 	}
 	return nil
 	//db checks later
 }
+
+
 
 func LoadConfig(file string) (*Config, error) {
 
@@ -53,7 +57,23 @@ func LoadConfig(file string) (*Config, error) {
 	err = validateConfig(conf)
 	if err != nil {
 
-		return &DefaultConfig, errors.New("the struct was empty")
+		return &DefaultConfig, err
+	}
+	if (conf.DAO == "DB") && (conf.DBConfig.ConnectionString == "") {
+
+		fmt.Println("No DB specified.")
+		conf.DBConfig = DefaultDBConfig
+	}
+	if (conf.DAO == "file") {
+		if (conf.FileConfig.Directory == "") {
+		fmt.Println("No directory specified.")
+		conf.FileConfig = DefaultFileConfig
+		}
+		if _, err := os.Stat(conf.FileConfig.Directory); os.IsNotExist(err) {
+			fmt.Println("Given directory doesn't exist.")
+			conf.FileConfig = DefaultFileConfig
+		}
+
 	}
 	return &conf, nil
 }
