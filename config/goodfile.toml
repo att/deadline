@@ -1,7 +1,7 @@
 
 dao = "file"
 [fileconfig]
-    directory = ".gfds"
+    directory = "../server/"
 [dbconfig]
     connection_string = "somethintoo"
 [serverconfig]

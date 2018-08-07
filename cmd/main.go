@@ -5,9 +5,11 @@ import (
 	//"github.com/davecgh/go-spew/spew"
 	"fmt"
 	"os"
+	//"log"
 	"egbitbucket.dtvops.net/deadline/config"
 	"egbitbucket.dtvops.net/deadline/schedule"
 	"egbitbucket.dtvops.net/deadline/server"
+	//"database/sql"
 )
 var c *config.Config
 func main() {

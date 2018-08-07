@@ -11,9 +11,16 @@ import (
 	"egbitbucket.dtvops.net/deadline/common"
 	"egbitbucket.dtvops.net/deadline/notifier"
 	"github.com/jasonlvhit/gocron"
+	_ "github.com/go-sql-driver/mysql"
+    "github.com/jmoiron/sqlx"
 )
 
 
+var schema = `
+CREATE TABLE schedule (
+    name text,
+    timing text
+);`
 
 func EvaluateTime(by string, at string,h notifier.NotifyHandler) bool {
 
@@ -169,7 +176,9 @@ func NewScheduleDAO(c *config.Config) ScheduleDAO {
 		Path: c.FileConfig.Directory,
 	} 
 }
-	return &dbDAO{}
+	return &dbDAO{
+		ConnectionString: c.DBConfig.ConnectionString,
+	}
 }
 
 func UpdateEvents(m *ScheduleManager, e *common.Event, fd ScheduleDAO) {
@@ -202,10 +211,27 @@ func UpdateSchedule(m *ScheduleManager, s *Schedule) {
 }
 
 func (db dbDAO) GetByName(name string) ([]byte, error) {
+
+	
 	return []byte{},nil
 }
 
 func (db dbDAO) Save(s Schedule) error {
-	
+	dbb, err := sqlx.Open("mysql", db.ConnectionString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+/* 	dbb, err = sqlx.Connect("postgres", "user=webdb_user dbname=webdb sslmode=disable")
+    if err != nil {
+        log.Fatalln(err)
+    }
+ */
+		//dbb.MustExec(schema)
+
+		tx := dbb.MustBegin()
+		tx.NamedExec("INSERT INTO schedule (name, timing) VALUES (:name,:timing)", &s)
+		tx.Commit()
+
 	return nil
 }

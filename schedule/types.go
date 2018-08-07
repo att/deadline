@@ -2,15 +2,14 @@ package schedule
 
 import (
 	"encoding/xml"
-
 	"egbitbucket.dtvops.net/deadline/common"
 )
 
 type Schedule struct {
 	XMLName  xml.Name       `xml:"schedule"`
 	Handler  Handler 		`xml:"handler,omitempty"`
-	Timing   string         `xml:"timing,attr,omitempty"`
-	Name     string         `xml:"name,attr,omitempty"`
+	Timing   string         `xml:"timing,attr,omitempty" db:"timing"`	
+	Name     string         `xml:"name,attr,omitempty" db:"name"`
 	Schedule []byte         `xml:",innerxml"`
 	Start    Node           `xml:"-"`
 	End      Node           `xml:"-"`
@@ -55,4 +54,5 @@ type fileDAO struct{
 }
 
 type dbDAO struct {
+	ConnectionString string
 }
