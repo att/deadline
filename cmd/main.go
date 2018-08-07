@@ -1,41 +1,60 @@
 package main
 
 import (
-	"github.com/davecgh/go-spew/spew"
-	//"github.com/davecgh/go-spew/spew"
+	"flag"
+
 	"fmt"
 	"os"
-	//"log"
+
+	"github.com/davecgh/go-spew/spew"
+
 	"egbitbucket.dtvops.net/deadline/config"
 	"egbitbucket.dtvops.net/deadline/schedule"
 	"egbitbucket.dtvops.net/deadline/server"
-	//"database/sql"
 )
-var c *config.Config
+
+var (
+	configFile  *string = flag.String("config.file", "config.toml", "The Config file this binary is to run with")
+	showVersion *bool   = flag.Bool("version", false, "Show the version of this binary")
+
+	version string = NOT_DEFINED
+	commit  string = NOT_DEFINED
+	builtby string = NOT_DEFINED
+)
+
+const (
+	NOT_DEFINED string = "Not defined"
+)
+
 func main() {
-	c = &config.DefaultConfig
-	var arg string
-	
-	if len(os.Args) >= 2 {
-		arg = os.Args[1]
-		var err error
-		c, err = config.LoadConfig(arg)
-		if err != nil {
-			fmt.Println("We couldn't load the config!")
-		
-		} 
+	flag.Parse()
+
+	if *showVersion {
+		fmt.Println("Version:\t", version)
+		fmt.Println("Commit:\t\t", commit)
+		fmt.Println("Built by:\t", builtby)
+		os.Exit(0)
 	}
 
-	spew.Dump(c)
-	 //our location for the config 
+	cfg := &config.DefaultConfig
 
-	server.Fd = schedule.NewScheduleDAO(c)
+	cfg, err := config.LoadConfig(*configFile)
+	if err != nil {
+		fmt.Println("We couldn't load the config, using defaults. Error was", err)
+	} else {
+		cfg = &config.DefaultConfig
+	}
+
+	spew.Dump(cfg)
+	//our location for the config
+
+	server.Fd = schedule.NewScheduleDAO(cfg)
 
 	server.M = schedule.NewManager()
 
-	dlsvr := server.NewDeadlineServer(c)
+	dlsvr := server.NewDeadlineServer(cfg)
 
-	err := dlsvr.Start()
+	err = dlsvr.Start()
 	if err != nil {
 		fmt.Println("Server exited with error:", err)
 	}
