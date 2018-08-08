@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
-var testfolder = "testdata/"
 
 var good = Config{
 	DAO: "file",

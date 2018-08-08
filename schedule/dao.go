@@ -79,31 +79,44 @@ func (db dbDAO) GetByName(name string) ([]byte, error) {
 
 	sEvents := []ScheduledEvent{}
 	
-/* 	for rows.Next() {
-        err := rows.StructScan(&sEvent)
+ 	for rows2.Next() {
+        err := rows2.StructScan(&sEvent)
         if err != nil {
             log.Fatalln(err)
 		} 
 		sEvents = append(sEvents,sEvent)
-	} */
+	} 
 	
 	for rows.Next() {
         err := rows.StructScan(&s)
         if err != nil {
             log.Fatalln(err)
         } 
-    }
+	}
+	
+	eventsForSchedule := []Event{}
+	for _, e := range sEvents {
+		oneEvent := Event{
+			Name: e.ScheduleName,
+			ReceiveBy: e.EReceiveBy,
+		}
+		eventsForSchedule = append(eventsForSchedule,oneEvent)
+	}
 
-
-
-
+	//encode 
+	bytes, err := xml.Marshal(eventsForSchedule)
+	if err != nil {
+		return nil, err
+	}
+	s.Schedule = bytes
+	schedulebytes, err := xml.Marshal(s)
+	log.Println("Our schedule ==========================")
 	spew.Dump(s)
-	spew.Dump(sEvents)
-/*  SELECT   videos.*, AVG(ratings.rating)
-	FROM     videos JOIN ratings ON videos.id = ratings.video_id
-	GROUP BY videos.id */
 
-	return []byte{},nil
+	log.Println("Our scheduledEvents ===================")
+	spew.Dump(sEvents)
+
+	return schedulebytes,nil
 }
 
 func (db dbDAO) Save(s Schedule) error {
