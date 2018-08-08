@@ -10,7 +10,19 @@ import (
 )
 
 var m = NewManager()
-var c = config.Config{} 
+var c = config.Config{
+	DAO: "file",
+	FileConfig: config.FileConfig{
+		Directory: "../server/",
+	},
+	DBConfig: config.DBConfig{
+		ConnectionString: "somethintoo",
+	},
+	Server: config.ServConfig{
+		Port: "8081",
+	},
+
+} 
 var e1 = common.Event{
 	Name:      "first event",
 	ReceiveBy: "18:00:00",
