@@ -6,21 +6,34 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"bytes"
 	"time"
 	"egbitbucket.dtvops.net/deadline/config"
 	"egbitbucket.dtvops.net/deadline/common"
+	"egbitbucket.dtvops.net/deadline/database"
 	"egbitbucket.dtvops.net/deadline/notifier"
 	"github.com/jasonlvhit/gocron"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/davecgh/go-spew/spew"
     "github.com/jmoiron/sqlx"
 )
 
 
-var schema = `
-CREATE TABLE schedule (
+var schema1 = `
+CREATE TABLE schedules (
     name text,
     timing text
-);`
+)`
+var schema2 = `
+CREATE TABLE schedulevents (
+	schedulename text,
+	ename		text,
+	ereceiveby text
+)`
+
+
+
+
 
 func EvaluateTime(by string, at string,h notifier.NotifyHandler) bool {
 
@@ -211,8 +224,51 @@ func UpdateSchedule(m *ScheduleManager, s *Schedule) {
 }
 
 func (db dbDAO) GetByName(name string) ([]byte, error) {
+	var s Schedule
+	dbb, err := sqlx.Open("mysql", db.ConnectionString)
+	if err != nil {
+		log.Fatal(err)
+	}
+	sEvent := database.ScheduledEvent{}
+	sEvent.ScheduleName = name
+	s.Name = name
 
+	rows, err := dbb.NamedQuery(`SELECT * FROM schedules WHERE name=:name`, s)
+	if rows == nil {
+		log.Fatal(err)
+	}
+	rows2, err := dbb.NamedQuery(`SELECT * FROM schedulevents WHERE schedulename=:schedulename`, sEvent)
+	if rows2 == nil {
+		log.Fatal(err)
+	}
+
+	sEvents := []database.ScheduledEvent{}
 	
+
+
+	for rows.Next() {
+        err := rows.StructScan(&sEvent)
+        if err != nil {
+            log.Fatalln(err)
+		} 
+		sEvents = append(sEvents,sEvent)
+    }
+	for rows.Next() {
+        err := rows.StructScan(&s)
+        if err != nil {
+            log.Fatalln(err)
+        } 
+    }
+
+
+
+
+	spew.Dump(s)
+	spew.Dump(sEvents)
+/*  SELECT   videos.*, AVG(ratings.rating)
+	FROM     videos JOIN ratings ON videos.id = ratings.video_id
+	GROUP BY videos.id */
+
 	return []byte{},nil
 }
 
@@ -221,16 +277,32 @@ func (db dbDAO) Save(s Schedule) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-/* 	dbb, err = sqlx.Connect("postgres", "user=webdb_user dbname=webdb sslmode=disable")
-    if err != nil {
-        log.Fatalln(err)
-    }
- */
-		//dbb.MustExec(schema)
-
+/* 		dbb.MustExec(schema1)
+		dbb.MustExec(schema2) */
 		tx := dbb.MustBegin()
-		tx.NamedExec("INSERT INTO schedule (name, timing) VALUES (:name,:timing)", &s)
+		tx.NamedExec("INSERT INTO schedules (name, timing) VALUES (:name,:timing)", &s)
+		evnts := []common.Event{}
+		buf := bytes.NewBuffer(s.Schedule)
+		dec := xml.NewDecoder(buf)
+		var o = common.Event{}
+		for dec.Decode(&o) == nil {
+			evnts = append(evnts,o)
+		}
+		
+		fmt.Println("Our scheduled events:")
+		spew.Dump(evnts)
+
+
+		for _, e := range evnts {
+		tx.NamedExec("INSERT INTO schedulevents (schedulename, ename, ereceiveby) VALUES (:schedulename, :ename,:ereceiveby)", 
+		&database.ScheduledEvent{
+			ScheduleName: s.Name,
+			EName: e.Name,
+			EReceiveBy: e.ReceiveBy,
+			//details
+			
+		})
+		}
 		tx.Commit()
 
 	return nil
