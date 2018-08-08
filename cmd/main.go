@@ -36,17 +36,14 @@ func main() {
 		os.Exit(0)
 	}
 
-	cfg := &config.DefaultConfig
-
 	cfg, err := config.LoadConfig(*configFile)
+
 	if err != nil {
 		fmt.Println("We couldn't load the config, using defaults. Error was", err)
-	} else {
 		cfg = &config.DefaultConfig
 	}
 
 	spew.Dump(cfg)
-	//our location for the config
 
 	server.Fd = schedule.NewScheduleDAO(cfg)
 

@@ -6,4 +6,7 @@ DETAILS="{}"
 
 BODY="{\"name\": \"${NAME}\", \"success\":${SUCCESS}, \"details\": \"${DETAILS}\"}"
 
-curl -v -X POST http://localhost:8081/api/v1/event -d '{"name": "jeff-test","success":true}'
+SERVER=localhost
+PORT=8081
+
+curl -v -X POST http://${HOST}:${PORT}/api/v1/event -d ${BODY}
