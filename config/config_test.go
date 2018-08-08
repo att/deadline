@@ -1,9 +1,10 @@
 package config
 
 import (
-//"github.com/davecgh/go-spew/spew"
-"github.com/stretchr/testify/assert"
-"testing" 
+	//"github.com/davecgh/go-spew/spew"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var good = Config{
@@ -17,21 +18,19 @@ var good = Config{
 	Server: ServConfig{
 		Port: "8081",
 	},
-
-
 }
 
 func TestGoodConfig(test *testing.T) {
-	g, err := LoadConfig("goodfile.toml")
+	g, err := LoadConfig("testdata/goodfile.toml")
 	assert.Nil(test, err, "Could not load a good file")
-	assert.Equal(test,g,&good)
+	assert.Equal(test, g, &good)
 	//should print goodfile struct
 
 }
 
 func TestBadConfig(test *testing.T) {
-	g, err := LoadConfig("badfile.toml")
+	g, err := LoadConfig("testdata/badfile.toml")
 	assert.NotNil(test, err, "Loaded a bad file")
-	assert.Equal(test,&DefaultConfig,g) 
+	assert.Equal(test, &DefaultConfig, g)
 	//should print default
 }
