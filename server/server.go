@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 )
@@ -55,16 +54,14 @@ func notifyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err := json.NewDecoder(r.Body).Decode(&msg)
-	if err != nil {
-		log.Println(err)
-	}
+	common.CheckError(err)
 	log.Println(msg)
 	w.WriteHeader(http.StatusOK)
 }
 
 func eventHander(w http.ResponseWriter, r *http.Request) {
 
-	event := common.Event{}
+	event := schedule.Event{}
 	if r.Body == nil {
 		log.Println("No request body sent")
 		w.WriteHeader(http.StatusBadRequest)
@@ -73,36 +70,86 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&event)
 
-	valid := validateEvent(event)
+	valid := event.ValidateEvent()
 	if err != nil || valid != nil {
 		log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	schedule.UpdateEvents(M, &event, Fd)
+	M.UpdateEvents(&event)
 	w.WriteHeader(http.StatusOK)
 
 }
 
 func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 
+	err := doMethod(r.Method,w,r)
+	if  err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusBadRequest)
+
+	} else {
+	w.WriteHeader(http.StatusOK) 
+	}
+}
+
+
+func doMethod(method string, w http.ResponseWriter, r *http.Request) error {
+
 	sched := schedule.Schedule{}
 
 	if r.Body == nil {
-		log.Println("No request body sent")
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		
+		return errors.New("No input")
 	}
-	if r.Method == "GET" {
+	switch method {
+		case "GET":
+			return getSchedule(r,w)
+		case "PUT":
+			return putSchedule(w,r,sched)
+	}
+	return nil
+}
+	
+
+
+func putSchedule(w http.ResponseWriter, r *http.Request, sched schedule.Schedule)  error {
+			err := xml.NewDecoder(r.Body).Decode(&sched)
+				if err != nil {
+					return err
+				}
+			var f schedule.Event
+
+			buf := bytes.NewBuffer(sched.Schedule)
+			dec := xml.NewDecoder(buf)
+			for dec.Decode(&f) == nil {
+				e := f
+				valid := e.ValidateEvent()
+					if valid != nil {
+						return valid
+					}
+				node1 := schedule.Node{
+					Event: &e,
+					Nodes: []schedule.Node{},
+				}
+				sched.Start.Nodes = append(sched.Start.Nodes, node1)
+			}
+
+			err = Fd.Save(sched)
+			common.CheckError(err)
+			M.UpdateSchedule(&sched)
+			return nil
+}
+
+func getSchedule(r *http.Request,w http.ResponseWriter) error {
 		keys, ok := r.URL.Query()["name"]
 		if !ok || len(keys[0]) < 1 {
-			log.Println("You didn't have a parameter")
+			return errors.New("You didn't have a parameter")
 		}
 
 		bytes, err := Fd.GetByName(string(keys[0]))
 		if err != nil {
-			log.Println(err)
-			return
+			return err
 		}
 
 		w.Header().Set("Content-Type", "application/xml")
@@ -110,56 +157,11 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 		_, err = w.Write(bytes)
 
 		if err != nil {
-			fmt.Println("Could not send bytes")
-			return
-
+			return err
 		}
 
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-	if r.Method == "PUT" {
-		err := xml.NewDecoder(r.Body).Decode(&sched)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		var f common.Event
-
-		buf := bytes.NewBuffer(sched.Schedule)
-		dec := xml.NewDecoder(buf)
-
-		for dec.Decode(&f) == nil {
-			e := f
-			valid := validateEvent(e)
-
-			if err != nil || valid != nil {
-				log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-			node1 := schedule.Node{
-				Event: &e,
-				Nodes: []schedule.Node{},
-			}
-			sched.Start.Nodes = append(sched.Start.Nodes, node1)
-
-		}
-
-		err = Fd.Save(sched)
-		if err != nil {
-			log.Println(err)
-		}
-		schedule.UpdateSchedule(M, &sched)
-	}
-	w.WriteHeader(http.StatusOK)
-}
-
-func validateEvent(e common.Event) error {
-	if e.Name == "" {
-		return errors.New("Name cannot be empty.")
-	} else {
 		return nil
+		
 	}
-}
+
+

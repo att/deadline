@@ -4,7 +4,6 @@ import (
 	"log"
 	"testing"
 	"egbitbucket.dtvops.net/deadline/config"
-	"egbitbucket.dtvops.net/deadline/common"
 	"egbitbucket.dtvops.net/deadline/notifier"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,20 +22,20 @@ var c = config.Config{
 	},
 
 } 
-var e1 = common.Event{
+var e1 = Event{
 	Name:      "first event",
 	ReceiveBy: "18:00:00",
 	ReceiveAt: "19:00:00",
 	Success:   true,
 }
-var e2 = common.Event{
+var e2 = Event{
 	Name:      "second event",
 	ReceiveBy: "18:00:00",
 	ReceiveAt: "17:00:00",
 	Success:   true,
 }
 
-var e3 = common.Event{
+var e3 = Event{
 	Name:      "third event",
 	ReceiveBy: "18:00:00",
 	ReceiveAt: "18:00:00",
@@ -113,28 +112,28 @@ func TestGetFile(test *testing.T) {
 
 func TestManager(test *testing.T) {
 
-	UpdateSchedule(m, &s1)
-	UpdateSchedule(m, &s2)
-	UpdateSchedule(m, &s3)
+	m.UpdateSchedule(&s1)
+	m.UpdateSchedule(&s2)
+	m.UpdateSchedule(&s3)
 	log.Println("Current map: ", m.subscriptionTable)
-	UpdateEvents(m, &e1, fd)
-	UpdateEvents(m, &e2, fd)
+	m.UpdateEvents(&e1)
+	m.UpdateEvents(&e2)
 }
 
-var f1 = common.Event{
+var f1 = Event{
 	Name:      "first event",
 	ReceiveBy: "18:00:00",
 	ReceiveAt: "19:00:00",
 	Success:   true,
 }
-var f2 = common.Event{
+var f2 = Event{
 	Name:      "second event",
 	ReceiveBy: "18:00:00",
 	ReceiveAt: "17:00:00",
 	Success:   true,
 }
 
-var f3 = common.Event{
+var f3 = Event{
 	Name:      "third event",
 	ReceiveBy: "18:00:00",
 	ReceiveAt: "18:00:00",

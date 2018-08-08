@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"log"
 	"net/http"
+	"egbitbucket.dtvops.net/deadline/common"
 )
 
 
@@ -14,10 +15,7 @@ func (w Webhook) Send(msg string) {
 		log.Println("Could not encode.")
 	}
 	_ , err = http.Post(w.Addr,"application/json", bytes.NewBuffer(jv))
-
-	if err != nil {
-		log.Println(err)
-	}
+	common.CheckError(err)
 
 
 }

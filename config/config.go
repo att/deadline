@@ -4,35 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
-
 	"github.com/BurntSushi/toml"
 )
-
-var DefaultConfig = Config{
-	FileConfig: DefaultFileConfig,
-	Server:     DefaultServerConfig,
-	DAO:        "file",
-}
-
-var DefaultFileConfig = FileConfig{
-	Directory: ".",
-}
-
-var DefaultDBConfig = DBConfig{
-
-	ConnectionString: "wearenotworkingwithdatabasesyet",
-}
-
-var DefaultEmailConfig = EmailConfig{}
-
-var DefaultServerConfig = ServConfig{
-	Port: "8081",
-}
 
 func validateConfig(c Config) error {
 
 	if (c.DAO == "") || (c.DAO != "DB" && c.DAO != "file") {
-
 		return errors.New("DAO not specified, used default")
 	}
 	return nil
@@ -50,27 +27,31 @@ func LoadConfig(file string) (*Config, error) {
 	if _, err := toml.DecodeFile(file, &conf); err != nil {
 		return &DefaultConfig, err
 	}
-
 	err = validateConfig(conf)
-	if err != nil {
-		return &DefaultConfig, err
+	if  err != nil {
+		return &DefaultConfig,err 
 	}
-
-	if (conf.DAO == "DB") && (conf.DBConfig.ConnectionString == "") {
-		fmt.Println("No DB specified.")
-		conf.DBConfig = DefaultDBConfig
-	}
-
-	if conf.DAO == "file" {
-		if conf.FileConfig.Directory == "" {
-			fmt.Println("No directory specified.")
-			conf.FileConfig = DefaultFileConfig
-		}
-		if _, err := os.Stat(conf.FileConfig.Directory); os.IsNotExist(err) {
-			fmt.Println("Given directory doesn't exist.")
-			conf.FileConfig = DefaultFileConfig
-		}
-	}
-
+	checkMissingConfigs(&conf)
 	return &conf, nil
 }
+
+func checkMissingConfigs(c *Config) {
+	switch c.DAO {
+	case "DB":
+		if c.DBConfig.ConnectionString == "" {
+			fmt.Println("No DB specified.")
+			c.DBConfig = DefaultDBConfig
+		}
+		break
+	case "file":
+		if c.FileConfig.Directory == "" {
+			fmt.Println("No directory specified.")
+			c.FileConfig = DefaultFileConfig
+		}
+		if _, err := os.Stat(c.FileConfig.Directory); os.IsNotExist(err) {
+			fmt.Println("Given directory doesn't exist.")
+			c.FileConfig = DefaultFileConfig
+		}
+	}
+}
+
