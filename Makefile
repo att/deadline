@@ -1,5 +1,6 @@
 
 DESTDIR ?= ~
+LD_FLAGS="-X main.commit=$(shell git rev-parse HEAD) -X main.version=$(shell cat VERSION) -X main.builtby=$(shell whoami)@$(shell hostname)"
 
 server_file	        ?=	"cmd/main.go"
 server_output		?=	"deadline-server"
@@ -19,7 +20,7 @@ verify:
 
 build: test
 	@echo "Building..."
-	@go build -o ${server_output} ${server_file}
+	@go build -ldflags $(LD_FLAGS) -o ${server_output} ${server_file}
 
 test: verify
 	@echo "Testing..."
