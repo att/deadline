@@ -1,8 +1,7 @@
 package schedule
 import (
 "time"
-"log"
-"egbitbucket.dtvops.net/deadline/notifier"
+"egbitbucket.dtvops.net/deadline/common"
 )
 
 
@@ -18,7 +17,7 @@ func (m *ScheduleManager) UpdateEvents(e *Event) {
 	scheds := m.subscriptionTable[e.Name]
 	if scheds == nil {
 
-		log.Println("No subscribers.")
+		common.Info.Println("No subscribers.")
 	}
 	for _, sched := range scheds {
 		sched.EventOccurred(e)
@@ -47,23 +46,20 @@ func (m *ScheduleManager) EvaluateAll(scheds []Schedule) {
 
 			t, err := time.ParseDuration(scheds[b].Timing) 
 			if err != nil {
-				log.Println(err)
+				common.Info.Println(err)
 				return
 			}
 			if time.Now().Sub(m.EvaluationTime) > t  {
-				var h = notifier.NewNotifyHandler(scheds[b].Handler.Name,scheds[b].Handler.Address)
+/* 				var h = notifier.NewNotifyHandler(scheds[b].Handler.Name,scheds[b].Handler.Address)
 				
 				//go through every event
 				f := scheds[b].Start.findEvent(a)
 				if f == nil {
-						log.Println("Couldn't find the event in the schedule")
 						return
 				} else {
-						log.Println("----------------------------------------------")
-						log.Println(f.Name)
 						f.EvaluateEvent(h)	
 				} 
-			}
+ */			}
 		}
 	m.EvaluationTime = time.Now()
 

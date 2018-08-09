@@ -3,7 +3,7 @@ import (
 	"time"
 	"errors"
 	"egbitbucket.dtvops.net/deadline/notifier"
-
+	"egbitbucket.dtvops.net/deadline/common"
 )
 
 func (e Event) ValidateEvent() error {
@@ -23,7 +23,9 @@ func (e *Event) makeLive() {
 func (e *Event) EvaluateTime(h notifier.NotifyHandler) bool {
 
 	byTime := ConvertTime(e.ReceiveBy)
-	atTime := ConvertTime(e.ReceiveBy)
+	atTime := ConvertTime(e.ReceiveAt)
+	common.Debug.Println(byTime)
+	common.Debug.Println(atTime)
 	if atTime.IsZero() {
 		if time.Now().After(byTime) {
 		
