@@ -2,6 +2,7 @@ package schedule
 import (
 
 	"egbitbucket.dtvops.net/deadline/config"
+	"egbitbucket.dtvops.net/deadline/common"
 	"os"
 	"io/ioutil"
 	"encoding/xml"
@@ -60,13 +61,12 @@ func (fd fileDAO) Save(s Schedule) error {
 
 func (db dbDAO) GetByName(name string) ([]byte, error) {
 	var s Schedule
-	dbb, err := sqlx.Open("mysql", db.ConnectionString)
-	if err != nil {
-		log.Fatal(err)
-	}
 	sEvent := ScheduledEvent{}
 	sEvent.ScheduleName = name
 	s.Name = name
+	dbb, err := sqlx.Open("mysql", db.ConnectionString)
+	common.CheckError(err)
+
 
 	rows, err := dbb.NamedQuery(`SELECT * FROM schedules WHERE name=:name`, s)
 	if rows == nil {
@@ -81,17 +81,13 @@ func (db dbDAO) GetByName(name string) ([]byte, error) {
 	
  	for rows2.Next() {
         err := rows2.StructScan(&sEvent)
-        if err != nil {
-            log.Fatalln(err)
-		} 
+        common.CheckError(err)
 		sEvents = append(sEvents,sEvent)
 	} 
 	
 	for rows.Next() {
         err := rows.StructScan(&s)
-        if err != nil {
-            log.Fatalln(err)
-        } 
+        common.CheckError(err)
 	}
 	
 	eventsForSchedule := []Event{}

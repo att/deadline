@@ -23,53 +23,29 @@ CREATE TABLE schedulevents (
 	ereceiveby text
 )`
 
-func ConvertTimes(by string,at string) (time.Time,time.Time){
+func ConvertTime(timing string) (time.Time){
 	var m = int(time.Now().Month())
 	loc, err := time.LoadLocation("Local")
 	common.CheckError(err)
-	byParse, err := time.ParseInLocation("15:04:05", by, loc)
-	common.CheckError(err)
-
-	byParse = byParse.AddDate(time.Now().Year(),m-1,time.Now().Day()-1)
-
-	atParse, err := time.ParseInLocation("15:04:05", at, loc)
+	parsedTime, err := time.ParseInLocation("15:04:05", timing, loc)
 	if err != nil {
-		atParse = time.Time{}
+		parsedTime = time.Time{}
 	}
-	if !atParse.IsZero() {
-	atParse = atParse.AddDate(time.Now().Year(),m-1,time.Now().Day()-1)
+	if !parsedTime.IsZero() {
+		parsedTime = parsedTime.AddDate(time.Now().Year(),m-1,time.Now().Day()-1)
 	}
-	return byParse,atParse
+
+
+	return parsedTime
+
 }
 
 
-
-func EvaluateTime(by string, at string,h notifier.NotifyHandler) bool {
-
-	byTime,atTime := ConvertTimes(by,at)
-	if atTime.IsZero() {
-		if time.Now().After(byTime) {
-		
-			h.Send("The event is late. Never arrived.")
-			return false
-		}
-		return true
-
-	}
-	
-	if atTime.Before(byTime){
-		h.Send("The event is here and it is not late!")
-		return true
-	}
-	return false
-}
-func EvaluateSuccess(e *Event) bool {
+func (e *Event) EvaluateSuccess() bool {
 	return e.Success
 }
-func EvaluateEvent(e *Event,h notifier.NotifyHandler) bool {
-
-	return EvaluateTime(e.ReceiveBy, e.ReceiveAt,h) && EvaluateSuccess(e)
-
+func (e *Event) EvaluateEvent(h notifier.NotifyHandler) bool {
+	return e.EvaluateTime(h) && e.EvaluateSuccess()
 }
 
 func (s Schedule) EventOccurred(e *Event) {
