@@ -2,9 +2,9 @@ package config
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"github.com/BurntSushi/toml"
+	"egbitbucket.dtvops.net/deadline/common"
 )
 
 func validateConfig(c Config) error {
@@ -13,7 +13,6 @@ func validateConfig(c Config) error {
 		return errors.New("DAO not specified, used default")
 	}
 	return nil
-	//db checks later
 }
 
 func LoadConfig(file string) (*Config, error) {
@@ -39,17 +38,17 @@ func checkMissingConfigs(c *Config) {
 	switch c.DAO {
 	case "DB":
 		if c.DBConfig.ConnectionString == "" {
-			fmt.Println("No DB specified.")
+			common.Info.Println("No DB specified.")
 			c.DBConfig = DefaultDBConfig
 		}
 		break
 	case "file":
 		if c.FileConfig.Directory == "" {
-			fmt.Println("No directory specified.")
+			common.Info.Println("No directory specified.")
 			c.FileConfig = DefaultFileConfig
 		}
 		if _, err := os.Stat(c.FileConfig.Directory); os.IsNotExist(err) {
-			fmt.Println("Given directory doesn't exist.")
+			common.Info.Println("Given directory doesn't exist.")
 			c.FileConfig = DefaultFileConfig
 		}
 	}

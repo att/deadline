@@ -141,8 +141,8 @@ var f3 = Event{
 }
 
 func TestEvaluation(test *testing.T) {
-	assert.False(test, EvaluateEvent(&f1,notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "It is coming back as true")
-	assert.True(test, EvaluateEvent(&f2,notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "Came back as false")
-	assert.False(test, EvaluateEvent(&f3,notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "Came back as true")
+	assert.False(test, f1.EvaluateEvent(notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "It is coming back as true")
+	assert.True(test, f2.EvaluateEvent(notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "Came back as false")
+	assert.False(test, f3.EvaluateEvent(notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "Came back as true")
 
 }

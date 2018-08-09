@@ -2,6 +2,7 @@ package schedule
 import (
 
 	"egbitbucket.dtvops.net/deadline/config"
+	"egbitbucket.dtvops.net/deadline/common"
 	"os"
 	"io/ioutil"
 	"encoding/xml"
@@ -10,7 +11,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"log"
 	"bytes"
-	"fmt"
 )
 
 func NewScheduleDAO(c *config.Config) ScheduleDAO {
@@ -60,38 +60,32 @@ func (fd fileDAO) Save(s Schedule) error {
 
 func (db dbDAO) GetByName(name string) ([]byte, error) {
 	var s Schedule
-	dbb, err := sqlx.Open("mysql", db.ConnectionString)
-	if err != nil {
-		log.Fatal(err)
-	}
 	sEvent := ScheduledEvent{}
 	sEvent.ScheduleName = name
 	s.Name = name
+	dbb, err := sqlx.Open("mysql", db.ConnectionString)
+	common.CheckError(err)
 
 	rows, err := dbb.NamedQuery(`SELECT * FROM schedules WHERE name=:name`, s)
 	if rows == nil {
-		log.Fatal(err)
+		common.CheckError(err)
 	}
 	rows2, err := dbb.NamedQuery(`SELECT * FROM schedulevents WHERE schedulename=:schedulename`, sEvent)
 	if rows2 == nil {
-		log.Fatal(err)
+		common.CheckError(err)
 	}
 
 	sEvents := []ScheduledEvent{}
 	
  	for rows2.Next() {
         err := rows2.StructScan(&sEvent)
-        if err != nil {
-            log.Fatalln(err)
-		} 
+        common.CheckError(err)
 		sEvents = append(sEvents,sEvent)
 	} 
 	
 	for rows.Next() {
         err := rows.StructScan(&s)
-        if err != nil {
-            log.Fatalln(err)
-        } 
+        common.CheckError(err)
 	}
 	
 	eventsForSchedule := []Event{}
@@ -110,10 +104,10 @@ func (db dbDAO) GetByName(name string) ([]byte, error) {
 	}
 	s.Schedule = bytes
 	schedulebytes, err := xml.Marshal(s)
-	log.Println("Our schedule ==========================")
+	common.Debug.Println("Our schedule ==========================")
 	spew.Dump(s)
 
-	log.Println("Our scheduledEvents ===================")
+	common.Debug.Println("Our scheduledEvents ===================")
 	spew.Dump(sEvents)
 
 	return schedulebytes,nil
@@ -136,7 +130,7 @@ func (db dbDAO) Save(s Schedule) error {
 			evnts = append(evnts,o)
 		}
 		
-		fmt.Println("Our scheduled events:")
+		common.Debug.Println("Our scheduled events:")
 		spew.Dump(evnts)
 
 
@@ -146,8 +140,6 @@ func (db dbDAO) Save(s Schedule) error {
 			ScheduleName: s.Name,
 			EName: e.Name,
 			EReceiveBy: e.ReceiveBy,
-			//details
-			
 		})
 		}
 		tx.Commit()

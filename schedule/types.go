@@ -2,7 +2,7 @@ package schedule
 
 import (
 	"encoding/xml"
-
+	"time"
 )
 
 type Schedule struct {
@@ -58,6 +58,7 @@ type End struct {
 
 type ScheduleManager struct {
 	subscriptionTable map[string][]*Schedule
+	EvaluationTime	time.Time
 }
 
 type Error struct {

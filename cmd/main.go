@@ -7,10 +7,11 @@ import (
 	"os"
 
 	"github.com/davecgh/go-spew/spew"
-
+	"github.com/jasonlvhit/gocron"
 	"egbitbucket.dtvops.net/deadline/config"
 	"egbitbucket.dtvops.net/deadline/schedule"
 	"egbitbucket.dtvops.net/deadline/server"
+	"egbitbucket.dtvops.net/deadline/common"
 )
 
 var (
@@ -27,6 +28,7 @@ const (
 )
 
 func main() {
+	common.Init(os.Stdout, os.Stdout)
 	flag.Parse()
 
 	if *showVersion {
@@ -39,20 +41,23 @@ func main() {
 	cfg, err := config.LoadConfig(*configFile)
 
 	if err != nil {
-		fmt.Println("We couldn't load the config, using defaults. Error was", err)
+		common.Info.Println("We couldn't load the config, using defaults. Error was", err)
 		cfg = &config.DefaultConfig
 	}
-
+	common.Debug.Println("Our config file:")
 	spew.Dump(cfg)
 
 	server.Fd = schedule.NewScheduleDAO(cfg)
 
 	server.M = schedule.NewManager()
+	go gocron.Every(10).Seconds().Do(server.M.EvaluateAll)
+	go gocron.Start()
+
 
 	dlsvr := server.NewDeadlineServer(cfg)
 
 	err = dlsvr.Start()
 	if err != nil {
-		fmt.Println("Server exited with error:", err)
+		common.Info.Println("Server exited with error:", err)
 	}
 }

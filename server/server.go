@@ -1,6 +1,7 @@
 package server
 
 import (
+	"os"
 	"bytes"
 	"egbitbucket.dtvops.net/deadline/common"
 	"egbitbucket.dtvops.net/deadline/config"
@@ -8,7 +9,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
-	"log"
 	"net/http"
 )
 
@@ -20,7 +20,7 @@ type DeadlineServer struct {
 }
 
 func NewDeadlineServer(c *config.Config) *DeadlineServer {
-
+	common.Init(os.Stdout,os.Stdout)
 	return &DeadlineServer{
 		server: &http.Server{
 			Addr:    ":" + c.Server.Port,
@@ -49,13 +49,13 @@ func newDeadlineHandler() http.Handler {
 func notifyHandler(w http.ResponseWriter, r *http.Request) {
 	msg := ""
 	if r.Body == nil {
-		log.Println("No request body sent")
+		common.Info.Println("No request body sent")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	err := json.NewDecoder(r.Body).Decode(&msg)
 	common.CheckError(err)
-	log.Println(msg)
+	common.Info.Println(msg)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -63,7 +63,7 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 
 	event := schedule.Event{}
 	if r.Body == nil {
-		log.Println("No request body sent")
+		common.Info.Println("No request body sent")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -72,7 +72,7 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 
 	valid := event.ValidateEvent()
 	if err != nil || valid != nil {
-		log.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
+		common.Info.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -85,7 +85,7 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := doMethod(r.Method,w,r)
 	if  err != nil {
-		log.Println(err)
+		common.Info.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 
 	} else {

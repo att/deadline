@@ -2,7 +2,6 @@ package notifier
 import (
 	"encoding/json"
 	"bytes"
-	"log"
 	"net/http"
 	"egbitbucket.dtvops.net/deadline/common"
 )
@@ -12,7 +11,7 @@ func (w Webhook) Send(msg string) {
 	str := msg
 	jv, err := json.Marshal(str)
 	if err != nil {
-		log.Println("Could not encode.")
+		common.CheckError(err)
 	}
 	_ , err = http.Post(w.Addr,"application/json", bytes.NewBuffer(jv))
 	common.CheckError(err)
@@ -32,7 +31,7 @@ func NewNotifyHandler(nh string,addr string) NotifyHandler{
 
 		return w
 	}
-	log.Println("Did not give a valid handler.")
+	common.Info.Println("Did not give a valid handler.")
 	return &Webhook{}
 }
 
