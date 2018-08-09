@@ -3,49 +3,97 @@ package schedule
 import (
 	"log"
 	"testing"
-
-	"egbitbucket.dtvops.net/deadline/common"
-
+	"egbitbucket.dtvops.net/deadline/config"
+	"egbitbucket.dtvops.net/deadline/notifier"
 	"github.com/stretchr/testify/assert"
 )
 
-//"egbitbucket.dtvops.net/deadline/common"
-//create a new database
-//assert
-
-//var dbdriver string
 var m = NewManager()
-var e1 = common.Event{
-	Name: "first event",
+var c = config.Config{
+	DAO: "file",
+	FileConfig: config.FileConfig{
+		Directory: "../server/",
+	},
+	DBConfig: config.DBConfig{
+		ConnectionString: "somethintoo",
+	},
+	Server: config.ServConfig{
+		Port: "8081",
+	},
+
+} 
+var e1 = Event{
+	Name:      "first event",
+	ReceiveBy: "18:00:00",
+	ReceiveAt: "19:00:00",
+	Success:   true,
 }
-var e2 = common.Event{
-	Name: "second event",
+var e2 = Event{
+	Name:      "second event",
+	ReceiveBy: "18:00:00",
+	ReceiveAt: "17:00:00",
+	Success:   true,
 }
 
-var e3 = common.Event{
-	Name: "third event",
+var e3 = Event{
+	Name:      "third event",
+	ReceiveBy: "18:00:00",
+	ReceiveAt: "18:00:00",
+	Success:   true,
 }
 
 var s1 = Schedule{
-	Name:     "First Schedule",
-	Schedule: []common.Event{e1, e2},
+	Name: "First Schedule",
+	Start: Node{
+		Nodes: []Node{
+			Node{
+
+				Event: &e1,
+			},
+			Node{
+				Event: &e3,
+			},
+		},
+	},
+	Handler: Handler{
+			Name: "WEBHOOK",
+			Address: "http://localhost:8081/api/v1/msg",
+	},
+
 }
 
 var s2 = Schedule{
-	Name:     "Second Schedule",
-	Schedule: []common.Event{e1, e3},
+	Name: "Second Schedule",
+	Start: Node{
+		Nodes: []Node{
+			Node{
+
+				Event: &e1,
+			},
+			Node{
+				Event: &e2,
+			},
+		},
+	},
 }
 
 var s3 = Schedule{
-	Name:     "Third Schedule",
-	Schedule: []common.Event{e2},
+	Name: "Third Schedule",
+	Start: Node{
+		Nodes: []Node{
+			Node{
+
+				Event: &e2,
+			},
+		},
+	},
 }
 
-var fd = NewScheduleDAO()
+var fd = NewScheduleDAO(&c)
 var s = Schedule{
 	Name:   "sample_schedule",
 	Timing: "daily",
-	Handler: common.Handler{
+	Handler: Handler{
 		Name:    "email handler",
 		Address: "kp755d@att.com",
 	},
@@ -53,31 +101,48 @@ var s = Schedule{
 
 func TestSendFile(test *testing.T) {
 	assert.Nil(test, fd.Save(s), "Could not save the file.")
-
-	//will put file in directory
-
 }
 
 func TestGetFile(test *testing.T) {
 	f, err := fd.GetByName("sample_schedule")
 	assert.Nil(test, err, "Could not find the file.")
 	assert.NotNil(test, f, "Could not find the file.")
-	log.Printf("Received the following information: %#v\n", f)
-	//will get sample schedule from directory
 
 }
 
 func TestManager(test *testing.T) {
-	//	updateEvents(m,e1)
-	//	updateEvents(m,e2)
-	//	updateEvents(m,e3)
-	updateSchedule(m, s1)
-	updateSchedule(m, s2)
-	updateSchedule(m, s3)
-	updateEvents(m, e1)
-	updateEvents(m, e2)
 
-	//these are not test cases, just here for the purpose of seeing output
-	log.Printf("%#v\n", m.subscriptionTable)
+	m.UpdateSchedule(&s1)
+	m.UpdateSchedule(&s2)
+	m.UpdateSchedule(&s3)
+	log.Println("Current map: ", m.subscriptionTable)
+	m.UpdateEvents(&e1)
+	m.UpdateEvents(&e2)
+}
+
+var f1 = Event{
+	Name:      "first event",
+	ReceiveBy: "18:00:00",
+	ReceiveAt: "19:00:00",
+	Success:   true,
+}
+var f2 = Event{
+	Name:      "second event",
+	ReceiveBy: "18:00:00",
+	ReceiveAt: "17:00:00",
+	Success:   true,
+}
+
+var f3 = Event{
+	Name:      "third event",
+	ReceiveBy: "18:00:00",
+	ReceiveAt: "18:00:00",
+	Success:   true,
+}
+
+func TestEvaluation(test *testing.T) {
+	assert.False(test, EvaluateEvent(&f1,notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "It is coming back as true")
+	assert.True(test, EvaluateEvent(&f2,notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "Came back as false")
+	assert.False(test, EvaluateEvent(&f3,notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "Came back as true")
 
 }

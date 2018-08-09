@@ -8,18 +8,27 @@ import (
 	"os"
 	"strings"
 	"testing"
-
-	sched "egbitbucket.dtvops.net/deadline/schedule"
+	"egbitbucket.dtvops.net/deadline/config"
+	"egbitbucket.dtvops.net/deadline/schedule"
 	"github.com/stretchr/testify/assert"
 )
+var c = config.Config{
+	FileConfig: config.FileConfig{
+		Directory: "/home/kaelapolintz/go/src/egbitbucket.dtvops.net/deadline/server",
+	},
+	DAO: "file",
+	Server: config.ServConfig{
+		Port: "8081",
+	},
 
-var server = NewDeadlineServer()
+}
+var server = NewDeadlineServer(&c)
 var baseAddress = "http://localhost:8081"
 var eventApi = baseAddress + "/api/v1/event"
 var scheduleApi = baseAddress + "/api/v1/schedule"
 var badfile = "testdata/badfile.xml"
 var goodfile = "testdata/sample_schedule.xml"
-var testschedule sched.Schedule
+var testschedule schedule.Schedule
 
 func TestMain(m *testing.M) {
 	go server.Start()
@@ -29,7 +38,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestGoodParams(test *testing.T) {
-
+	M = schedule.NewManager()
+	Fd = schedule.NewScheduleDAO(&c)
 	goodRequest := "{\"name\": \"kaela\", \"success\": true}"
 	response, err := http.Post(eventApi, "application/json", strings.NewReader(goodRequest))
 
@@ -38,7 +48,6 @@ func TestGoodParams(test *testing.T) {
 	assert.Equal(test, http.StatusOK, response.StatusCode, "Response http status code not what it should be")
 
 }
-
 func TestBadParams(test *testing.T) {
 
 	badReqeust := "{}"
@@ -61,7 +70,6 @@ func TestGoodSchedule(test *testing.T) {
 	err = xml.Unmarshal(b, &testschedule)
 	assert.Nil(test, err, "Could not decode bytes.")
 
-	//post to server
 	response, err := http.NewRequest("PUT", scheduleApi, bytes.NewBuffer(b))
 	assert.Nil(test, err, "Error getting ready for post")
 	assert.NotNil(test, response, "Response is nil")
