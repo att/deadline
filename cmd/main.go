@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/davecgh/go-spew/spew"
-
+	"github.com/jasonlvhit/gocron"
 	"egbitbucket.dtvops.net/deadline/config"
 	"egbitbucket.dtvops.net/deadline/schedule"
 	"egbitbucket.dtvops.net/deadline/server"
@@ -48,6 +48,9 @@ func main() {
 	server.Fd = schedule.NewScheduleDAO(cfg)
 
 	server.M = schedule.NewManager()
+	go gocron.Every(10).Seconds().Do(server.M.EvaluateAll)
+	go gocron.Start()
+
 
 	dlsvr := server.NewDeadlineServer(cfg)
 
