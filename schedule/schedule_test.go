@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var m = NewManager()
+
 var c = config.Config{
 	DAO: "file",
 	FileConfig: config.FileConfig{
@@ -22,6 +22,8 @@ var c = config.Config{
 	},
 
 } 
+var m *ScheduleManager
+
 var e1 = Event{
 	Name:      "first event",
 	ReceiveBy: "18:00:00",
@@ -100,7 +102,7 @@ var s = Schedule{
 }
 
 func TestSendFile(test *testing.T) {
-	assert.Nil(test, fd.Save(s), "Could not save the file.")
+	assert.Nil(test, fd.Save(&s), "Could not save the file.")
 }
 
 func TestGetFile(test *testing.T) {
@@ -111,7 +113,7 @@ func TestGetFile(test *testing.T) {
 }
 
 func TestManager(test *testing.T) {
-
+	m = m.Init(&c)
 	m.UpdateSchedule(&s1)
 	m.UpdateSchedule(&s2)
 	m.UpdateSchedule(&s3)

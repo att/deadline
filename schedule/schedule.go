@@ -59,3 +59,10 @@ func (s Schedule) EventOccurred(e *Event) {
 	s.Start.ErrorTo = &s.Error
 	}
 }
+
+func (s *Schedule) ResetSchedule() {
+	//for each event, set receive-at to ""
+	//reset nodes 
+
+
+}

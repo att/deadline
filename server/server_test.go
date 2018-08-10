@@ -38,8 +38,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestGoodParams(test *testing.T) {
-	M = schedule.NewManager()
-	Fd = schedule.NewScheduleDAO(&c)
+	M = M.Init(&c)
+	
 	goodRequest := "{\"name\": \"kaela\", \"success\": true}"
 	response, err := http.Post(eventApi, "application/json", strings.NewReader(goodRequest))
 

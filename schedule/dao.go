@@ -1,5 +1,6 @@
 package schedule
 import (
+	"strings"
 
 	"egbitbucket.dtvops.net/deadline/config"
 	"egbitbucket.dtvops.net/deadline/common"
@@ -12,6 +13,8 @@ import (
 	"log"
 	"bytes"
 )
+
+
 
 func NewScheduleDAO(c *config.Config) ScheduleDAO {
 	if (c.DAO == "file"){
@@ -40,7 +43,7 @@ func (fd fileDAO) GetByName(name string) ([]byte, error) {
 	return bytes, nil
 }
 
-func (fd fileDAO) Save(s Schedule) error {
+func (fd fileDAO) Save(s *Schedule) error {
 	
 	str := s.Name + ".xml"
 	f, err := os.Create(fd.Path + "/" +  str)
@@ -113,7 +116,7 @@ func (db dbDAO) GetByName(name string) ([]byte, error) {
 	return schedulebytes,nil
 }
 
-func (db dbDAO) Save(s Schedule) error {
+func (db dbDAO) Save(s *Schedule) error {
 	dbb, err := sqlx.Open("mysql", db.ConnectionString)
 	if err != nil {
 		log.Fatal(err)
@@ -145,4 +148,48 @@ func (db dbDAO) Save(s Schedule) error {
 		tx.Commit()
 
 	return nil
+}
+
+//puts all schedules in the manager 
+func (fd fileDAO) LoadStatelessSchedules() ([]Schedule,error) { //will definiely change names later 
+	var schedules = []Schedule{}
+	s := Schedule{}
+	file, err := os.Open(fd.Path)
+	if err != nil {
+		common.Info.Println("Could not open directory.")
+		return []Schedule{}, err
+	}
+	defer file.Close()
+
+	list,_ := file.Readdirnames(0)
+	for _, schedule := range list {
+		if strings.Contains(schedule,".xml") {
+			schedule = strings.TrimSuffix(schedule,".xml")
+			bytes,_ := fd.GetByName(schedule)
+			err = xml.Unmarshal(bytes,&s)
+			if err != nil {
+				common.Info.Println(schedule + " wasn't translated")
+				continue
+			}
+			common.Debug.Println("Schedule: " + schedule)
+			spew.Dump(s)
+			schedules = append(schedules,s)
+		}
+	}
+	return schedules,nil
+}
+
+func (db dbDAO) LoadStatelessSchedules() ([]Schedule,error){
+	dbb, err := sqlx.Open("mysql", db.ConnectionString)
+	if err != nil{
+		return []Schedule{},err
+	}
+
+	schedules := []Schedule{}
+	err = dbb.Select(&schedules, "SELECT * FROM schedules")
+	if err != nil {
+		return []Schedule{},err
+	}
+
+	return schedules,nil
 }

@@ -1,0 +1,1 @@
+<schedule name="First Schedule"><handler name="WEBHOOK"><address>http://localhost:8081/api/v1/msg</address></handler></schedule>

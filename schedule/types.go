@@ -67,7 +67,8 @@ type Error struct {
 
 type ScheduleDAO interface {
 	GetByName(string) ([]byte, error)
-	Save(s Schedule) error
+	Save(s *Schedule) error
+	LoadStatelessSchedules() ([]Schedule,error)
 }
 
 type fileDAO struct{
