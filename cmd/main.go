@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/jasonlvhit/gocron"
 	"egbitbucket.dtvops.net/deadline/config"
 	"egbitbucket.dtvops.net/deadline/server"
@@ -41,11 +40,8 @@ func main() {
 		common.Info.Println("We couldn't load the config, using defaults. Error was", err)
 		cfg = &config.DefaultConfig
 	}
-	common.Debug.Println("Our config file:")
-	spew.Dump(cfg)
+
 	server.M = server.M.Init(cfg)
-
-
 
  	go gocron.Every(10).Seconds().Do(server.M.EvaluateAll)
 	go gocron.Start() 

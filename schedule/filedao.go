@@ -11,8 +11,6 @@ import (
 
 )
 
-
-
 func NewScheduleDAO(c *config.Config) ScheduleDAO {
 	if (c.DAO == "file"){
 	return &fileDAO{
@@ -48,7 +46,6 @@ func (fd fileDAO) Save(s *Schedule) error {
 		return err
 	}
 	defer f.Close()
-	//translate inner bytes so that it is not duplicated
 	s.fixSchedule()
 	encoder := xml.NewEncoder(f)
 	err = encoder.Encode(s)
@@ -59,8 +56,6 @@ func (fd fileDAO) Save(s *Schedule) error {
 	return nil
 }
 
-
-//puts all schedules in the manager 
 func (fd fileDAO) LoadStatelessSchedules() ([]Schedule,error) { //will definiely change names later 
 	var schedules = []Schedule{}
 	s := Schedule{}
@@ -120,16 +115,13 @@ func (fd fileDAO) SaveEvent(e *Event) error{
 	str := e.Name + ".xml"
 	f, err := os.Create(fd.Path + "/events/" +  str)
 	if err != nil {
-		common.CheckError(err)
 		return err
 	}
 	defer f.Close()
-	//translate inner bytes so that it is not duplicated
 	encoder := xml.NewEncoder(f)
 	err = encoder.Encode(e)
 
 	if err != nil {
-		common.CheckError(err)
 		return err
 	}
 

@@ -7,7 +7,6 @@ func (start Node) findEvent(name string) *Event {
 			return start.Event
 		}
 	} 
-	
 	for j := 0; j < len(start.Nodes); j++ {
 		f := start.Nodes[j].findEvent(name)
 		if f != nil {		
@@ -19,7 +18,6 @@ func (start Node) findEvent(name string) *Event {
 }
 
 func (start *Node) ResetEvents() {
-	
 	
 	if start == nil {
 		return 
@@ -37,7 +35,5 @@ func (start *Node) ResetEvents() {
 }
 
 func (err Node) throwError() {
-	// log.Println("This event did not have success")
-	//and other things that kill the event
-	//log fatal? etc
+	//things that kill the event
 }

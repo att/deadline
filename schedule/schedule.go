@@ -6,6 +6,7 @@ import (
 	"egbitbucket.dtvops.net/deadline/notifier"
 	"bytes"
 	"encoding/xml"
+	
 
 )
 
@@ -51,8 +52,6 @@ func ConvertTime(timing string) (time.Time){
 	if !parsedTime.IsZero() {
 		parsedTime = parsedTime.AddDate(time.Now().Year(),m-1,time.Now().Day()-1)
 	}
-
-
 	return parsedTime
 
 }
@@ -83,7 +82,6 @@ func (s Schedule) EventOccurred(e *Event) {
 func (s *Schedule) MakeNodes() {
 	s.fixSchedule()
 	var f Event
-	
 	buf := bytes.NewBuffer(s.Schedule)
 				dec := xml.NewDecoder(buf)
 				for dec.Decode(&f) == nil {
@@ -99,13 +97,10 @@ func (s *Schedule) MakeNodes() {
 					}
 					s.Start.Nodes = append(s.Start.Nodes, node1)
 				}
-
-
 }
 
 
 func (s *Schedule) fixSchedule() {
-	//sort out events from inner xml of schedule 
 	evnts := []Event{}
 	b := bytes.NewBuffer(s.Schedule)
 	d := xml.NewDecoder(b)
@@ -129,9 +124,6 @@ func (s *Schedule) fixSchedule() {
 		case xml.EndElement:
 			break
         }
-
-
-
 	}
 	bytes, err := xml.Marshal(evnts)
 	common.CheckError(err)

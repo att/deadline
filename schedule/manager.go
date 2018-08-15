@@ -30,38 +30,31 @@ func (m *ScheduleManager) getInstance() *ScheduleManager{
 func (m *ScheduleManager) Init(cfg *config.Config) *ScheduleManager{
 	common.Init(os.Stdout, os.Stdout)
 
-	n := m.getInstance()
+	currentManager := m.getInstance()
 
 	Fd = NewScheduleDAO(cfg) 
 	schedules, err := Fd.LoadStatelessSchedules()
 	if err != nil {
 		common.CheckError(err)
-		return n
+		return currentManager
 	}
 
 	for _, s := range schedules {
-		//make sure we are not pointing to same addresses
+		
 		s.LastRun = time.Time{}
 		s.MakeNodes()
-		newS := s
-		n.AddSchedule(&newS)
+		newSchedule := s
+		//make sure pointers are different
+		currentManager.AddSchedule(&newSchedule)
 
 	}
-/* 
-	common.Debug.Println("Our subscription table in Init: ==============================================")
-	spew.Dump(n.subscriptionTable)
-	common.Debug.Println("======================================================================") */
 
 	evnts,err := Fd.LoadEvents()
 	common.CheckError(err)
 	for _, e := range evnts {
-		n.UpdateEvents(&e)
+		currentManager.UpdateEvents(&e)
 	}
-	
-
-	//load events (later)
-	
-	return n
+	return currentManager
 }
 
 func (m *ScheduleManager) UpdateEvents(e *Event) {
@@ -84,14 +77,13 @@ func (m *ScheduleManager) UpdateSchedule(s *Schedule) {
 }
 
 func (m *ScheduleManager) EvaluateAll() {
-//TODO
 
-	for a := range m.subscriptionTable {
-		s := m.subscriptionTable[a]
-		for b := 0; b < len(s); b++ {
-			common.Debug.Println("Looking at " + s[b].Name)
-			t, err := time.ParseDuration(s[b].Timing) 
-			if !s[b].LastRun.IsZero() {
+	for subs := range m.subscriptionTable {
+		schedules := m.subscriptionTable[subs]
+		for s := 0; s < len(schedules); s++ {
+
+			t, err := time.ParseDuration(schedules[s].Timing) 
+			if !schedules[s].LastRun.IsZero() {
 				continue
 			}
 			
@@ -101,14 +93,14 @@ func (m *ScheduleManager) EvaluateAll() {
 			}
 			dif := time.Now().Sub(m.EvaluationTime)
 			if  dif >= t {
-				s[b].Start.ResetEvents()
+				schedules[s].Start.ResetEvents()
 				m.EvaluationTime = time.Now()
-				s[b].LastRun = time.Time{}
+				schedules[s].LastRun = time.Time{}
 				continue
 			}
 			
-			var h = notifier.NewNotifyHandler(s[b].Handler.Name,s[b].Handler.Address)
-			f := s[b].Start.findEvent(a)
+			var h = notifier.NewNotifyHandler(schedules[s].Handler.Name,schedules[s].Handler.Address)
+			f := schedules[s].Start.findEvent(subs)
 			if f == nil {
 				common.Info.Println("Couldn't find the event in the schedule")
 			} else {
@@ -116,8 +108,8 @@ func (m *ScheduleManager) EvaluateAll() {
 				common.Debug.Println(f.Name)
 				if !f.EvaluateEvent(h) {
 					if f.ReceiveAt != "" {
-					common.Info.Println("Just letting you know that " + f.Name + " failed!")
-					s[b].LastRun = time.Now()
+					common.Info.Println(f.Name + " failed!")
+					schedules[s].LastRun = time.Now()
 					}
 				}
 				

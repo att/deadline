@@ -24,14 +24,12 @@ type Event struct {
 	Details   map[string]string `json:"details,omitempty" xml:"details,omitempty" db:"details"`
 	ReceiveBy string            `xml:"receive-by,attr" db:"receiveby"`
 	ReceiveAt string            `xml:"receive-at,attr" db:"receiveat"`
-	//receives will have to be time values in the future
 	IsLive bool `xml:"islive"`
 }
 
 type ScheduledEvent struct {
 	ScheduleName 	string	`db:"schedulename"`
 	EName			string  `db:"ename"` 
-	//details
 	EReceiveBy		string  `db:"ereceiveby"` 
 
 }
@@ -45,7 +43,6 @@ type Handler struct {
 type ScheduledHandler struct {
 	ScheduleName 	string	`db:"schedulename"`
 	Name			string  `db:"name"` 
-	//details
 	Address			string  `db:"address"` 
 
 }

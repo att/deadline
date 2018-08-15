@@ -1,78 +1,68 @@
 package schedule
 
 import(
-	//"github.com/davecgh/go-spew/spew"
-	"github.com/jmoiron/sqlx"
 	"log"
 	"bytes"
 	"time"
 	"egbitbucket.dtvops.net/deadline/common"
+	//"github.com/davecgh/go-spew/spew"
+	"github.com/jmoiron/sqlx"
 	"encoding/xml"
+	
 )
 
 func (db dbDAO) GetByName(name string) ([]byte, error) {
 	var s Schedule
-	sEvent := ScheduledEvent{}
-	sHandler := ScheduledHandler{}
-	//stateless event struct
-	sEvent.ScheduleName = name
 	s.Name = name
+	sEvent := ScheduledEvent{}
+	sEvent.ScheduleName = s.Name
+	sHandler := ScheduledHandler{}
+	sHandler.ScheduleName = s.Name
+
 	dbb, err := sqlx.Open("mysql", db.ConnectionString)
 	common.CheckError(err)
 
 	rows, err := dbb.NamedQuery(`SELECT * FROM schedules WHERE name=:name`, s)
-	if rows == nil {
-		common.CheckError(err)
-	}
-	rows2, err := dbb.NamedQuery(`SELECT * FROM schedulevents WHERE schedulename=:schedulename`, sEvent)
-	if rows2 == nil {
-		common.CheckError(err)
-	}
+	common.CheckError(err)
 
-	sEvents := []ScheduledEvent{}
-	
- 	for rows2.Next() {
-        err := rows2.StructScan(&sEvent)
-        common.CheckError(err)
-		sEvents = append(sEvents,sEvent)
-	} 
-	
 	for rows.Next() {
         err := rows.StructScan(&s)
         common.CheckError(err)
 	}
+
+	rows2, err := dbb.NamedQuery(`SELECT * FROM schedulevents WHERE schedulename=:schedulename`, sEvent)
+	common.CheckError(err)
+
+	eventsForSchedule := []Event{}
+	for rows2.Next() {
+		err := rows2.StructScan(&sEvent)
+		common.CheckError(err)
+		eventForSchedule := Event{
+			Name: sEvent.EName,
+			ReceiveBy: sEvent.EReceiveBy,
+		}
+		eventsForSchedule = append(eventsForSchedule,eventForSchedule)
+	} 
+
+	bytes, err := xml.Marshal(eventsForSchedule)
+	common.CheckError(err)
+	s.Schedule = bytes
 	
 	rows3, err := dbb.NamedQuery(`SELECT * FROM handlers WHERE schedulename=:schedulename`, &sHandler)
-	if rows == nil {
-		common.CheckError(err)
-	}
-
+	common.CheckError(err)
+	
 	for rows3.Next() {
-		err := rows.StructScan(&sHandler)
+		err := rows3.StructScan(&sHandler)
 		common.CheckError(err)
+
 		s.Handler = Handler{
 			Name: sHandler.Name,
 			Address: sHandler.Address,
 		}
 	}
 
-	eventsForSchedule := []Event{}
-	for _, e := range sEvents {
-		oneEvent := Event{
-			Name: e.ScheduleName,
-			ReceiveBy: e.EReceiveBy,
-		}
-		eventsForSchedule = append(eventsForSchedule,oneEvent)
-	}
-
-	bytes, err := xml.Marshal(eventsForSchedule)
-	if err != nil {
-		return nil, err
-	}
-	s.Schedule = bytes
 	schedulebytes, err := xml.Marshal(s)
-
-	return schedulebytes,nil
+	return schedulebytes, err
 }
 
 func (db dbDAO) Save(s *Schedule) error {
@@ -92,7 +82,6 @@ func (db dbDAO) Save(s *Schedule) error {
 			evnts = append(evnts,o)
 		}
 		for _, e := range evnts {
-		//schedulevents -- stateless event information that correlate to schedules
 		_, err = tx.NamedExec("INSERT INTO schedulevents (schedulename, ename, ereceiveby) VALUES (:schedulename, :ename,:ereceiveby)", 
 		&ScheduledEvent{
 			ScheduleName: s.Name,
@@ -119,6 +108,7 @@ func (db dbDAO) Save(s *Schedule) error {
 }
 
 func (db dbDAO) LoadStatelessSchedules() ([]Schedule,error){
+	schedulesFromDB := []Schedule{}
 
 	dbb, err := sqlx.Open("mysql", db.ConnectionString)
 	if err != nil{
@@ -126,69 +116,22 @@ func (db dbDAO) LoadStatelessSchedules() ([]Schedule,error){
 		return []Schedule{},err
 	}
 
-/* 	dbb.MustExec(eventSchema)
-	dbb.MustExec(handlerSchema)
-	dbb.MustExec(scheduleEventSchema)
-	dbb.MustExec(scheduleSchema)  */
+	//initializeTables(dbb)
 
-	
-	schedulesFromDB := []Schedule{}
 	err = dbb.Select(&schedulesFromDB, "SELECT * FROM schedules")
 	if err != nil {
 		common.CheckError(err)
 		return []Schedule{},err
 	}
 
-
-	//get non-live scheduled event information from that table 
-	eventFromDB := ScheduledEvent{} 
-	handlerFromDB := ScheduledHandler{}
-	eventForSchedule := Event{} 
-	eventsForSchedule := []Event{}
-	schedulesForTable := []Schedule{}
-	for _,s := range schedulesFromDB {
-		eventFromDB.ScheduleName = s.Name
-		rows, err := dbb.NamedQuery(`SELECT * FROM schedulevents WHERE schedulename=:schedulename`, &eventFromDB)
-		if rows == nil {
-			common.CheckError(err)
-		}
-		for rows.Next() {
-			err := rows.StructScan(&eventFromDB)
-			common.CheckError(err)
-			eventForSchedule = Event{
-				Name: eventFromDB.EName,
-				ReceiveBy: eventFromDB.EReceiveBy,
-			}
-			eventsForSchedule = append(eventsForSchedule,eventForSchedule)
-		} 
-		bytes, err := xml.Marshal(eventsForSchedule)
-
-		if err != nil {
-			common.CheckError(err)
-			return nil, err
-		}
-		
-		s.Schedule = bytes
-		eventsForSchedule = []Event{}
-		handlerFromDB.ScheduleName = s.Name
-		rows, err = dbb.NamedQuery(`SELECT * FROM handlers WHERE schedulename=:schedulename`, &handlerFromDB)
-		if rows == nil {
-			common.CheckError(err)
-		}
-
-		for rows.Next() {
-			err := rows.StructScan(&handlerFromDB)
-			common.CheckError(err)
-			s.Handler = Handler{
-				Name: handlerFromDB.Name,
-				Address: handlerFromDB.Address,
-			}
-		}
-
-		schedulesForTable = append(schedulesForTable,s)
+	for s := 0; s < len(schedulesFromDB); s++ {
+		bytes, err := db.GetByName(schedulesFromDB[s].Name)
+		common.CheckError(err)
+		err = xml.Unmarshal(bytes,&schedulesFromDB[s])
+		common.CheckError(err)
 	}
 
-	return schedulesForTable,nil
+	return schedulesFromDB,nil
 }
 
 
@@ -223,3 +166,9 @@ func (db dbDAO) SaveEvent(e *Event) error{
 	return nil
 }
 
+func initializeTables(dbb *sqlx.DB) {
+	dbb.MustExec(eventSchema)
+	dbb.MustExec(handlerSchema)
+	dbb.MustExec(scheduleEventSchema)
+	dbb.MustExec(scheduleSchema) 
+}

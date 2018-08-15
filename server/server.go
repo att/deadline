@@ -77,7 +77,8 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	M.UpdateEvents(&event)
-	schedule.Fd.SaveEvent(&event)
+	err = schedule.Fd.SaveEvent(&event)
+	common.CheckError(err)
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -117,12 +118,13 @@ func putSchedule(w http.ResponseWriter, r *http.Request, sched schedule.Schedule
 				if err != nil {
 					return err
 				}
-			var f schedule.Event
+			var evnt schedule.Event
 
 			buf := bytes.NewBuffer(sched.Schedule)
 			dec := xml.NewDecoder(buf)
-			for dec.Decode(&f) == nil {
-				e := f
+			for dec.Decode(&evnt) == nil {
+				e := evnt
+				//change location memory
 				valid := e.ValidateEvent()
 					if valid != nil {
 						return valid

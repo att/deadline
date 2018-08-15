@@ -21,8 +21,6 @@ type ServConfig struct {
 
 type HandlerConfig struct {
 	EmailConfig EmailConfig `toml:"emailconfig"`
-	//hipchat, slack, etc.
-	
 }
 
 type EmailConfig struct {

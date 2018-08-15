@@ -18,16 +18,15 @@ func (w Webhook) Send(msg string) {
 
 
 }
-//make a different function for each type 
-func NewNotifyHandler(nh string,addr string) NotifyHandler{
+func NewNotifyHandler(handlerType string,addr string) NotifyHandler{
 
-	switch nh {
+	switch handlerType {
 	case "WEBHOOK":	
 
 		w := &Webhook{
 			Addr: addr,
 		}
-		w.TH.Name = nh
+		w.TH.Name = handlerType
 
 		return w
 	}
