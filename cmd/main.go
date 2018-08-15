@@ -44,8 +44,8 @@ func main() {
 	common.Debug.Println("Our config file:")
 	spew.Dump(cfg)
 	server.M = server.M.Init(cfg)
- 
-	
+
+
 
  	go gocron.Every(10).Seconds().Do(server.M.EvaluateAll)
 	go gocron.Start() 

@@ -1,7 +1,5 @@
 package schedule
-import (
 
-)
 func (start Node) findEvent(name string) *Event {
 	if start.Event != nil {
 		

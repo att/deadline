@@ -1,6 +1,8 @@
 package schedule
 import (
 	"github.com/davecgh/go-spew/spew"
+	//"github.com/davecgh/go-spew/spew"
+
 "time"
 "os"
 "egbitbucket.dtvops.net/deadline/common"
@@ -31,17 +33,32 @@ func (m *ScheduleManager) Init(cfg *config.Config) *ScheduleManager{
 	n := m.getInstance()
 
 	Fd = NewScheduleDAO(cfg) 
-	schedules,err := Fd.LoadStatelessSchedules()
+	schedules, err := Fd.LoadStatelessSchedules()
 	if err != nil {
 		common.CheckError(err)
 		return n
 	}
-	common.Debug.Println("Our array of STATELESS schedules")
-	spew.Dump(schedules)
+
 	for _, s := range schedules {
-		n = n.AddSchedule(&s)
+		//make sure we are not pointing to same addresses
+		s.LastRun = time.Time{}
+		s.MakeNodes()
+		newS := s
+		n.AddSchedule(&newS)
 
 	}
+/* 
+	common.Debug.Println("Our subscription table in Init: ==============================================")
+	spew.Dump(n.subscriptionTable)
+	common.Debug.Println("======================================================================") */
+
+	evnts,err := Fd.LoadEvents()
+	common.CheckError(err)
+	for _, e := range evnts {
+		n.UpdateEvents(&e)
+	}
+	
+
 	//load events (later)
 	
 	return n
@@ -63,27 +80,39 @@ func (m *ScheduleManager) UpdateSchedule(s *Schedule) {
 	err := Fd.Save(s)
 	common.CheckError(err)
 	m.AddSchedule(s)
-
 }
 
 func (m *ScheduleManager) EvaluateAll() {
-
+//TODO
+	common.Debug.Println("OUR SUBSCRIPTION TABLE==============================================================")
 	spew.Dump(m.subscriptionTable)
-
 	for a := range m.subscriptionTable {
 		s := m.subscriptionTable[a]
 		for b := 0; b < len(s); b++ {
-
 			t, err := time.ParseDuration(s[b].Timing) 
+			if !s[b].LastRun.IsZero() {
+				baddiff := time.Now().Sub(s[b].LastRun)
+				if baddiff >= t {
+					s[b].LastRun = time.Time{}
+					s[b].Start.ResetEvents()
+					//edit this because we still need to know if we get the schedule, historic 
+				} else {
+				continue
+				}
+			}
+			
 			if err != nil {
 				common.Info.Println(err)
 				return
 			}
-			if time.Now().Sub(m.EvaluationTime) == t {
-				s[b].ResetSchedule()
+			dif := time.Now().Sub(m.EvaluationTime)
+
+			if  dif >= t {
+				s[b].Start.ResetEvents()
 				m.EvaluationTime = time.Now()
 				continue
 			}
+			
 			var h = notifier.NewNotifyHandler(s[b].Handler.Name,s[b].Handler.Address)
 			f := s[b].Start.findEvent(a)
 			if f == nil {
@@ -92,7 +121,10 @@ func (m *ScheduleManager) EvaluateAll() {
 			} else {
 				common.Debug.Println("----------------------------------------------")
 				common.Debug.Println(f.Name)
-				f.EvaluateEvent(h)
+				if !f.EvaluateEvent(h) {
+					common.Info.Println("Just letting you know that " + f.Name + " failed!")
+					s[b].LastRun = time.Now()
+				}
 				
 			}
 		}
@@ -101,17 +133,17 @@ func (m *ScheduleManager) EvaluateAll() {
 
 }
 
-func (m *ScheduleManager) AddSchedule(s *Schedule) *ScheduleManager{
+func (m *ScheduleManager) AddSchedule(s *Schedule) {
 
-	var o *ScheduleManager = m
+	
 	for i := 0; i < len(s.Start.Nodes); i++ {
-		scheds := o.subscriptionTable[(s.Start.Nodes[i].Event.Name)]
+		scheds := m.subscriptionTable[(s.Start.Nodes[i].Event.Name)]
 		if scheds == nil {
-			o.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = []*Schedule{s}
+			m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = []*Schedule{s}
 			continue
 		}
 		scheds = append(scheds, s)
-		o.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = scheds
+		m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = scheds
 	}
-	return o
+	
 }

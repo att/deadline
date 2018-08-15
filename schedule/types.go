@@ -7,10 +7,11 @@ import (
 
 type Schedule struct {
 	XMLName  xml.Name       `xml:"schedule"`
-	Handler  Handler 		`xml:"handler,omitempty"`
+	Handler  Handler 		`xml:"handler,omitempty" db:"handler"`
 	Timing   string         `xml:"timing,attr,omitempty" db:"timing"`	
 	Name     string         `xml:"name,attr,omitempty" db:"name"`
 	Schedule []byte         `xml:",innerxml"`
+	LastRun	 time.Time
 	Start    Node           `xml:"-"`
 	End      Node           `xml:"-"`
 	Error    Node           `xml:"-"`
@@ -21,8 +22,8 @@ type Event struct {
 	Name      string            `json:"name" xml:"name,attr" db:"name"`
 	Success   bool              `json:"success" xml:"success" db:"success"`
 	Details   map[string]string `json:"details,omitempty" xml:"details,omitempty" db:"details"`
-	ReceiveBy string            `xml:"receive-by,attr" db:"receive-by"`
-	ReceiveAt string            `xml:"receive-at,attr" db:"receive-at"`
+	ReceiveBy string            `xml:"receive-by,attr" db:"receiveby"`
+	ReceiveAt string            `xml:"receive-at,attr" db:"receiveat"`
 	//receives will have to be time values in the future
 	IsLive bool `xml:"islive"`
 }
@@ -37,13 +38,21 @@ type ScheduledEvent struct {
 
 type Handler struct {
 	XMLName xml.Name `xml:"handler"`
-	Name    string   `xml:"name,attr"`
-	Address string   `xml:"address"`
+	Name    string   `xml:"name,attr" db:"name"`
+	Address string   `xml:"address"   db:"address"`
+}
+
+type ScheduledHandler struct {
+	ScheduleName 	string	`db:"schedulename"`
+	Name			string  `db:"name"` 
+	//details
+	Address			string  `db:"address"` 
+
 }
 
 type Node struct {
 	Event   *Event `xml:"event"`
-	Nodes   []Node        `xml:",any"`
+	Nodes   []Node        `xml:"-"`
 	ErrorTo *Node         `xml:"-"`
 	OkTo    *Node         `xml:"-"`
 }
@@ -69,6 +78,8 @@ type ScheduleDAO interface {
 	GetByName(string) ([]byte, error)
 	Save(s *Schedule) error
 	LoadStatelessSchedules() ([]Schedule,error)
+	LoadEvents() ([]Event,error)
+	SaveEvent( e *Event) error
 }
 
 type fileDAO struct{
@@ -78,4 +89,10 @@ type fileDAO struct{
 
 type dbDAO struct {
 	ConnectionString string
+}
+
+type innerbytes struct {
+	XMLName xml.Name `xml:"innerbytes"`
+	Hander Handler 	`xml:"handler"`
+	Events []Event	`xml:"event"`
 }

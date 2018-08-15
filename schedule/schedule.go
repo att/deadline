@@ -1,27 +1,45 @@
 package schedule
 
 import (
-
-
 	"time"
 	"egbitbucket.dtvops.net/deadline/common"
 	"egbitbucket.dtvops.net/deadline/notifier"
-	
+	"bytes"
+	"encoding/xml"
 
 )
 
 
-var schema1 = `
+var scheduleSchema = `
 CREATE TABLE schedules (
     name text,
-    timing text
+	timing text
 )`
-var schema2 = `
+var scheduleEventSchema = `
 CREATE TABLE schedulevents (
 	schedulename text,
 	ename		text,
 	ereceiveby text
 )`
+
+var  eventSchema = `
+CREATE TABLE events (
+	name 		text,
+	receiveat 	text,
+	success		text,
+	details		text,
+	islive		text
+)`
+
+var handlerSchema = `
+CREATE TABLE handlers (
+	schedulename text,
+    name text,
+	address text
+)
+
+
+`
 
 func ConvertTime(timing string) (time.Time){
 	var m = int(time.Now().Month())
@@ -60,9 +78,61 @@ func (s Schedule) EventOccurred(e *Event) {
 	}
 }
 
-func (s *Schedule) ResetSchedule() {
-	//for each event, set receive-at to ""
-	//reset nodes 
+
+func (s *Schedule) MakeNodes() {
+	s.fixSchedule()
+	var f Event
+	
+	buf := bytes.NewBuffer(s.Schedule)
+				dec := xml.NewDecoder(buf)
+				for dec.Decode(&f) == nil {
+					e := f
+					valid := e.ValidateEvent()
+						if valid != nil {
+							common.Debug.Println("You had an invalid event")
+							return 
+						}
+					node1 := Node{
+						Event: &e,
+						Nodes: []Node{},
+					}
+					s.Start.Nodes = append(s.Start.Nodes, node1)
+				}
 
 
+}
+
+
+func (s *Schedule) fixSchedule() {
+	//sort out events from inner xml of schedule 
+	evnts := []Event{}
+	b := bytes.NewBuffer(s.Schedule)
+	d := xml.NewDecoder(b)
+
+	for {
+		t, err := d.Token()
+		if err != nil  {
+            break
+        }
+
+        switch et := t.(type) {
+
+        case xml.StartElement:
+            if et.Name.Local == "event" {
+                c := &Event{}
+                if err := d.DecodeElement(&c, &et); err != nil {
+                    panic(err)
+                }
+				evnts = append(evnts,(*c))
+            } 
+		case xml.EndElement:
+			break
+        }
+
+
+
+	}
+	bytes, err := xml.Marshal(evnts)
+	common.CheckError(err)
+	s.Schedule = bytes
 }

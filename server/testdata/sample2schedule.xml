@@ -1,6 +1,6 @@
-<schedule name="samp3schedule" timing="24h" >
+<schedule name="successfulschedule" timing="24h" >
 
-        <event name="first event" receive-by="11:23:00">
+        <event name="first event" receive-by="16:23:00">
                 <error to="email handler"/>
         </event>
 
