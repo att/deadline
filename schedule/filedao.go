@@ -91,7 +91,7 @@ func (fd fileDAO) LoadStatelessSchedules() ([]Schedule,error) { //will definiely
 func (fd fileDAO) LoadEvents() ([]Event,error){
 	liveEvents := []Event{}
 	liveEvent := Event{}
-	file, err := os.Open(fd.Path + "events") 
+	file, err := os.Open(fd.Path + "/" + "events") 
 	if err != nil {
 		common.Info.Println("Could not open directory.")
 		return []Event{}, err

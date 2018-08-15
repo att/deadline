@@ -27,7 +27,6 @@ CREATE TABLE events (
 	name 		text,
 	receiveat 	text,
 	success		text,
-	details		text,
 	islive		text
 )`
 
@@ -69,8 +68,10 @@ func (e *Event) EvaluateEvent(h notifier.NotifyHandler) bool {
 func (s Schedule) EventOccurred(e *Event) {
 
 	ev := s.Start.findEvent(e.Name)
+	
 	if ev != nil {
 		ev.makeLive() 
+		ev.Success = e.Success
 		s.Start.OkTo = &s.End
 		
 	} else {

@@ -3,6 +3,7 @@ package server
 import (
 	"os"
 	"bytes"
+	
 	"egbitbucket.dtvops.net/deadline/common"
 	"egbitbucket.dtvops.net/deadline/config"
 	"egbitbucket.dtvops.net/deadline/schedule"
@@ -76,6 +77,7 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	M.UpdateEvents(&event)
+	schedule.Fd.SaveEvent(&event)
 	w.WriteHeader(http.StatusOK)
 
 }

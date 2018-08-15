@@ -1,4 +1,4 @@
-<schedule name="successfulschedule" timing="24h" >
+<schedule name="schedule1" timing="24h" >
 
         <event name="first event" receive-by="16:23:00">
                 <error to="email handler"/>

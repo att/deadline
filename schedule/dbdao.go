@@ -1,10 +1,11 @@
 package schedule
 
 import(
-	
+	//"github.com/davecgh/go-spew/spew"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"bytes"
+	"time"
 	"egbitbucket.dtvops.net/deadline/common"
 	"encoding/xml"
 )
@@ -79,7 +80,6 @@ func (db dbDAO) Save(s *Schedule) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-		//initalize tables function?
 
 		tx := dbb.MustBegin()
 		_, err = tx.NamedExec("INSERT INTO schedules (name, timing) VALUES (:name,:timing)", &s)
@@ -125,10 +125,12 @@ func (db dbDAO) LoadStatelessSchedules() ([]Schedule,error){
 		common.CheckError(err)
 		return []Schedule{},err
 	}
+
 /* 	dbb.MustExec(eventSchema)
 	dbb.MustExec(handlerSchema)
 	dbb.MustExec(scheduleEventSchema)
-	dbb.MustExec(scheduleSchema) */
+	dbb.MustExec(scheduleSchema)  */
+
 	
 	schedulesFromDB := []Schedule{}
 	err = dbb.Select(&schedulesFromDB, "SELECT * FROM schedules")
@@ -208,12 +210,16 @@ func (db dbDAO) LoadEvents() ([]Event,error){
 
 func (db dbDAO) SaveEvent(e *Event) error{
 	
+	e.ReceiveAt = time.Now().Format("01-02-2006 15:04:05")
+	e.IsLive = true
 	dbb, err := sqlx.Open("mysql", db.ConnectionString)
 	if err != nil {
 		log.Fatal(err)
 	}
 	tx := dbb.MustBegin()
-	_, err = tx.NamedExec("INSERT INTO events (name, receiveat,success,details, islive) VALUES (:name, :receiveat,:success,:details, :islive)", &e)
+	_, err = tx.NamedExec("INSERT INTO events (name, receiveat,success,islive) VALUES (:name, :receiveat,:success,:islive)", e)
 	common.CheckError(err)
+	tx.Commit()
 	return nil
 }
+

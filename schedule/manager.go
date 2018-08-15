@@ -1,7 +1,7 @@
 package schedule
 import (
-	"github.com/davecgh/go-spew/spew"
-	//"github.com/davecgh/go-spew/spew"
+	
+//"github.com/davecgh/go-spew/spew"
 
 "time"
 "os"
@@ -66,6 +66,7 @@ func (m *ScheduleManager) Init(cfg *config.Config) *ScheduleManager{
 
 func (m *ScheduleManager) UpdateEvents(e *Event) {
 	scheds := m.subscriptionTable[e.Name]
+	
 	if scheds == nil {
 
 		common.Info.Println("No subscribers.")
@@ -73,7 +74,7 @@ func (m *ScheduleManager) UpdateEvents(e *Event) {
 	for _, sched := range scheds {
 		sched.EventOccurred(e)
 	}
-
+	
 }
 
 func (m *ScheduleManager) UpdateSchedule(s *Schedule) {
@@ -84,21 +85,14 @@ func (m *ScheduleManager) UpdateSchedule(s *Schedule) {
 
 func (m *ScheduleManager) EvaluateAll() {
 //TODO
-	common.Debug.Println("OUR SUBSCRIPTION TABLE==============================================================")
-	spew.Dump(m.subscriptionTable)
+
 	for a := range m.subscriptionTable {
 		s := m.subscriptionTable[a]
 		for b := 0; b < len(s); b++ {
+			common.Debug.Println("Looking at " + s[b].Name)
 			t, err := time.ParseDuration(s[b].Timing) 
 			if !s[b].LastRun.IsZero() {
-				baddiff := time.Now().Sub(s[b].LastRun)
-				if baddiff >= t {
-					s[b].LastRun = time.Time{}
-					s[b].Start.ResetEvents()
-					//edit this because we still need to know if we get the schedule, historic 
-				} else {
 				continue
-				}
 			}
 			
 			if err != nil {
@@ -106,10 +100,10 @@ func (m *ScheduleManager) EvaluateAll() {
 				return
 			}
 			dif := time.Now().Sub(m.EvaluationTime)
-
 			if  dif >= t {
 				s[b].Start.ResetEvents()
 				m.EvaluationTime = time.Now()
+				s[b].LastRun = time.Time{}
 				continue
 			}
 			
@@ -117,13 +111,14 @@ func (m *ScheduleManager) EvaluateAll() {
 			f := s[b].Start.findEvent(a)
 			if f == nil {
 				common.Info.Println("Couldn't find the event in the schedule")
-				return
 			} else {
 				common.Debug.Println("----------------------------------------------")
 				common.Debug.Println(f.Name)
 				if !f.EvaluateEvent(h) {
+					if f.ReceiveAt != "" {
 					common.Info.Println("Just letting you know that " + f.Name + " failed!")
 					s[b].LastRun = time.Now()
+					}
 				}
 				
 			}
