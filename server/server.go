@@ -3,6 +3,7 @@ package server
 import (
 	"os"
 	"bytes"
+	
 	"egbitbucket.dtvops.net/deadline/common"
 	"egbitbucket.dtvops.net/deadline/config"
 	"egbitbucket.dtvops.net/deadline/schedule"
@@ -13,7 +14,6 @@ import (
 )
 
 var M *schedule.ScheduleManager
-var Fd schedule.ScheduleDAO
 
 type DeadlineServer struct {
 	server *http.Server
@@ -77,6 +77,8 @@ func eventHander(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	M.UpdateEvents(&event)
+	err = schedule.Fd.SaveEvent(&event)
+	common.CheckError(err)
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -104,26 +106,25 @@ func doMethod(method string, w http.ResponseWriter, r *http.Request) error {
 	}
 	switch method {
 		case "GET":
-			return getSchedule(r,w)
+			return getSchedule(w,r)
 		case "PUT":
 			return putSchedule(w,r,sched)
 	}
 	return nil
 }
-	
-
 
 func putSchedule(w http.ResponseWriter, r *http.Request, sched schedule.Schedule)  error {
 			err := xml.NewDecoder(r.Body).Decode(&sched)
 				if err != nil {
 					return err
 				}
-			var f schedule.Event
+			var evnt schedule.Event
 
 			buf := bytes.NewBuffer(sched.Schedule)
 			dec := xml.NewDecoder(buf)
-			for dec.Decode(&f) == nil {
-				e := f
+			for dec.Decode(&evnt) == nil {
+				e := evnt
+				//change location memory
 				valid := e.ValidateEvent()
 					if valid != nil {
 						return valid
@@ -134,20 +135,17 @@ func putSchedule(w http.ResponseWriter, r *http.Request, sched schedule.Schedule
 				}
 				sched.Start.Nodes = append(sched.Start.Nodes, node1)
 			}
-
-			err = Fd.Save(sched)
-			common.CheckError(err)
 			M.UpdateSchedule(&sched)
 			return nil
 }
 
-func getSchedule(r *http.Request,w http.ResponseWriter) error {
+func getSchedule(w http.ResponseWriter,r *http.Request) error {
 		keys, ok := r.URL.Query()["name"]
 		if !ok || len(keys[0]) < 1 {
 			return errors.New("You didn't have a parameter")
 		}
 
-		bytes, err := Fd.GetByName(string(keys[0]))
+		bytes, err := schedule.Fd.GetByName(string(keys[0]))
 		if err != nil {
 			return err
 		}

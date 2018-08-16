@@ -1,9 +1,5 @@
 package config
 
-//import "net/http"
-
-//import "egbitbucket.dtvops.net/deadline/common"
-
 type Config struct {
 	FileConfig  FileConfig  `toml:"fileconfig"`
 	DBConfig    DBConfig    `toml:"dbconfig"`
@@ -25,8 +21,6 @@ type ServConfig struct {
 
 type HandlerConfig struct {
 	EmailConfig EmailConfig `toml:"emailconfig"`
-	//hipchat, slack, etc.
-	
 }
 
 type EmailConfig struct {

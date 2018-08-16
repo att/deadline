@@ -19,8 +19,6 @@ func CheckError(e error) {
 }
 
 
-
-
 func Init(
 	infoHandle io.Writer, debugHandle io.Writer) {
 

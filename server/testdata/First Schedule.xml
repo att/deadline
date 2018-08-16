@@ -1,0 +1,1 @@
+<schedule timing="24h" name="First Schedule"><handler name="WEBHOOK"><address>http://localhost:8081/api/v1/msg</address></handler><LastRun>0001-01-01T00:00:00Z</LastRun></schedule>

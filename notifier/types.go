@@ -2,8 +2,6 @@ package notifier
 import (
 	"net/http"
 )
-//basically making a set 
-
 
 type NotifyHandler interface {
 	Send(string) 

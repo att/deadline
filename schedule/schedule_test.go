@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"time"
 	"log"
 	"testing"
 	"egbitbucket.dtvops.net/deadline/config"
@@ -8,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var m = NewManager()
+
 var c = config.Config{
 	DAO: "file",
 	FileConfig: config.FileConfig{
-		Directory: "../server/",
+		Directory: "../server/testdata",
 	},
 	DBConfig: config.DBConfig{
 		ConnectionString: "somethintoo",
@@ -22,6 +23,8 @@ var c = config.Config{
 	},
 
 } 
+var m *ScheduleManager
+
 var e1 = Event{
 	Name:      "first event",
 	ReceiveBy: "18:00:00",
@@ -44,6 +47,7 @@ var e3 = Event{
 
 var s1 = Schedule{
 	Name: "First Schedule",
+	Timing: "24h",
 	Start: Node{
 		Nodes: []Node{
 			Node{
@@ -98,9 +102,8 @@ var s = Schedule{
 		Address: "kp755d@att.com",
 	},
 }
-
 func TestSendFile(test *testing.T) {
-	assert.Nil(test, fd.Save(s), "Could not save the file.")
+	assert.Nil(test, fd.Save(&s), "Could not save the file.")
 }
 
 func TestGetFile(test *testing.T) {
@@ -111,7 +114,7 @@ func TestGetFile(test *testing.T) {
 }
 
 func TestManager(test *testing.T) {
-
+	m = m.Init(&c)
 	m.UpdateSchedule(&s1)
 	m.UpdateSchedule(&s2)
 	m.UpdateSchedule(&s3)
@@ -132,7 +135,6 @@ var f2 = Event{
 	ReceiveAt: "17:00:00",
 	Success:   true,
 }
-
 var f3 = Event{
 	Name:      "third event",
 	ReceiveBy: "18:00:00",
@@ -146,3 +148,85 @@ func TestEvaluation(test *testing.T) {
 	assert.False(test, f3.EvaluateEvent(notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "Came back as true")
 
 }
+
+
+var beforereset = Schedule{
+	Name: "First Schedule",
+	Timing: "24h",
+	Start: Node{
+		Nodes: []Node{
+			Node{
+
+				Event: &Event{
+					Name:      "first event",
+					ReceiveBy: "18:00:00",
+					ReceiveAt: "19:00:00",
+					Success:   true,
+					
+				},
+			},
+			Node{
+				Event: &Event{
+					Name:      "third event",
+					ReceiveBy: "18:00:00",
+					ReceiveAt: "17:00:00",
+					Success:   true,
+					
+				},
+			},
+		},
+	},
+	Handler: Handler{
+			Name: "WEBHOOK",
+			Address: "http://localhost:8081/api/v1/msg",
+	},
+
+}
+
+
+var afterreset  = Schedule{
+	Name: "First Schedule",
+	Timing: "24h",
+	Start: Node{
+		Nodes: []Node{
+			Node{
+
+				Event: &Event{
+					Name:      "first event",
+					ReceiveBy: "18:00:00",
+					ReceiveAt: "",
+					Success:   true,
+					
+				},
+			},
+			Node{
+				Event: &Event{
+					Name:      "third event",
+					ReceiveBy: "18:00:00",
+					ReceiveAt: "",
+					Success:   true,
+					
+				},
+			},
+		},
+	},
+	Handler: Handler{
+			Name: "WEBHOOK",
+			Address: "http://localhost:8081/api/v1/msg",
+	},
+
+}
+var n *ScheduleManager
+func TestTimings(test *testing.T) {
+	n = n.Init(&c)
+	var currentTime time.Time
+	currentTime = time.Now()
+	newTime := time.Now().AddDate(0,0,-1)
+	n.EvaluationTime = currentTime
+	n.AddSchedule(&beforereset)
+	n.EvaluateAll()
+	n.EvaluationTime = newTime
+	n.EvaluateAll()
+	//bring back te assert equal, but one that functions properly with the function 
+	
+} 

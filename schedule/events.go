@@ -26,6 +26,7 @@ func (e *Event) EvaluateTime(h notifier.NotifyHandler) bool {
 	atTime := ConvertTime(e.ReceiveAt)
 	common.Debug.Println(byTime)
 	common.Debug.Println(atTime)
+	
 	if atTime.IsZero() {
 		if time.Now().After(byTime) {
 		
