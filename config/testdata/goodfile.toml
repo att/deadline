@@ -3,6 +3,6 @@ dao = "file"
 [fileconfig]
     directory = "../server/"
 [dbconfig]
-    connection_string = "somethintoo"
+    connection_string = "N/A"
 [serverconfig]
     port = "8081"
