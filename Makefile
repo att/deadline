@@ -7,7 +7,7 @@ server_output		?=	"deadline-server"
 
 threshold		?=	"10"
 packages = $(shell go list ./... | grep -v /vendor/)
-packages_relative = $(shell go list ./... | grep -v /vendor/ | cut -d"/" -f3)
+packages_relative = $(shell go list ./... | grep -v /vendor/ | cut -d"/" -f4)
 #check_complexity = $(shell scripts/check_complexity.sh -t $(threshold) -f $(pkg))
 check_complexity = $(shell echo $(pkg))
 

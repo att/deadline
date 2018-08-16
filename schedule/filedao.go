@@ -2,8 +2,8 @@ package schedule
 import (
 	"strings"
 
-	"egbitbucket.dtvops.net/deadline/config"
-	"egbitbucket.dtvops.net/deadline/common"
+	"github.com/att/deadline/config"
+	"github.com/att/deadline/common"
 	"os"
 	"io/ioutil"
 	"encoding/xml"

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 	"github.com/jasonlvhit/gocron"
-	"egbitbucket.dtvops.net/deadline/config"
-	"egbitbucket.dtvops.net/deadline/server"
-	"egbitbucket.dtvops.net/deadline/common"
+	"github.com/att/deadline/config"
+	"github.com/att/deadline/server"
+	"github.com/att/deadline/common"
 )
 
 var (

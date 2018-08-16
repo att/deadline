@@ -2,8 +2,8 @@ package schedule
 import (
 	"time"
 	"errors"
-	"egbitbucket.dtvops.net/deadline/notifier"
-	"egbitbucket.dtvops.net/deadline/common"
+	"github.com/att/deadline/notifier"
+	"github.com/att/deadline/common"
 )
 
 func (e Event) ValidateEvent() error {

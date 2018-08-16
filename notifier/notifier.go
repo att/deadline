@@ -3,7 +3,7 @@ import (
 	"encoding/json"
 	"bytes"
 	"net/http"
-	"egbitbucket.dtvops.net/deadline/common"
+	"github.com/att/deadline/common"
 )
 
 

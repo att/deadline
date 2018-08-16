@@ -4,8 +4,8 @@ import (
 	"time"
 	"log"
 	"testing"
-	"egbitbucket.dtvops.net/deadline/config"
-	"egbitbucket.dtvops.net/deadline/notifier"
+	"github.com/att/deadline/config"
+	"github.com/att/deadline/notifier"
 	"github.com/stretchr/testify/assert"
 )
 

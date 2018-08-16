@@ -4,7 +4,7 @@ import(
 	"log"
 	"bytes"
 	"time"
-	"egbitbucket.dtvops.net/deadline/common"
+	"github.com/att/deadline/common"
 	"github.com/jmoiron/sqlx"
 	"encoding/xml"
 	

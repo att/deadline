@@ -4,7 +4,7 @@ import (
 	"errors"
 	"os"
 	"github.com/BurntSushi/toml"
-	"egbitbucket.dtvops.net/deadline/common"
+	"github.com/att/deadline/common"
 )
 
 func validateConfig(c Config) error {

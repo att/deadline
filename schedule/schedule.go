@@ -2,8 +2,8 @@ package schedule
 
 import (
 	"time"
-	"egbitbucket.dtvops.net/deadline/common"
-	"egbitbucket.dtvops.net/deadline/notifier"
+	"github.com/att/deadline/common"
+	"github.com/att/deadline/notifier"
 	"bytes"
 	"encoding/xml"
 	

@@ -8,13 +8,13 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"egbitbucket.dtvops.net/deadline/config"
-	"egbitbucket.dtvops.net/deadline/schedule"
+	"github.com/att/deadline/config"
+	"github.com/att/deadline/schedule"
 	"github.com/stretchr/testify/assert"
 )
 var c = config.Config{
 	FileConfig: config.FileConfig{
-		Directory: "/home/kaelapolintz/go/src/egbitbucket.dtvops.net/deadline/server",
+		Directory: "/home/kaelapolintz/go/src/github.com/att/deadline/server",
 	},
 	DAO: "file",
 	Server: config.ServConfig{

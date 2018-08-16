@@ -4,9 +4,9 @@ import (
 	"os"
 	"bytes"
 	
-	"egbitbucket.dtvops.net/deadline/common"
-	"egbitbucket.dtvops.net/deadline/config"
-	"egbitbucket.dtvops.net/deadline/schedule"
+	"github.com/att/deadline/common"
+	"github.com/att/deadline/config"
+	"github.com/att/deadline/schedule"
 	"encoding/json"
 	"encoding/xml"
 	"errors"

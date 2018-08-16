@@ -4,9 +4,9 @@ import (
 "errors"
 "time"
 "os"
-"egbitbucket.dtvops.net/deadline/common"
-"egbitbucket.dtvops.net/deadline/notifier"
-"egbitbucket.dtvops.net/deadline/config"
+"github.com/att/deadline/common"
+"github.com/att/deadline/notifier"
+"github.com/att/deadline/config"
 )
 
 var Fd ScheduleDAO

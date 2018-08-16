@@ -2,7 +2,7 @@ package schedule
 import (
 	"encoding/xml"
 	"encoding/json"
-	"egbitbucket.dtvops.net/deadline/common"
+	"github.com/att/deadline/common"
 	"errors"
 	"bytes"
 )
