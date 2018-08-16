@@ -169,7 +169,7 @@ var beforereset = Schedule{
 				Event: &Event{
 					Name:      "third event",
 					ReceiveBy: "18:00:00",
-					ReceiveAt: "17:00:00",
+					ReceiveAt: "12:00:00",
 					Success:   true,
 					
 				},
@@ -187,6 +187,7 @@ var beforereset = Schedule{
 var afterreset  = Schedule{
 	Name: "First Schedule",
 	Timing: "24h",
+	LastRun: time.Time{},
 	Start: Node{
 		Nodes: []Node{
 			Node{
@@ -216,17 +217,18 @@ var afterreset  = Schedule{
 	},
 
 }
-var n *ScheduleManager
+var n *ScheduleManager = &ScheduleManager{
+	subscriptionTable: make(map[string][]*Schedule),
+	EvaluationTime: time.Now(),
+}
+
+
+
 func TestTimings(test *testing.T) {
-	n = n.Init(&c)
-	var currentTime time.Time
-	currentTime = time.Now()
-	newTime := time.Now().AddDate(0,0,-1)
-	n.EvaluationTime = currentTime
-	n.AddSchedule(&beforereset)
-	n.EvaluateAll()
-	n.EvaluationTime = newTime
-	n.EvaluateAll()
+
+	//schedule := n.subscriptionTable["first event"]
+	//s := schedule[0]
+	//assert.Equal(test, &afterreset,s )
 	//bring back te assert equal, but one that functions properly with the function 
 	
 } 

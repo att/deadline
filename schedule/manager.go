@@ -1,8 +1,7 @@
 package schedule
 import (
-	
 //"github.com/davecgh/go-spew/spew"
-
+"errors"
 "time"
 "os"
 "egbitbucket.dtvops.net/deadline/common"
@@ -17,6 +16,7 @@ func (m *ScheduleManager) getInstance() *ScheduleManager{
 	if m == nil {
 		var manager = ScheduleManager{
 			subscriptionTable: make(map[string][]*Schedule),
+			scheduleTable: make(map[string]*Schedule),
 			EvaluationTime: time.Now(),
 		}
 		return &manager 
@@ -46,6 +46,7 @@ func (m *ScheduleManager) Init(cfg *config.Config) *ScheduleManager{
 		newSchedule := s
 		//make sure pointers are different
 		currentManager.AddSchedule(&newSchedule)
+		currentManager.scheduleTable[s.Name] = &newSchedule
 
 	}
 
@@ -54,6 +55,8 @@ func (m *ScheduleManager) Init(cfg *config.Config) *ScheduleManager{
 	for _, e := range evnts {
 		currentManager.UpdateEvents(&e)
 	}
+/* 	common.Debug.Println("Our scheduleTable:")
+	spew.Dump(currentManager.scheduleTable) */
 	return currentManager
 }
 
@@ -131,6 +134,24 @@ func (m *ScheduleManager) AddSchedule(s *Schedule) {
 		}
 		scheds = append(scheds, s)
 		m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = scheds
+		
 	}
 	
+}
+
+func (m *ScheduleManager) GetLiveSchedule(name string) ([]byte,error) {
+	
+	//check if it is in the table 
+	i, ok := m.scheduleTable[name]
+	if !ok {
+		return []byte{},errors.New("It is not in the table")
+	}
+
+	bytes, err := retrieveLiveSchedule(*i) 
+	if err != nil {
+		return []byte{},errors.New("Could not encode a live schedule")
+	}
+	//if it is, put it into the live struct 
+
+	return bytes,nil
 }

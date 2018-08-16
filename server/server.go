@@ -40,9 +40,10 @@ func (dlsvr *DeadlineServer) Stop() error {
 func newDeadlineHandler() http.Handler {
 
 	handler := http.NewServeMux()
-	handler.HandleFunc("/api/v1/event", eventHander)
+	handler.HandleFunc("/api/v1/event", eventHandler)
 	handler.HandleFunc("/api/v1/schedule", scheduleHandler)
 	handler.HandleFunc("/api/v1/msg", notifyHandler)
+	handler.HandleFunc("/status", statusHandler)
 	return handler
 }
 
@@ -59,7 +60,7 @@ func notifyHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func eventHander(w http.ResponseWriter, r *http.Request) {
+func eventHandler(w http.ResponseWriter, r *http.Request) {
 
 	event := schedule.Event{}
 	if r.Body == nil {
@@ -94,6 +95,36 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK) 
 	}
 }
+
+func statusHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		name, err := getParams(r)
+		if err != nil {
+			common.Info.Println(err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+
+		}
+		bytes, err := M.GetLiveSchedule(name)
+		if err != nil {
+			common.Info.Println(err)
+			w.WriteHeader(http.StatusBadRequest)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+
+		_, err = w.Write(bytes)
+
+		if err != nil {
+			common.Info.Println(err)
+			return
+		}
+
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 
 
 func doMethod(method string, w http.ResponseWriter, r *http.Request) error {
@@ -140,12 +171,12 @@ func putSchedule(w http.ResponseWriter, r *http.Request, sched schedule.Schedule
 }
 
 func getSchedule(w http.ResponseWriter,r *http.Request) error {
-		keys, ok := r.URL.Query()["name"]
-		if !ok || len(keys[0]) < 1 {
-			return errors.New("You didn't have a parameter")
+		name, err := getParams(r)
+		if err != nil {
+			return err 
 		}
 
-		bytes, err := schedule.Fd.GetByName(string(keys[0]))
+		bytes, err := schedule.Fd.GetByName(name)
 		if err != nil {
 			return err
 		}
@@ -163,3 +194,10 @@ func getSchedule(w http.ResponseWriter,r *http.Request) error {
 	}
 
 
+func getParams(r *http.Request) (string, error){
+	keys, ok := r.URL.Query()["name"]
+	if !ok || len(keys[0]) < 1 {
+		return "",errors.New("You didn't have a parameter")
+	}
+	return string(keys[0]), nil
+}

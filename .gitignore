@@ -1,6 +1,0 @@
-vendor/
-deadline-server
-cmd/cmd
-
-*/*.swp
-*/.*.sw*

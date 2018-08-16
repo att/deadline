@@ -5,7 +5,6 @@ import(
 	"bytes"
 	"time"
 	"egbitbucket.dtvops.net/deadline/common"
-	//"github.com/davecgh/go-spew/spew"
 	"github.com/jmoiron/sqlx"
 	"encoding/xml"
 	
