@@ -38,7 +38,7 @@ func (fd fileDAO) GetByName(name string) ([]byte, error) {
 	return bytes, nil
 }
 
-func (fd fileDAO) Save(s *Schedule) error {
+func (fd fileDAO) Save(s *Definition) error {
 	
 	str := s.Name + ".xml"
 	f, err := os.Create(fd.Path + "/" +  str)
@@ -56,13 +56,13 @@ func (fd fileDAO) Save(s *Schedule) error {
 	return nil
 }
 
-func (fd fileDAO) LoadStatelessSchedules() ([]Schedule,error) { //will definiely change names later 
-	var schedules = []Schedule{}
-	s := Schedule{}
+func (fd fileDAO) LoadStatelessSchedules() ([]Definition,error) { 
+	var schedules = []Definition{}
+	s := Definition{}
 	file, err := os.Open(fd.Path)
 	if err != nil {
 		common.Info.Println("Could not open directory.")
-		return []Schedule{}, err
+		return []Definition{}, err
 	}
 	defer file.Close()
 

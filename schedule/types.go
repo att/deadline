@@ -4,26 +4,26 @@ import (
 	"encoding/xml"
 	"time"
 )
-//definition
-type Schedule struct {
-	XMLName  xml.Name       `xml:"schedule"`
-	Handler  Handler 		`json:"handler" xml:"handler,omitempty" db:"handler"`
-	Timing   string         `xml:"timing,attr,omitempty" db:"timing"`	
-	Name     string         `xml:"name,attr,omitempty" db:"name"`
-	Schedule []byte         `xml:",innerxml"`
-	LastRun	 time.Time
-	Start    Node           `xml:"-"`
-	End      Node           `xml:"-"`
-	Error    Node           `xml:"-"`
+
+type Definition struct {
+	XMLName  xml.Name       	`xml:"schedule"`
+	Handler  Handler 			`json:"handler" xml:"handler,omitempty" db:"handler"`
+	Timing   string         	`xml:"timing,attr,omitempty" db:"timing"`	
+	Name     string         	`xml:"name,attr,omitempty" db:"name"`
+	Schedule []byte         	`xml:",innerxml"`
+	LastRun	 time.Time			`xml:"-"`
+	Start    Node           	`xml:"-"`
+	End      Node           	`xml:"-"`
+	Error    Node           	`xml:"-"`
 }
 
-type LiveSchedule struct {
+type Live struct {
 
-	Timing   string         `json:"timing,attr,omitempty" db:"timing"`	
-	Name     string         `json:"name,attr,omitempty" db:"name"`
-	LastRun	 time.Time		`json:"lastrun"`
-	Events []Event			`json:"events"`
-	Handler  Handler		`json:"handler"`
+	Timing   string         	`json:"timing,attr,omitempty" db:"timing"`	
+	Name     string         	`json:"name,attr,omitempty" db:"name"`
+	LastRun	 time.Time			`json:"lastrun"`
+	Events []Event				`json:"events"`
+	Handler  Handler			`json:"handler"`
 }
 
 type Event struct {
@@ -72,8 +72,8 @@ type End struct {
 }
 
 type ScheduleManager struct {
-	subscriptionTable map[string][]*Schedule
-	scheduleTable 	  map[string]*Schedule
+	subscriptionTable map[string][]*Definition
+	ScheduleTable 	  map[string]*Definition
 	EvaluationTime	time.Time
 }
 
@@ -83,8 +83,8 @@ type Error struct {
 
 type ScheduleDAO interface {
 	GetByName(string) ([]byte, error)
-	Save(s *Schedule) error
-	LoadStatelessSchedules() ([]Schedule,error)
+	Save(s *Definition) error
+	LoadStatelessSchedules() ([]Definition,error)
 	LoadEvents() ([]Event,error)
 	SaveEvent( e *Event) error
 }

@@ -11,11 +11,14 @@ import(
 )
 
 func (db dbDAO) GetByName(name string) ([]byte, error) {
-	var s Schedule
+	var s Definition
+	var sEvent ScheduledEvent
+	var sHandler ScheduledHandler
+	var eventsForSchedule []Event
 	s.Name = name
-	sEvent := ScheduledEvent{}
+	
 	sEvent.ScheduleName = s.Name
-	sHandler := ScheduledHandler{}
+	
 	sHandler.ScheduleName = s.Name
 
 	dbb, err := sqlx.Open("mysql", db.ConnectionString)
@@ -32,7 +35,7 @@ func (db dbDAO) GetByName(name string) ([]byte, error) {
 	rows2, err := dbb.NamedQuery(`SELECT * FROM schedulevents WHERE schedulename=:schedulename`, sEvent)
 	common.CheckError(err)
 
-	eventsForSchedule := []Event{}
+	
 	for rows2.Next() {
 		err := rows2.StructScan(&sEvent)
 		common.CheckError(err)
@@ -64,7 +67,9 @@ func (db dbDAO) GetByName(name string) ([]byte, error) {
 	return schedulebytes, err
 }
 
-func (db dbDAO) Save(s *Schedule) error {
+func (db dbDAO) Save(s *Definition) error {
+	var evnts []Event
+	var encodedEvent = Event{}
 	dbb, err := sqlx.Open("mysql", db.ConnectionString)
 	if err != nil {
 		log.Fatal(err)
@@ -73,12 +78,11 @@ func (db dbDAO) Save(s *Schedule) error {
 		tx := dbb.MustBegin()
 		_, err = tx.NamedExec("INSERT INTO schedules (name, timing) VALUES (:name,:timing)", &s)
 		common.CheckError(err)
-		evnts := []Event{}
 		buf := bytes.NewBuffer(s.Schedule)
 		dec := xml.NewDecoder(buf)
-		var o = Event{}
-		for dec.Decode(&o) == nil {
-			evnts = append(evnts,o)
+
+		for dec.Decode(&encodedEvent) == nil {
+			evnts = append(evnts,encodedEvent)
 		}
 		for _, e := range evnts {
 		_, err = tx.NamedExec("INSERT INTO schedulevents (schedulename, ename, ereceiveby) VALUES (:schedulename, :ename,:ereceiveby)", 
@@ -106,21 +110,19 @@ func (db dbDAO) Save(s *Schedule) error {
 	return nil
 }
 
-func (db dbDAO) LoadStatelessSchedules() ([]Schedule,error){
-	schedulesFromDB := []Schedule{}
+func (db dbDAO) LoadStatelessSchedules() ([]Definition,error){
+	var schedulesFromDB []Definition
 
 	dbb, err := sqlx.Open("mysql", db.ConnectionString)
 	if err != nil{
 		common.CheckError(err)
-		return []Schedule{},err
+		return []Definition{},err
 	}
-
-	//initializeTables(dbb)
 
 	err = dbb.Select(&schedulesFromDB, "SELECT * FROM schedules")
 	if err != nil {
 		common.CheckError(err)
-		return []Schedule{},err
+		return []Definition{},err
 	}
 
 	for s := 0; s < len(schedulesFromDB); s++ {
@@ -136,8 +138,7 @@ func (db dbDAO) LoadStatelessSchedules() ([]Schedule,error){
 
 
 func (db dbDAO) LoadEvents() ([]Event,error){
-	
-	liveEvents := []Event{}
+	var liveEvents []Event
 	dbb, err := sqlx.Open("mysql", db.ConnectionString)
 	if err != nil{
 		return []Event{},err
@@ -147,12 +148,13 @@ func (db dbDAO) LoadEvents() ([]Event,error){
 		common.CheckError(err)
 		return []Event{}, err
 	}
+
 	return liveEvents, nil
 }
 
 func (db dbDAO) SaveEvent(e *Event) error{
 	
-	e.ReceiveAt = time.Now().Format("01-02-2006 15:04:05")
+	e.ReceiveAt = time.Now().Format("15:04:05")
 	e.IsLive = true
 	dbb, err := sqlx.Open("mysql", db.ConnectionString)
 	if err != nil {

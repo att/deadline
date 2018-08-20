@@ -15,10 +15,6 @@ func (e Event) ValidateEvent() error {
 }
 
 
-func (e *Event) makeLive() {
-	e.IsLive = true
-	e.ReceiveAt = time.Now().Format("15:04:05")
-}
 
 func (e *Event) EvaluateTime(h notifier.NotifyHandler) bool {
 

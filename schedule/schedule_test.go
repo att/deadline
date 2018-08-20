@@ -45,7 +45,7 @@ var e3 = Event{
 	Success:   true,
 }
 
-var s1 = Schedule{
+var s1 = Definition{
 	Name: "First Schedule",
 	Timing: "24h",
 	Start: Node{
@@ -66,7 +66,7 @@ var s1 = Schedule{
 
 }
 
-var s2 = Schedule{
+var s2 = Definition{
 	Name: "Second Schedule",
 	Start: Node{
 		Nodes: []Node{
@@ -81,7 +81,7 @@ var s2 = Schedule{
 	},
 }
 
-var s3 = Schedule{
+var s3 = Definition{
 	Name: "Third Schedule",
 	Start: Node{
 		Nodes: []Node{
@@ -94,7 +94,7 @@ var s3 = Schedule{
 }
 
 var fd = NewScheduleDAO(&c)
-var s = Schedule{
+var s = Definition{
 	Name:   "sample_schedule",
 	Timing: "daily",
 	Handler: Handler{
@@ -150,7 +150,7 @@ func TestEvaluation(test *testing.T) {
 }
 
 
-var beforereset = Schedule{
+var beforereset = Definition{
 	Name: "First Schedule",
 	Timing: "24h",
 	Start: Node{
@@ -184,7 +184,7 @@ var beforereset = Schedule{
 }
 
 
-var afterreset  = Schedule{
+var afterreset  = Definition{
 	Name: "First Schedule",
 	Timing: "24h",
 	LastRun: time.Time{},
@@ -218,7 +218,7 @@ var afterreset  = Schedule{
 
 }
 var n *ScheduleManager = &ScheduleManager{
-	subscriptionTable: make(map[string][]*Schedule),
+	subscriptionTable: make(map[string][]*Definition),
 	EvaluationTime: time.Now(),
 }
 

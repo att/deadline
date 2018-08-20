@@ -8,7 +8,8 @@ import (
 
 
 func (w Webhook) Send(msg string) {
-	str := msg
+	var str string
+	str = msg
 	jv, err := json.Marshal(str)
 	if err != nil {
 		common.CheckError(err)

@@ -1,6 +1,5 @@
 package schedule
 import (
-//"github.com/davecgh/go-spew/spew"
 "errors"
 "time"
 "os"
@@ -15,8 +14,8 @@ var Fd ScheduleDAO
 func (m *ScheduleManager) getInstance() *ScheduleManager{
 	if m == nil {
 		var manager = ScheduleManager{
-			subscriptionTable: make(map[string][]*Schedule),
-			scheduleTable: make(map[string]*Schedule),
+			subscriptionTable: make(map[string][]*Definition),
+			ScheduleTable: make(map[string]*Definition),
 			EvaluationTime: time.Now(),
 		}
 		return &manager 
@@ -46,7 +45,7 @@ func (m *ScheduleManager) Init(cfg *config.Config) *ScheduleManager{
 		newSchedule := s
 		//make sure pointers are different
 		currentManager.AddSchedule(&newSchedule)
-		currentManager.scheduleTable[s.Name] = &newSchedule
+		currentManager.ScheduleTable[s.Name] = &newSchedule
 
 	}
 
@@ -55,8 +54,6 @@ func (m *ScheduleManager) Init(cfg *config.Config) *ScheduleManager{
 	for _, e := range evnts {
 		currentManager.UpdateEvents(&e)
 	}
-/* 	common.Debug.Println("Our scheduleTable:")
-	spew.Dump(currentManager.scheduleTable) */
 	return currentManager
 }
 
@@ -73,7 +70,7 @@ func (m *ScheduleManager) UpdateEvents(e *Event) {
 	
 }
 
-func (m *ScheduleManager) UpdateSchedule(s *Schedule) {
+func (m *ScheduleManager) UpdateSchedule(s *Definition) {
 	err := Fd.Save(s)
 	common.CheckError(err)
 	m.AddSchedule(s)
@@ -123,13 +120,13 @@ func (m *ScheduleManager) EvaluateAll() {
 
 }
 
-func (m *ScheduleManager) AddSchedule(s *Schedule) {
+func (m *ScheduleManager) AddSchedule(s *Definition) {
 
 	
 	for i := 0; i < len(s.Start.Nodes); i++ {
 		scheds := m.subscriptionTable[(s.Start.Nodes[i].Event.Name)]
 		if scheds == nil {
-			m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = []*Schedule{s}
+			m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = []*Definition{s}
 			continue
 		}
 		scheds = append(scheds, s)
@@ -142,12 +139,12 @@ func (m *ScheduleManager) AddSchedule(s *Schedule) {
 func (m *ScheduleManager) GetLiveSchedule(name string) ([]byte,error) {
 	
 	//check if it is in the table 
-	i, ok := m.scheduleTable[name]
+	i, ok := m.ScheduleTable[name]
 	if !ok {
 		return []byte{},errors.New("It is not in the table")
 	}
 
-	bytes, err := retrieveLiveSchedule(*i) 
+	bytes, err := retrieveLiveSchedule(i) 
 	if err != nil {
 		return []byte{},errors.New("Could not encode a live schedule")
 	}
