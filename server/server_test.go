@@ -28,7 +28,7 @@ var eventApi = baseAddress + "/api/v1/event"
 var scheduleApi = baseAddress + "/api/v1/schedule"
 var badfile = "testdata/badfile.xml"
 var goodfile = "testdata/sample_schedule.xml"
-var testschedule schedule.Schedule
+var testschedule schedule.Definition
 
 func TestMain(m *testing.M) {
 	go server.Start()

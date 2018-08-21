@@ -1,6 +1,7 @@
 package server
 
 import (
+	"time"
 	"os"
 	"bytes"
 	
@@ -77,6 +78,8 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
+	event.ReceiveAt = time.Now().Format("15:04:05")
 	M.UpdateEvents(&event)
 	err = schedule.Fd.SaveEvent(&event)
 	common.CheckError(err)
@@ -129,7 +132,7 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 
 func doMethod(method string, w http.ResponseWriter, r *http.Request) error {
 
-	sched := schedule.Schedule{}
+	sched := schedule.Definition{}
 
 	if r.Body == nil {
 		
@@ -144,7 +147,7 @@ func doMethod(method string, w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func putSchedule(w http.ResponseWriter, r *http.Request, sched schedule.Schedule)  error {
+func putSchedule(w http.ResponseWriter, r *http.Request, sched schedule.Definition)  error {
 			err := xml.NewDecoder(r.Body).Decode(&sched)
 				if err != nil {
 					return err

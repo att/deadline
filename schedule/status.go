@@ -7,17 +7,17 @@ import (
 	"bytes"
 )
 
-func retrieveLiveSchedule(s Schedule) ([]byte,error){
-	evnt := Event{}
-	eventsFromSchedule := []Event{}
+func retrieveLiveSchedule(s *Definition) ([]byte,error){
+	var evnt Event
+	var eventsFromSchedule []Event
 	var counter = 0
 
 	buf := bytes.NewBuffer(s.Schedule)
 	dec := xml.NewDecoder(buf)
 	for dec.Decode(&evnt) == nil {
 		common.Debug.Println("It gets stuck in this loop")
-		e := evnt
-		eventsFromSchedule = append(eventsFromSchedule,e)
+		e := s.Start.findEvent(evnt.Name)
+		eventsFromSchedule = append(eventsFromSchedule,*e)
 		counter++
 	}
 
@@ -25,7 +25,7 @@ func retrieveLiveSchedule(s Schedule) ([]byte,error){
 		return []byte{},errors.New("Had problems unmarshalling")
 	}
 
-	l := LiveSchedule{
+	l := Live{
 		Name: s.Name,
 		Timing: s.Timing,
 		LastRun: s.LastRun,

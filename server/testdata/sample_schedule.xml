@@ -1,1 +1,1 @@
-<schedule timing="daily" name="sample_schedule"><handler name="email handler"><address>kp755d@att.com</address></handler><LastRun>0001-01-01T00:00:00Z</LastRun></schedule>
+<schedule timing="daily" name="sample_schedule"><handler name="email handler"><address>kp755d@att.com</address></handler></schedule>

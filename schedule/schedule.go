@@ -64,12 +64,13 @@ func (e *Event) EvaluateEvent(h notifier.NotifyHandler) bool {
 	return e.EvaluateTime(h) && e.EvaluateSuccess()
 }
 
-func (s Schedule) EventOccurred(e *Event) {
+func (s Definition) EventOccurred(e *Event) {
 
 	ev := s.Start.findEvent(e.Name)
 	
 	if ev != nil {
-		ev.makeLive() 
+		ev.ReceiveAt = e.ReceiveAt
+		ev.IsLive = true
 		ev.Success = e.Success
 		s.Start.OkTo = &s.End
 		
@@ -79,7 +80,7 @@ func (s Schedule) EventOccurred(e *Event) {
 }
 
 
-func (s *Schedule) MakeNodes() {
+func (s *Definition) MakeNodes() {
 	s.fixSchedule()
 	var f Event
 	buf := bytes.NewBuffer(s.Schedule)
@@ -100,7 +101,7 @@ func (s *Schedule) MakeNodes() {
 }
 
 
-func (s *Schedule) fixSchedule() {
+func (s *Definition) fixSchedule() {
 	evnts := []Event{}
 	b := bytes.NewBuffer(s.Schedule)
 	d := xml.NewDecoder(b)
