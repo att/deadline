@@ -187,7 +187,6 @@ var beforereset = Definition{
 var afterreset  = Definition{
 	Name: "First Schedule",
 	Timing: "24h",
-	LastRun: time.Time{},
 	Start: Node{
 		Nodes: []Node{
 			Node{
@@ -218,7 +217,7 @@ var afterreset  = Definition{
 
 }
 var n *ScheduleManager = &ScheduleManager{
-	subscriptionTable: make(map[string][]*Definition),
+	subscriptionTable: make(map[string][]*Live),
 	EvaluationTime: time.Now(),
 }
 

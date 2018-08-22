@@ -154,7 +154,7 @@ func putSchedule(w http.ResponseWriter, r *http.Request, sched schedule.Definiti
 				}
 			var evnt schedule.Event
 
-			buf := bytes.NewBuffer(sched.Schedule)
+			buf := bytes.NewBuffer(sched.ScheduleContent)
 			dec := xml.NewDecoder(buf)
 			for dec.Decode(&evnt) == nil {
 				e := evnt
@@ -192,8 +192,7 @@ func getSchedule(w http.ResponseWriter,r *http.Request) error {
 			return err
 		}
 
-		return nil
-		
+		return nil	
 	}
 
 

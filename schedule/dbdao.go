@@ -16,9 +16,7 @@ func (db dbDAO) GetByName(name string) ([]byte, error) {
 	var sHandler ScheduledHandler
 	var eventsForSchedule []Event
 	s.Name = name
-	
 	sEvent.ScheduleName = s.Name
-	
 	sHandler.ScheduleName = s.Name
 
 	dbb, err := sqlx.Open("mysql", db.ConnectionString)
@@ -48,7 +46,7 @@ func (db dbDAO) GetByName(name string) ([]byte, error) {
 
 	bytes, err := xml.Marshal(eventsForSchedule)
 	common.CheckError(err)
-	s.Schedule = bytes
+	s.ScheduleContent = bytes
 	
 	rows3, err := dbb.NamedQuery(`SELECT * FROM handlers WHERE schedulename=:schedulename`, &sHandler)
 	common.CheckError(err)
@@ -78,7 +76,7 @@ func (db dbDAO) Save(s *Definition) error {
 		tx := dbb.MustBegin()
 		_, err = tx.NamedExec("INSERT INTO schedules (name, timing) VALUES (:name,:timing)", &s)
 		common.CheckError(err)
-		buf := bytes.NewBuffer(s.Schedule)
+		buf := bytes.NewBuffer(s.ScheduleContent)
 		dec := xml.NewDecoder(buf)
 
 		for dec.Decode(&encodedEvent) == nil {
@@ -110,27 +108,45 @@ func (db dbDAO) Save(s *Definition) error {
 	return nil
 }
 
-func (db dbDAO) LoadStatelessSchedules() ([]Definition,error){
-	var schedulesFromDB []Definition
+func (db dbDAO) LoadSchedules() ([]Live,error){
+	var schedulesFromDB = []Live{}
+	var evnts []Event
 
 	dbb, err := sqlx.Open("mysql", db.ConnectionString)
-	if err != nil{
-		common.CheckError(err)
-		return []Definition{},err
-	}
+	common.CheckError(err);
 
 	err = dbb.Select(&schedulesFromDB, "SELECT * FROM schedules")
-	if err != nil {
-		common.CheckError(err)
-		return []Definition{},err
-	}
+	common.CheckError(err)
 
 	for s := 0; s < len(schedulesFromDB); s++ {
-		bytes, err := db.GetByName(schedulesFromDB[s].Name)
+	rows, err := dbb.Query("SELECT schedulename,ename,ereceiveby FROM schedulevents WHERE schedulename=?",schedulesFromDB[s].Name)
+	common.CheckError(err)
+	for rows.Next() {
+		sEvent := ScheduledEvent{}
+		err := rows.Scan(&sEvent.ScheduleName, &sEvent.EName, &sEvent.EReceiveBy)
 		common.CheckError(err)
-		err = xml.Unmarshal(bytes,&schedulesFromDB[s])
-		common.CheckError(err)
+		
+		evnts = append(evnts, Event{Name: sEvent.EName, ReceiveBy: sEvent.EReceiveBy})
 	}
+		bytes, err := xml.Marshal(&evnts)
+		common.CheckError(err)
+		scheduleForTree := Definition{ScheduleContent: bytes}
+		scheduleForTree.MakeNodes()
+		schedulesFromDB[s].Start = scheduleForTree.Start
+
+
+		rows, err = dbb.Query("SELECT schedulename,name,address FROM handlers WHERE schedulename=?",schedulesFromDB[s].Name)
+		common.CheckError(err)
+		for rows.Next() {
+			sHandler := ScheduledHandler{}
+			err := rows.Scan(&sHandler.ScheduleName, &sHandler.Name, &sHandler.Address)
+			common.CheckError(err)
+			schedulesFromDB[s].Handler = Handler{Name: sHandler.Name, Address: sHandler.Address}
+		}
+
+
+	}
+	
 
 	return schedulesFromDB,nil
 }
