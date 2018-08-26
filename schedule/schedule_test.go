@@ -2,6 +2,9 @@ package schedule
 
 import (
 	"log"
+	"math/rand"
+	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -15,7 +18,7 @@ import (
 var c = config.Config{
 	DAO: "file",
 	FileConfig: config.FileConfig{
-		Directory: "../server/testdata",
+		Directory: os.TempDir() + "/deadline_test/" + strconv.Itoa(rand.Int()),
 	},
 	DBConfig: config.DBConfig{
 		ConnectionString: "somethintoo",

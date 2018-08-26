@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/xml"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -16,7 +18,7 @@ import (
 
 var c = config.Config{
 	FileConfig: config.FileConfig{
-		Directory: "/home/kaelapolintz/go/src/github.com/att/deadline/server",
+		Directory: os.TempDir() + "/deadline_test/" + strconv.Itoa(rand.Int()),
 	},
 	DAO: "file",
 	Server: config.ServConfig{
