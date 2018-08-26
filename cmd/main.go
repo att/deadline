@@ -4,10 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"github.com/jasonlvhit/gocron"
+
+	"github.com/att/deadline/common"
 	"github.com/att/deadline/config"
 	"github.com/att/deadline/server"
-	"github.com/att/deadline/common"
+	"github.com/jasonlvhit/gocron"
 )
 
 var (
@@ -24,7 +25,6 @@ const (
 )
 
 func main() {
-	common.Init(os.Stdout, os.Stdout)
 	flag.Parse()
 
 	if *showVersion {
@@ -43,9 +43,8 @@ func main() {
 
 	server.M = server.M.Init(cfg)
 
- 	go gocron.Every(10).Seconds().Do(server.M.EvaluateAll)
-	go gocron.Start() 
-
+	go gocron.Every(10).Seconds().Do(server.M.EvaluateAll)
+	go gocron.Start()
 
 	dlsvr := server.NewDeadlineServer(cfg)
 

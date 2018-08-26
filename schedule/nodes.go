@@ -1,15 +1,17 @@
 package schedule
 
-func (start Node) findEvent(name string) *Event {
+import "github.com/att/deadline/common"
+
+func findEvent(start common.Node, name string) *common.Event {
 	if start.Event != nil {
-		
+
 		if start.Event.Name == name {
 			return start.Event
 		}
-	} 
+	}
 	for j := 0; j < len(start.Nodes); j++ {
-		f := start.Nodes[j].findEvent(name)
-		if f != nil {		
+		f := findEvent(start.Nodes[j], name)
+		if f != nil {
 			return f
 		}
 	}
@@ -17,23 +19,23 @@ func (start Node) findEvent(name string) *Event {
 	return nil
 }
 
-func (start *Node) ResetEvents() {
-	
+func ResetEvents(start *common.Node) {
+
 	if start == nil {
-		return 
+		return
 	}
 
 	if start.Event != nil {
 		start.Event.ReceiveAt = ""
-		
-	} 
+
+	}
 	for j := 0; j < len(start.Nodes); j++ {
-		start.Nodes[j].ResetEvents()
+		ResetEvents(&start.Nodes[j])
 	}
 
-	return 
+	return
 }
 
-func (err Node) throwError() {
+func throwError(err common.Node) {
 	//things that kill the event
 }

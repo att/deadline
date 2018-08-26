@@ -1,47 +1,15 @@
 package schedule
 
 import (
-	"time"
-	"github.com/att/deadline/common"
-	"github.com/att/deadline/notifier"
 	"bytes"
 	"encoding/xml"
-	
+	"time"
 
+	"github.com/att/deadline/common"
+	"github.com/att/deadline/notifier"
 )
 
-
-var scheduleSchema = `
-CREATE TABLE schedules (
-    name text,
-	timing text
-)`
-var scheduleEventSchema = `
-CREATE TABLE schedulevents (
-	schedulename text,
-	ename		text,
-	ereceiveby text
-)`
-
-var  eventSchema = `
-CREATE TABLE events (
-	name 		text,
-	receiveat 	text,
-	success		text,
-	islive		text
-)`
-
-var handlerSchema = `
-CREATE TABLE handlers (
-	schedulename text,
-    name text,
-	address text
-)
-
-
-`
-
-func ConvertTime(timing string) (time.Time){
+func ConvertTime(timing string) time.Time {
 	var m = int(time.Now().Month())
 	loc, err := time.LoadLocation("Local")
 	common.CheckError(err)
@@ -50,99 +18,94 @@ func ConvertTime(timing string) (time.Time){
 		parsedTime = time.Time{}
 	}
 	if !parsedTime.IsZero() {
-		parsedTime = parsedTime.AddDate(time.Now().Year(),m-1,time.Now().Day()-1)
+		parsedTime = parsedTime.AddDate(time.Now().Year(), m-1, time.Now().Day()-1)
 	}
 	return parsedTime
 
 }
 
-
-func (e *Event) EvaluateSuccess() bool {
-	if (!e.IsLive) {
+func EvaluateSuccess(e *common.Event) bool {
+	if !e.IsLive {
 		return true
 	}
 	return e.Success
 }
-func (e *Event) EvaluateEvent(h notifier.NotifyHandler) bool {
-	return e.EvaluateTime(h) && e.EvaluateSuccess()
+func EvaluateEvent(e *common.Event, h notifier.NotifyHandler) bool {
+	return EvaluateTime(e, h) && EvaluateSuccess(e)
 }
 
-func (s *Live) EventOccurred(e *Event) {
+func (s *Live) EventOccurred(e *common.Event) {
 
-	ev := s.Start.findEvent(e.Name)
-	
+	ev := findEvent(s.Start, e.Name)
+
 	if ev != nil {
 		ev.ReceiveAt = e.ReceiveAt
 		ev.IsLive = true
 		ev.Success = e.Success
 		s.Start.OkTo = &s.End
-		
+
 	} else {
-	s.Start.ErrorTo = &s.Error
+		s.Start.ErrorTo = &s.Error
 	}
-	
+
 }
 
-
-func (s *Definition) MakeNodes() {
-	s.fixSchedule()
-	var f Event
+func MakeNodes(s *common.Definition) {
+	fixSchedule(s)
+	var f common.Event
 	buf := bytes.NewBuffer(s.ScheduleContent)
-				dec := xml.NewDecoder(buf)
-				for dec.Decode(&f) == nil {
-					e := f
-					valid := e.ValidateEvent()
-						if valid != nil {
-							common.Debug.Println("You had an invalid event")
-							return 
-						}
-					node1 := Node{
-						Event: &e,
-						Nodes: []Node{},
-					}
-					s.Start.Nodes = append(s.Start.Nodes, node1)
-				}
+	dec := xml.NewDecoder(buf)
+	for dec.Decode(&f) == nil {
+		e := f
+		valid := e.ValidateEvent()
+		if valid != nil {
+			common.Debug.Println("You had an invalid event")
+			return
+		}
+		node1 := common.Node{
+			Event: &e,
+			Nodes: []common.Node{},
+		}
+		s.Start.Nodes = append(s.Start.Nodes, node1)
+	}
 }
 
-
-func (s *Definition) fixSchedule() {
-	evnts := []Event{}
+func fixSchedule(s *common.Definition) {
+	evnts := []common.Event{}
 	b := bytes.NewBuffer(s.ScheduleContent)
 	d := xml.NewDecoder(b)
 
 	for {
 		t, err := d.Token()
-		if err != nil  {
-            break
-        }
+		if err != nil {
+			break
+		}
 
-        switch et := t.(type) {
+		switch et := t.(type) {
 
-        case xml.StartElement:
-            if et.Name.Local == "event" {
-                c := &Event{}
-                if err := d.DecodeElement(&c, &et); err != nil {
-                    panic(err)
-                }
-				evnts = append(evnts,(*c))
-            } 
+		case xml.StartElement:
+			if et.Name.Local == "event" {
+				c := &common.Event{}
+				if err := d.DecodeElement(&c, &et); err != nil {
+					panic(err)
+				}
+				evnts = append(evnts, (*c))
+			}
 		case xml.EndElement:
 			break
-        }
+		}
 	}
 	bytes, err := xml.Marshal(evnts)
 	common.CheckError(err)
 	s.ScheduleContent = bytes
 }
 
-
-func (s *Definition) ConvertToLive() *Live{
-
+func ConvertToLive(s *common.Definition) *Live {
 
 	return &Live{
-		Name: s.Name,
-		Timing: s.Timing,
+		Name:    s.Name,
+		Timing:  s.Timing,
 		Handler: s.Handler,
-		Start: s.Start,
+		Start:   s.Start,
 	}
 }

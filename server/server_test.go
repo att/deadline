@@ -8,10 +8,12 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/att/deadline/common"
 	"github.com/att/deadline/config"
-	"github.com/att/deadline/schedule"
 	"github.com/stretchr/testify/assert"
 )
+
 var c = config.Config{
 	FileConfig: config.FileConfig{
 		Directory: "/home/kaelapolintz/go/src/github.com/att/deadline/server",
@@ -20,7 +22,6 @@ var c = config.Config{
 	Server: config.ServConfig{
 		Port: "8081",
 	},
-
 }
 var server = NewDeadlineServer(&c)
 var baseAddress = "http://localhost:8081"
@@ -28,7 +29,7 @@ var eventApi = baseAddress + "/api/v1/event"
 var scheduleApi = baseAddress + "/api/v1/schedule"
 var badfile = "testdata/badfile.xml"
 var goodfile = "testdata/sample_schedule.xml"
-var testschedule schedule.Definition
+var testschedule common.Definition
 
 func TestMain(m *testing.M) {
 	go server.Start()
@@ -39,7 +40,7 @@ func TestMain(m *testing.M) {
 
 func TestGoodParams(test *testing.T) {
 	M = M.Init(&c)
-	
+
 	goodRequest := "{\"name\": \"kaela\", \"success\": true}"
 	response, err := http.Post(eventApi, "application/json", strings.NewReader(goodRequest))
 

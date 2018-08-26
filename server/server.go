@@ -1,17 +1,17 @@
 package server
 
 import (
-	"time"
-	"os"
 	"bytes"
-	
-	"github.com/att/deadline/common"
-	"github.com/att/deadline/config"
-	"github.com/att/deadline/schedule"
+	"time"
+
 	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"net/http"
+
+	"github.com/att/deadline/common"
+	"github.com/att/deadline/config"
+	"github.com/att/deadline/schedule"
 )
 
 var M *schedule.ScheduleManager
@@ -21,7 +21,7 @@ type DeadlineServer struct {
 }
 
 func NewDeadlineServer(c *config.Config) *DeadlineServer {
-	common.Init(os.Stdout,os.Stdout)
+
 	return &DeadlineServer{
 		server: &http.Server{
 			Addr:    ":" + c.Server.Port,
@@ -63,7 +63,7 @@ func notifyHandler(w http.ResponseWriter, r *http.Request) {
 
 func eventHandler(w http.ResponseWriter, r *http.Request) {
 
-	event := schedule.Event{}
+	event := common.Event{}
 	if r.Body == nil {
 		common.Info.Println("No request body sent")
 		w.WriteHeader(http.StatusBadRequest)
@@ -89,13 +89,13 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 
 func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 
-	err := doMethod(r.Method,w,r)
-	if  err != nil {
+	err := doMethod(r.Method, w, r)
+	if err != nil {
 		common.Info.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 
 	} else {
-	w.WriteHeader(http.StatusOK) 
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
@@ -128,78 +128,75 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-
-
 func doMethod(method string, w http.ResponseWriter, r *http.Request) error {
 
-	sched := schedule.Definition{}
+	sched := common.Definition{}
 
 	if r.Body == nil {
-		
+
 		return errors.New("No input")
 	}
 	switch method {
-		case "GET":
-			return getSchedule(w,r)
-		case "PUT":
-			return putSchedule(w,r,sched)
+	case "GET":
+		return getSchedule(w, r)
+	case "PUT":
+		return putSchedule(w, r, sched)
 	}
 	return nil
 }
 
-func putSchedule(w http.ResponseWriter, r *http.Request, sched schedule.Definition)  error {
-			err := xml.NewDecoder(r.Body).Decode(&sched)
-				if err != nil {
-					return err
-				}
-			var evnt schedule.Event
+func putSchedule(w http.ResponseWriter, r *http.Request, sched common.Definition) error {
+	err := xml.NewDecoder(r.Body).Decode(&sched)
+	if err != nil {
+		return err
+	}
+	var evnt common.Event
 
-			buf := bytes.NewBuffer(sched.ScheduleContent)
-			dec := xml.NewDecoder(buf)
-			for dec.Decode(&evnt) == nil {
-				e := evnt
-				//change location memory
-				valid := e.ValidateEvent()
-					if valid != nil {
-						return valid
-					}
-				node1 := schedule.Node{
-					Event: &e,
-					Nodes: []schedule.Node{},
-				}
-				sched.Start.Nodes = append(sched.Start.Nodes, node1)
-			}
-			M.UpdateSchedule(&sched)
-			return nil
+	buf := bytes.NewBuffer(sched.ScheduleContent)
+	dec := xml.NewDecoder(buf)
+	for dec.Decode(&evnt) == nil {
+		e := evnt
+		//change location memory
+		valid := e.ValidateEvent()
+		if valid != nil {
+			return valid
+		}
+		node1 := common.Node{
+			Event: &e,
+			Nodes: []common.Node{},
+		}
+		sched.Start.Nodes = append(sched.Start.Nodes, node1)
+	}
+	M.UpdateSchedule(&sched)
+	return nil
 }
 
-func getSchedule(w http.ResponseWriter,r *http.Request) error {
-		name, err := getParams(r)
-		if err != nil {
-			return err 
-		}
-
-		bytes, err := schedule.Fd.GetByName(name)
-		if err != nil {
-			return err
-		}
-
-		w.Header().Set("Content-Type", "application/xml")
-
-		_, err = w.Write(bytes)
-
-		if err != nil {
-			return err
-		}
-
-		return nil	
+func getSchedule(w http.ResponseWriter, r *http.Request) error {
+	name, err := getParams(r)
+	if err != nil {
+		return err
 	}
 
+	bytes, err := schedule.Fd.GetByName(name)
+	if err != nil {
+		return err
+	}
 
-func getParams(r *http.Request) (string, error){
+	w.Header().Set("Content-Type", "application/xml")
+
+	_, err = w.Write(bytes)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getParams(r *http.Request) (string, error) {
 	keys, ok := r.URL.Query()["name"]
 	if !ok || len(keys[0]) < 1 {
-		return "",errors.New("You didn't have a parameter")
+		return "", errors.New("You didn't have a parameter")
 	}
 	return string(keys[0]), nil
 }
