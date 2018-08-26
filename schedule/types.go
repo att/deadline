@@ -10,11 +10,9 @@ type Definition struct {
 	Handler  Handler 			`json:"handler" xml:"handler,omitempty" db:"handler"`
 	Timing   string         	`xml:"timing,attr,omitempty" db:"timing"`	
 	Name     string         	`xml:"name,attr,omitempty" db:"name"`
-	Schedule []byte         	`xml:",innerxml"`
-	LastRun	 time.Time			`xml:"-"`
-	Start    Node           	`xml:"-"`
-	End      Node           	`xml:"-"`
-	Error    Node           	`xml:"-"`
+	ScheduleContent []byte      `xml:",innerxml"`
+	Start    Node           	`xml:"-" json:"-"`
+
 }
 
 type Live struct {
@@ -24,6 +22,9 @@ type Live struct {
 	LastRun	 time.Time			`json:"lastrun"`
 	Events []Event				`json:"events"`
 	Handler  Handler			`json:"handler"`
+	Start    Node           	`json:"-"`
+	End      Node           	`json:"-"`
+	Error    Node           	`json:"-"`
 }
 
 type Event struct {
@@ -50,17 +51,17 @@ type Handler struct {
 }
 
 type ScheduledHandler struct {
-	ScheduleName 	string	`db:"schedulename"`
-	Name			string  `db:"name"` 
-	Address			string  `db:"address"` 
+	ScheduleName 	string		`db:"schedulename"`
+	Name			string  	`db:"name"` 
+	Address			string  	`db:"address"` 
 
 }
 
 type Node struct {
-	Event   *Event `xml:"event"`
-	Nodes   []Node        `xml:"-"`
-	ErrorTo *Node         `xml:"-"`
-	OkTo    *Node         `xml:"-"`
+	Event   *Event 				`xml:"event"`
+	Nodes   []Node       		`xml:"-"`
+	ErrorTo *Node        		`xml:"-"`
+	OkTo    *Node         		`xml:"-"`
 }
 
 type Start struct {
@@ -72,19 +73,19 @@ type End struct {
 }
 
 type ScheduleManager struct {
-	subscriptionTable map[string][]*Definition
-	ScheduleTable 	  map[string]*Definition
+	subscriptionTable map[string][]*Live
+	ScheduleTable 	  map[string]*Live
 	EvaluationTime	time.Time
 }
 
 type Error struct {
-	To string `xml:"to,attr"`
+	To string 					`xml:"to,attr"`
 }
 
 type ScheduleDAO interface {
 	GetByName(string) ([]byte, error)
 	Save(s *Definition) error
-	LoadStatelessSchedules() ([]Definition,error)
+	LoadSchedules() ([]Live,error)
 	LoadEvents() ([]Event,error)
 	SaveEvent( e *Event) error
 }
@@ -99,7 +100,7 @@ type dbDAO struct {
 }
 
 type innerbytes struct {
-	XMLName xml.Name `xml:"innerbytes"`
-	Hander Handler 	`xml:"handler"`
-	Events []Event	`xml:"event"`
+	XMLName xml.Name 			`xml:"innerbytes"`
+	Hander Handler 				`xml:"handler"`
+	Events []Event				`xml:"event"`
 }

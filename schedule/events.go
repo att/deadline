@@ -36,5 +36,6 @@ func (e *Event) EvaluateTime(h notifier.NotifyHandler) bool {
 		h.Send("The event is here and it is not late!")
 		return true
 	}
+
 	return false
 }

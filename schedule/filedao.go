@@ -24,18 +24,14 @@ func NewScheduleDAO(c *config.Config) ScheduleDAO {
 
 
 func (fd fileDAO) GetByName(name string) ([]byte, error) {
-
 	file, err := os.Open(fd.Path + "/" + name + ".xml")
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	bytes, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-	return bytes, nil
+
+	return ioutil.ReadAll(file)
 }
 
 func (fd fileDAO) Save(s *Definition) error {
@@ -56,13 +52,13 @@ func (fd fileDAO) Save(s *Definition) error {
 	return nil
 }
 
-func (fd fileDAO) LoadStatelessSchedules() ([]Definition,error) { 
-	var schedules = []Definition{}
-	s := Definition{}
+func (fd fileDAO) LoadSchedules() ([]Live,error) { 
+	var schedules = []Live{} //live
+	s := Definition{}				//live
 	file, err := os.Open(fd.Path)
 	if err != nil {
 		common.Info.Println("Could not open directory.")
-		return []Definition{}, err
+		return []Live{}, err
 	}
 	defer file.Close()
 
@@ -73,10 +69,11 @@ func (fd fileDAO) LoadStatelessSchedules() ([]Definition,error) {
 			bytes,_ := fd.GetByName(schedule)
 			err = xml.Unmarshal(bytes,&s)
 			if err != nil {
-				common.Info.Println(schedule + " wasn't translated")
-				continue
+				return nil, err
 			}
-			schedules = append(schedules,s)
+			s.MakeNodes()
+			l := s.ConvertToLive()
+			schedules = append(schedules,*l)
 		}
 	}
 	return schedules,nil

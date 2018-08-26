@@ -58,13 +58,16 @@ func ConvertTime(timing string) (time.Time){
 
 
 func (e *Event) EvaluateSuccess() bool {
+	if (!e.IsLive) {
+		return true
+	}
 	return e.Success
 }
 func (e *Event) EvaluateEvent(h notifier.NotifyHandler) bool {
 	return e.EvaluateTime(h) && e.EvaluateSuccess()
 }
 
-func (s Definition) EventOccurred(e *Event) {
+func (s *Live) EventOccurred(e *Event) {
 
 	ev := s.Start.findEvent(e.Name)
 	
@@ -77,13 +80,14 @@ func (s Definition) EventOccurred(e *Event) {
 	} else {
 	s.Start.ErrorTo = &s.Error
 	}
+	
 }
 
 
 func (s *Definition) MakeNodes() {
 	s.fixSchedule()
 	var f Event
-	buf := bytes.NewBuffer(s.Schedule)
+	buf := bytes.NewBuffer(s.ScheduleContent)
 				dec := xml.NewDecoder(buf)
 				for dec.Decode(&f) == nil {
 					e := f
@@ -103,7 +107,7 @@ func (s *Definition) MakeNodes() {
 
 func (s *Definition) fixSchedule() {
 	evnts := []Event{}
-	b := bytes.NewBuffer(s.Schedule)
+	b := bytes.NewBuffer(s.ScheduleContent)
 	d := xml.NewDecoder(b)
 
 	for {
@@ -128,5 +132,17 @@ func (s *Definition) fixSchedule() {
 	}
 	bytes, err := xml.Marshal(evnts)
 	common.CheckError(err)
-	s.Schedule = bytes
+	s.ScheduleContent = bytes
+}
+
+
+func (s *Definition) ConvertToLive() *Live{
+
+
+	return &Live{
+		Name: s.Name,
+		Timing: s.Timing,
+		Handler: s.Handler,
+		Start: s.Start,
+	}
 }
