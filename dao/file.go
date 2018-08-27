@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/att/deadline/common"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 type fileDAO struct {
@@ -27,90 +26,97 @@ func newFileDAO(path string) *fileDAO {
 	return dao
 }
 
-func (fd fileDAO) GetByName(name string) ([]byte, error) {
+func (fd fileDAO) GetByName(name string) (*ScheduleBlueprint, error) {
 
 	file, err := os.Open(fd.path + "/" + name + ".xml")
+	defer file.Close()
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
 
-	bytes, err := ioutil.ReadAll(file)
-	if err != nil {
+	if bytes, err := ioutil.ReadAll(file); err != nil {
 		return nil, err
-	}
-	return bytes, nil
-}
-
-func (dao fileDAO) Save(s *common.Definition) error {
-
-	str := s.Name + ".xml"
-	f, err := os.Create(dao.path + "/" + str)
-	defer f.Close()
-
-	if err != nil {
-		return err
-	}
-
-	encoder := xml.NewEncoder(f)
-	err = encoder.Encode(s)
-
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (fd fileDAO) LoadSchedules() ([]common.Definition, error) {
-	var schedules = []common.Definition{}
-	s := common.Definition{}
-	file, err := os.Open(fd.path)
-	if err != nil {
-		common.Info.Println("Could not open directory.")
-		return []common.Definition{}, err
-	}
-	defer file.Close()
-
-	list, _ := file.Readdirnames(0)
-	for _, schedule := range list {
-		if strings.Contains(schedule, ".xml") {
-			schedule = strings.TrimSuffix(schedule, ".xml")
-			bytes, _ := fd.GetByName(schedule)
-			err = xml.Unmarshal(bytes, &s)
-			if err != nil {
-				common.Info.Println(schedule + " wasn't translated")
-				continue
-			}
-			schedules = append(schedules, s)
+	} else {
+		blueprint := &ScheduleBlueprint{}
+		if xml.Unmarshal(bytes, blueprint); err != nil {
+			return nil, err
+		} else {
+			return blueprint, nil
 		}
 	}
-	return schedules, nil
+}
+
+func (dao fileDAO) Save(blueprint *ScheduleBlueprint) error {
+
+	fileName := blueprint.Name + ".xml"
+	file, err := os.Create(dao.path + "/" + fileName)
+	defer file.Close()
+
+	if err != nil {
+		return err
+	}
+
+	encoder := xml.NewEncoder(file)
+	if err = encoder.Encode(blueprint); err != nil {
+		return err
+	} else {
+		return nil
+	}
+
+}
+
+func (dao fileDAO) LoadScheduleBlueprints() ([]ScheduleBlueprint, error) {
+	blueprints := []ScheduleBlueprint{}
+	//blueprint := ScheduleBlueprint{}
+
+	directory, err := os.Open(dao.path)
+	defer directory.Close()
+
+	if err != nil {
+		common.Info.Println("Could not open directory.")
+		return blueprints, err
+	}
+
+	list, _ := directory.Readdirnames(0)
+	for _, scheduleFile := range list {
+		if strings.Contains(scheduleFile, ".xml") {
+			scheduleName := strings.TrimSuffix(scheduleFile, ".xml")
+
+			if blueprint, err := dao.GetByName(scheduleName); err != nil {
+				common.Info.Println(scheduleName + " wasn't translated")
+			} else {
+				blueprints = append(blueprints, *blueprint)
+			}
+
+		}
+	}
+	return blueprints, nil
 }
 
 func (fd fileDAO) LoadEvents() ([]common.Event, error) {
 	liveEvents := []common.Event{}
-	liveEvent := common.Event{}
-	file, err := makeOrOpenDirectory(fd.path + "/" + "events")
-	defer file.Close()
+	// liveEvent := common.Event{}
+	// file, err := makeOrOpenDirectory(fd.path + "/" + "events")
+	// defer file.Close()
 
-	if err != nil {
-		common.Info.Println("Cannot read events because", err)
-		return []common.Event{}, err
-	}
+	// if err != nil {
+	// 	common.Info.Println("Cannot read events because", err)
+	// 	return []common.Event{}, err
+	// }
 
-	list, _ := file.Readdirnames(0)
-	for _, event := range list {
-		if strings.Contains(event, ".xml") {
-			event = strings.TrimSuffix(event, ".xml")
-			bytes, _ := fd.GetByName("events/" + event)
-			err = xml.Unmarshal(bytes, &liveEvent)
-			if err != nil {
-				common.Info.Println(event + " wasn't translated")
-				continue
-			}
-			liveEvents = append(liveEvents, liveEvent)
-		}
-	}
+	// list, _ := file.Readdirnames(0)
+	// for _, event := range list {
+	// 	if strings.Contains(event, ".xml") {
+	// 		event = strings.TrimSuffix(event, ".xml")
+	// 		bytes, _ := fd.GetByName("events/" + event)
+	// 		err = xml.Unmarshal(bytes, &liveEvent)
+	// 		if err != nil {
+	// 			common.Info.Println(event + " wasn't translated")
+	// 			continue
+	// 		}
+	// 		liveEvents = append(liveEvents, liveEvent)
+	// 	}
+	// }
 
 	return liveEvents, nil
 }
