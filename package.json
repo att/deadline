@@ -1,0 +1,28 @@
+{
+  "name": "deadline",
+  "version": "1.0.0",
+  "description": "A minimal Electron application",
+  "main": "app/src/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": "https://github.com/electron/electron-quick-start",
+  "keywords": [
+    "Electron",
+    "quick",
+    "start",
+    "tutorial",
+    "demo"
+  ],
+  "author": "GitHub",
+  "license": "CC0-1.0",
+  "devDependencies": {
+    "electron": "^2.0.8"
+  },
+  "dependencies": {
+    "cytoscape": "^3.2.16",
+    "d3": "^5.7.0",
+    "dagre": "^0.8.2",
+    "dagre-d3": "^0.6.1"
+  }
+}
