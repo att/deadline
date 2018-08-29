@@ -4,7 +4,7 @@ import (
 	"time"
 	"os"
 	"bytes"
-	
+
 	"github.com/att/deadline/common"
 	"github.com/att/deadline/config"
 	"github.com/att/deadline/schedule"
@@ -15,6 +15,7 @@ import (
 )
 
 var M *schedule.ScheduleManager
+
 
 type DeadlineServer struct {
 	server *http.Server
@@ -31,6 +32,7 @@ func NewDeadlineServer(c *config.Config) *DeadlineServer {
 }
 
 func (dlsvr *DeadlineServer) Start() error {
+
 	return dlsvr.server.ListenAndServe()
 }
 
@@ -45,8 +47,11 @@ func newDeadlineHandler() http.Handler {
 	handler.HandleFunc("/api/v1/schedule", scheduleHandler)
 	handler.HandleFunc("/api/v1/msg", notifyHandler)
 	handler.HandleFunc("/status", statusHandler)
+	handler.HandleFunc("/app/",http.StripPrefix("/app/",http.FileServer(http.Dir("app/src"))).ServeHTTP)
 	return handler
 }
+
+
 
 func notifyHandler(w http.ResponseWriter, r *http.Request) {
 	msg := ""
@@ -203,3 +208,4 @@ func getParams(r *http.Request) (string, error){
 	}
 	return string(keys[0]), nil
 }
+

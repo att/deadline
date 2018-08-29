@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"github.com/pkg/browser"
 	"github.com/jasonlvhit/gocron"
 	"github.com/att/deadline/config"
 	"github.com/att/deadline/server"
@@ -22,6 +23,9 @@ var (
 const (
 	NOT_DEFINED string = "Not defined"
 )
+
+
+
 
 func main() {
 	common.Init(os.Stdout, os.Stdout)
@@ -47,10 +51,17 @@ func main() {
 	go gocron.Start() 
 
 
+
+
 	dlsvr := server.NewDeadlineServer(cfg)
+	err = browser.OpenURL("http://localhost:" + cfg.Server.Port + "/app")
+	common.CheckError(err)
+
+
 
 	err = dlsvr.Start()
 	if err != nil {
 		common.Info.Println("Server exited with error:", err)
 	}
+	
 }
