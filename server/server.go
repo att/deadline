@@ -47,11 +47,13 @@ func newDeadlineHandler() http.Handler {
 	handler.HandleFunc("/api/v1/schedule", scheduleHandler)
 	handler.HandleFunc("/api/v1/msg", notifyHandler)
 	handler.HandleFunc("/status", statusHandler)
-	handler.HandleFunc("/app/",http.StripPrefix("/app/",http.FileServer(http.Dir("app/src"))).ServeHTTP)
+	handler.HandleFunc("/app/", appHandler)
 	return handler
 }
 
-
+func appHandler(w http.ResponseWriter, r *http.Request) {
+	http.StripPrefix("/app/",http.FileServer(http.Dir("app/src"))).ServeHTTP(w,r)
+}
 
 func notifyHandler(w http.ResponseWriter, r *http.Request) {
 	msg := ""
