@@ -27,5 +27,5 @@ build: test
 
 test: verify
 	@echo "Testing..."
-	@go test $(shell go list ./... | grep -v /vendor/)
+	@go test -cover $(shell go list ./... | grep -v /vendor/)
 

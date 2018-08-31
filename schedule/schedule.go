@@ -5,6 +5,8 @@ import (
 	"encoding/xml"
 	"time"
 
+	"github.com/att/deadline/dao"
+
 	"github.com/att/deadline/common"
 	"github.com/att/deadline/notifier"
 )
@@ -34,7 +36,7 @@ func EvaluateEvent(e *common.Event, h notifier.NotifyHandler) bool {
 	return EvaluateTime(e, h) && EvaluateSuccess(e)
 }
 
-func (s *Live) EventOccurred(e *common.Event) {
+func (s *Schedule) EventOccurred(e *common.Event) {
 
 	ev := findEvent(s.Start, e.Name)
 
@@ -100,12 +102,12 @@ func fixSchedule(s *common.Definition) {
 	s.ScheduleContent = bytes
 }
 
-func ConvertToLive(s *common.Definition) *Live {
+func FromBlueprint(blueprint *dao.ScheduleBlueprint) *Schedule {
 
-	return &Live{
-		Name:    s.Name,
-		Timing:  s.Timing,
-		Handler: s.Handler,
-		Start:   s.Start,
+	return &Schedule{
+		Name:   blueprint.Name,
+		Timing: blueprint.Timing,
+		//Handler: .Handler,
+		//Start: blueprint.Start,
 	}
 }

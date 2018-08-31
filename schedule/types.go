@@ -7,7 +7,18 @@ import (
 	"github.com/att/deadline/common"
 )
 
-type Live struct {
+// type Live struct {
+// 	Timing  string         `json:"timing,attr,omitempty" db:"timing"`
+// 	Name    string         `json:"name,attr,omitempty" db:"name"`
+// 	LastRun time.Time      `json:"lastrun"`
+// 	Events  []common.Event `json:"events"`
+// 	Handler common.Handler `json:"handler"`
+// 	Start   common.Node    `json:"-"`
+// 	End     common.Node    `json:"-"`
+// 	Error   common.Node    `json:"-"`
+// }
+
+type Schedule struct {
 	Timing  string         `json:"timing,attr,omitempty" db:"timing"`
 	Name    string         `json:"name,attr,omitempty" db:"name"`
 	LastRun time.Time      `json:"lastrun"`
@@ -25,8 +36,8 @@ type ScheduledHandler struct {
 }
 
 type ScheduleManager struct {
-	subscriptionTable map[string][]*Live
-	ScheduleTable     map[string]*Live
+	subscriptionTable map[string][]*Schedule
+	ScheduleTable     map[string]*Schedule
 	EvaluationTime    time.Time
 }
 

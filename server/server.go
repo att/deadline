@@ -1,8 +1,9 @@
 package server
 
 import (
-	"bytes"
 	"time"
+
+	"github.com/att/deadline/dao"
 
 	"encoding/json"
 	"encoding/xml"
@@ -42,23 +43,9 @@ func newDeadlineHandler() http.Handler {
 
 	handler := http.NewServeMux()
 	handler.HandleFunc("/api/v1/event", eventHandler)
+	handler.HandleFunc("/api/v1/blueprint", blueprintHandler)
 	handler.HandleFunc("/api/v1/schedule", scheduleHandler)
-	handler.HandleFunc("/api/v1/msg", notifyHandler)
-	handler.HandleFunc("/status", statusHandler)
 	return handler
-}
-
-func notifyHandler(w http.ResponseWriter, r *http.Request) {
-	msg := ""
-	if r.Body == nil {
-		common.Info.Println("No request body sent")
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	err := json.NewDecoder(r.Body).Decode(&msg)
-	common.CheckError(err)
-	common.Info.Println(msg)
-	w.WriteHeader(http.StatusOK)
 }
 
 func eventHandler(w http.ResponseWriter, r *http.Request) {
@@ -87,104 +74,83 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func scheduleHandler(w http.ResponseWriter, r *http.Request) {
+func blueprintHandler(w http.ResponseWriter, r *http.Request) {
 
-	err := doMethod(r.Method, w, r)
+	switch r.Method {
+	case http.MethodGet:
+		getBlueprint(w, r)
+	case http.MethodPut:
+		putBlueprint(w, r)
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func scheduleHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	name, err := getParams(r)
 	if err != nil {
 		common.Info.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
-
-	} else {
-		w.WriteHeader(http.StatusOK)
+		return
 	}
-}
 
-func statusHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
-		name, err := getParams(r)
-		if err != nil {
-			common.Info.Println(err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-
-		}
-		bytes, err := M.GetLiveSchedule(name)
-		if err != nil {
-			common.Info.Println(err)
-			w.WriteHeader(http.StatusBadRequest)
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-
-		_, err = w.Write(bytes)
-
-		if err != nil {
-			common.Info.Println(err)
-			return
-		}
-
+	schedule := M.GetSchedule(name)
+	if schedule == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	bytes, err := json.Marshal(schedule)
 
 	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(bytes)
+
+	if err != nil {
+		common.Info.Println(err)
+		return
+	}
 }
 
-func doMethod(method string, w http.ResponseWriter, r *http.Request) error {
+func putBlueprint(w http.ResponseWriter, r *http.Request) error {
+	blueprint := dao.ScheduleBlueprint{}
+	err := xml.NewDecoder(r.Body).Decode(&blueprint)
 
-	sched := common.Definition{}
-
-	if r.Body == nil {
-
-		return errors.New("No input")
-	}
-	switch method {
-	case "GET":
-		return getSchedule(w, r)
-	case "PUT":
-		return putSchedule(w, r, sched)
-	}
-	return nil
-}
-
-func putSchedule(w http.ResponseWriter, r *http.Request, sched common.Definition) error {
-	err := xml.NewDecoder(r.Body).Decode(&sched)
 	if err != nil {
 		return err
 	}
-	var evnt common.Event
 
-	buf := bytes.NewBuffer(sched.ScheduleContent)
-	dec := xml.NewDecoder(buf)
-	for dec.Decode(&evnt) == nil {
-		e := evnt
-		//change location memory
-		valid := e.ValidateEvent()
-		if valid != nil {
-			return valid
-		}
-		node1 := common.Node{
-			Event: &e,
-			Nodes: []common.Node{},
-		}
-		sched.Start.Nodes = append(sched.Start.Nodes, node1)
-	}
-	M.UpdateSchedule(&sched)
+	M.AddSchedule(&blueprint)
+	w.WriteHeader(http.StatusCreated)
+
 	return nil
 }
 
-func getSchedule(w http.ResponseWriter, r *http.Request) error {
+func getBlueprint(w http.ResponseWriter, r *http.Request) error {
 	name, err := getParams(r)
 	if err != nil {
 		return err
 	}
 
-	bytes, err := schedule.Fd.GetByName(name)
+	blueprint, err := schedule.Fd.GetByName(name) //TODO pull from schedule manager not DAO
 	if err != nil {
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/xml")
 
-	_, err = w.Write(bytes)
+	data, err := xml.MarshalIndent(blueprint, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(data)
 
 	if err != nil {
 		return err

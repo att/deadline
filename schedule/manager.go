@@ -1,8 +1,6 @@
 package schedule
 
 import (
-	"encoding/json"
-	"errors"
 	"time"
 
 	"github.com/att/deadline/common"
@@ -12,16 +10,15 @@ import (
 )
 
 var Fd dao.ScheduleDAO
+var m *ScheduleManager
 
-func (m *ScheduleManager) getInstance() *ScheduleManager {
+func GetManagerInstance() *ScheduleManager {
 	if m == nil {
-		var manager = ScheduleManager{
-			subscriptionTable: make(map[string][]*Live),
-			ScheduleTable:     make(map[string]*Live),
+		m = &ScheduleManager{
+			subscriptionTable: make(map[string][]*Schedule),
+			ScheduleTable:     make(map[string]*Schedule),
 			EvaluationTime:    time.Now(),
 		}
-		return &manager
-
 	}
 	return m
 
@@ -29,10 +26,10 @@ func (m *ScheduleManager) getInstance() *ScheduleManager {
 
 func (m *ScheduleManager) Init(cfg *config.Config) *ScheduleManager {
 
-	currentManager := m.getInstance()
+	currentManager := GetManagerInstance()
 
 	Fd = dao.NewScheduleDAO(cfg)
-	blueprints, err := Fd.LoadSchedules()
+	blueprints, err := Fd.LoadScheduleBlueprints()
 	if err != nil {
 		common.CheckError(err)
 		return currentManager
@@ -40,12 +37,12 @@ func (m *ScheduleManager) Init(cfg *config.Config) *ScheduleManager {
 
 	for _, bprint := range blueprints {
 
-		newSchedule := ConvertToLive(&bprint)
+		newSchedule := FromBlueprint(&bprint)
 
 		newSchedule.LastRun = time.Time{}
 
 		//make sure pointers are different
-		currentManager.AddSchedule(newSchedule)
+		currentManager.updateSubscriptions(newSchedule)
 
 	}
 
@@ -70,11 +67,11 @@ func (m *ScheduleManager) UpdateEvents(e *common.Event) {
 
 }
 
-func (m *ScheduleManager) UpdateSchedule(s *common.Definition) {
-	err := Fd.Save(s)
+func (m *ScheduleManager) AddSchedule(blueprint *dao.ScheduleBlueprint) {
+	err := Fd.Save(blueprint)
 	common.CheckError(err)
-	l := ConvertToLive(s)
-	m.AddSchedule(l)
+	sched := FromBlueprint(blueprint)
+	m.updateSubscriptions(sched)
 }
 
 func (m *ScheduleManager) EvaluateAll() {
@@ -119,12 +116,12 @@ func (m *ScheduleManager) EvaluateAll() {
 
 }
 
-func (m *ScheduleManager) AddSchedule(s *Live) {
+func (m *ScheduleManager) updateSubscriptions(s *Schedule) {
 
 	for i := 0; i < len(s.Start.Nodes); i++ {
 		scheds := m.subscriptionTable[(s.Start.Nodes[i].Event.Name)]
 		if scheds == nil {
-			m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = []*Live{s}
+			m.subscriptionTable[(s.Start.Nodes[i].Event.Name)] = []*Schedule{s}
 			continue
 		}
 		scheds = append(scheds, s)
@@ -134,17 +131,18 @@ func (m *ScheduleManager) AddSchedule(s *Live) {
 	m.ScheduleTable[s.Name] = s
 }
 
-func (m *ScheduleManager) GetLiveSchedule(name string) ([]byte, error) {
+func (m *ScheduleManager) GetSchedule(name string) *Schedule {
 
-	l, ok := m.ScheduleTable[name]
+	s, ok := m.ScheduleTable[name]
 	if !ok {
-		return []byte{}, errors.New("It is not in the table")
-	}
-	l.Events = []common.Event{}
-	//clears out old live data
-	for n := 0; n < len(l.Start.Nodes); n++ {
-		l.Events = append(l.Events, *(l.Start.Nodes[n].Event))
+		return nil
 	}
 
-	return json.Marshal(&l)
+	s.Events = []common.Event{}
+	//clears out old live data
+	for n := 0; n < len(s.Start.Nodes); n++ {
+		s.Events = append(s.Events, *(s.Start.Nodes[n].Event))
+	}
+
+	return s
 }
