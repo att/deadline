@@ -109,9 +109,12 @@ import (
 // 	s.ScheduleContent = bytes
 // }
 
+// FromBlueprint creates a Schedule struct from a blueprint.  Errors can occur for various reasons
+// like invalid business rules like an event node's error-to can only go to end or a handler
+// or just general malformed blueprints like nodes having cycles or hanging nodes.
 func FromBlueprint(blueprint *com.ScheduleBlueprint) (*Schedule, error) {
 	maps := &com.BlueprintMaps{}
-	var err error = nil
+	var err error
 
 	if maps, err = com.GetBlueprintMaps(blueprint); err != nil {
 		return nil, err
@@ -129,46 +132,28 @@ func FromBlueprint(blueprint *com.ScheduleBlueprint) (*Schedule, error) {
 		},
 	}
 
+	schedule.nodes[blueprint.End.Name] = schedule.End
+
 	if firstEvent, found := maps.Events[blueprint.Start.To]; !found {
 		return nil, errors.New("Start node needs to point to an event Node")
-	} else {
-		schedule.addEventBlueprint(firstEvent)
+
+	} else if err := schedule.addEventBlueprint(firstEvent); err != nil {
+		return nil, err
 	}
 
-	// schedule.Start = &NodeInstance{
-	// 	value: &StartNode{
-	// 		to
-	// 	}
-	// }
+	if firstEvent, found := schedule.nodes[blueprint.Start.To]; !found {
+		return nil, errors.New("Schedule built, but still no first node")
+	} else {
+		startNode := &NodeInstance{
+			NodeType: StartNodeType,
+			value: &StartNode{
+				to: firstEvent,
+			},
+		}
 
-	// handlerMap[handler.Name] = handler
-	// if node := fromHandlerBlueprint(handler); node != nil {
-	// 	if _, found := schedule.nodes[node.value.Name()]; found {
-	// 		return nil, errors.New("Two or more nodes use the same name " + node.value.Name())
-	// 	} else {
-	// 		schedule.nodes[node.value.Name()] = node
-	// 	}
-	// }
-
-	// for _, event := range blueprint.Events {
-	// 	eventMap[event.Name] = event
-	// 	if node, err := fromEventBlueprint(event); err != nil {
-	// 		return nil, err
-	// 	} else if _, found := schedule.nodes[node.value.Name()]; found {
-	// 		return nil, errors.New("Two or more nodes use the same name " + node.value.Name())
-	// 	} else {
-	// 		schedule.nodes[node.value.Name()] = node
-	// 	}
-	// }
-
-	// for _, node := range schedule.nodes {
-	// 	nodeName := node.value.Name()
-	// 	if nodeBlueprint, ok := eventMap[nodeName]; ok {
-
-	// 	} else if nodeBlueprint, ok := handlerMap[nodeName]; ok {
-
-	// 	}
-	// }
+		schedule.nodes[startNode.value.Name()] = startNode
+		schedule.Start = startNode
+	}
 
 	return schedule, nil
 }
@@ -181,13 +166,16 @@ func (schedule *Schedule) addEventBlueprint(blueprint com.EventBlueprint) error 
 		// look for and make the okTo node
 		if _, found := schedule.nodes[blueprint.OkTo]; !found {
 			okToBlueprint, isEvent := schedule.blueprintMaps.Events[blueprint.OkTo]
+			okToNode, foundOkTo := schedule.nodes[blueprint.OkTo]
 
 			if isEvent { //okTo not already made and is an event node
 				if err := schedule.addEventBlueprint(okToBlueprint); err != nil {
 					return err
 				}
+			} else if foundOkTo && okToNode.NodeType == EndNodeType {
+				// do nothing, just having checked for it is enough
 			} else {
-				return errors.New("Events can only ok-to other events")
+				return errors.New("Events can only ok-to other events or the end node")
 			}
 		}
 

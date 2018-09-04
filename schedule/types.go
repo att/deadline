@@ -11,6 +11,7 @@ type NodeType int
 const (
 	EventNodeType NodeType = iota
 	EndNodeType
+	StartNodeType
 	HandlerNodeType
 )
 

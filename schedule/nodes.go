@@ -8,6 +8,10 @@ func (node EndNode) Name() string {
 	return node.name
 }
 
+func (node StartNode) Name() string {
+	return "start"
+}
+
 // func findEvent(start common.Node, name string) *common.Event {
 // 	if start.Event != nil {
 
