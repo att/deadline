@@ -3,14 +3,12 @@ package server
 import (
 	"time"
 
-	"github.com/att/deadline/dao"
-
 	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"net/http"
 
-	"github.com/att/deadline/common"
+	com "github.com/att/deadline/common"
 	"github.com/att/deadline/config"
 	"github.com/att/deadline/schedule"
 )
@@ -50,9 +48,9 @@ func newDeadlineHandler() http.Handler {
 
 func eventHandler(w http.ResponseWriter, r *http.Request) {
 
-	event := common.Event{}
+	event := com.Event{}
 	if r.Body == nil {
-		common.Info.Println("No request body sent")
+		com.Info.Println("No request body sent")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -61,15 +59,15 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 
 	valid := event.ValidateEvent()
 	if err != nil || valid != nil {
-		common.Info.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
+		com.Info.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	event.ReceiveAt = time.Now().Format("15:04:05")
-	M.UpdateEvents(&event)
+	event.ReceivedAt = time.Now().Unix()
+	M.Update(&event)
 	err = schedule.Fd.SaveEvent(&event)
-	common.CheckError(err)
+	com.CheckError(err)
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -94,7 +92,7 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 
 	name, err := getParams(r)
 	if err != nil {
-		common.Info.Println(err)
+		com.Info.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -113,13 +111,13 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(bytes)
 
 	if err != nil {
-		common.Info.Println(err)
+		com.Info.Println(err)
 		return
 	}
 }
 
 func putBlueprint(w http.ResponseWriter, r *http.Request) error {
-	blueprint := dao.ScheduleBlueprint{}
+	blueprint := com.ScheduleBlueprint{}
 	err := xml.NewDecoder(r.Body).Decode(&blueprint)
 
 	if err != nil {

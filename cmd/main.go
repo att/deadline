@@ -41,9 +41,9 @@ func main() {
 		cfg = &config.DefaultConfig
 	}
 
-	server.M = server.M.Init(cfg)
+	//server.M = server.M.Init(cfg)
 
-	go gocron.Every(10).Seconds().Do(server.M.EvaluateAll)
+	//go gocron.Every(10).Seconds().Do(server.M.EvaluateAll)
 	go gocron.Start()
 
 	dlsvr := server.NewDeadlineServer(cfg)

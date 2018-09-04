@@ -1,5 +1,0 @@
-<schedule timing="daily" name="sample_schedule">
-    <handler name="email handler">
-        <address>kp755d@att.com</address>
-    </handler>
-</schedule>

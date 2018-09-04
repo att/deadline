@@ -2,13 +2,13 @@
 <schedule timing="daily" name="single_event_schedule">
     <start to="onlyEvent" />
 
-    <event name="onlyEvent">
+    <event name="onlyEvent" ok="scheduleEnd" error="email error">
         <constraints>
             <receive-by>3h</receive-by>
         </constraints>
     </event>
 
-    <handler name="email error">
+    <handler name="email error" to="scheduleEnd">
         <email>
             <to>jo424n@att.com</to>
         </email>

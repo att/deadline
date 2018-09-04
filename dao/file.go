@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/att/deadline/common"
+	com "github.com/att/deadline/common"
 )
 
 type fileDAO struct {
@@ -26,7 +26,7 @@ func newFileDAO(path string) *fileDAO {
 	return dao
 }
 
-func (fd fileDAO) GetByName(name string) (*ScheduleBlueprint, error) {
+func (fd fileDAO) GetByName(name string) (*com.ScheduleBlueprint, error) {
 
 	file, err := os.Open(fd.path + "/" + name + ".xml")
 	defer file.Close()
@@ -37,7 +37,7 @@ func (fd fileDAO) GetByName(name string) (*ScheduleBlueprint, error) {
 	if bytes, err := ioutil.ReadAll(file); err != nil {
 		return nil, err
 	} else {
-		blueprint := &ScheduleBlueprint{}
+		blueprint := &com.ScheduleBlueprint{}
 		if xml.Unmarshal(bytes, blueprint); err != nil {
 			return nil, err
 		} else {
@@ -46,7 +46,7 @@ func (fd fileDAO) GetByName(name string) (*ScheduleBlueprint, error) {
 	}
 }
 
-func (dao fileDAO) Save(blueprint *ScheduleBlueprint) error {
+func (dao fileDAO) Save(blueprint *com.ScheduleBlueprint) error {
 
 	fileName := blueprint.Name + ".xml"
 	file, err := os.Create(dao.path + "/" + fileName)
@@ -65,15 +65,15 @@ func (dao fileDAO) Save(blueprint *ScheduleBlueprint) error {
 
 }
 
-func (dao fileDAO) LoadScheduleBlueprints() ([]ScheduleBlueprint, error) {
-	blueprints := []ScheduleBlueprint{}
+func (dao fileDAO) LoadScheduleBlueprints() ([]com.ScheduleBlueprint, error) {
+	blueprints := []com.ScheduleBlueprint{}
 	//blueprint := ScheduleBlueprint{}
 
 	directory, err := os.Open(dao.path)
 	defer directory.Close()
 
 	if err != nil {
-		common.Info.Println("Could not open directory.")
+		com.Info.Println("Could not open directory.")
 		return blueprints, err
 	}
 
@@ -83,7 +83,7 @@ func (dao fileDAO) LoadScheduleBlueprints() ([]ScheduleBlueprint, error) {
 			scheduleName := strings.TrimSuffix(scheduleFile, ".xml")
 
 			if blueprint, err := dao.GetByName(scheduleName); err != nil {
-				common.Info.Println(scheduleName + " wasn't translated")
+				com.Info.Println(scheduleName + " wasn't translated")
 			} else {
 				blueprints = append(blueprints, *blueprint)
 			}
@@ -93,8 +93,8 @@ func (dao fileDAO) LoadScheduleBlueprints() ([]ScheduleBlueprint, error) {
 	return blueprints, nil
 }
 
-func (fd fileDAO) LoadEvents() ([]common.Event, error) {
-	liveEvents := []common.Event{}
+func (fd fileDAO) LoadEvents() ([]com.Event, error) {
+	liveEvents := []com.Event{}
 	// liveEvent := common.Event{}
 	// file, err := makeOrOpenDirectory(fd.path + "/" + "events")
 	// defer file.Close()
@@ -139,7 +139,7 @@ func makeOrOpenDirectory(path string) (*os.File, error) {
 	return os.Open(path)
 }
 
-func (fd fileDAO) SaveEvent(e *common.Event) error {
+func (fd fileDAO) SaveEvent(e *com.Event) error {
 	str := e.Name + ".xml"
 	f, err := os.Create(fd.path + "/events/" + str)
 	if err != nil {

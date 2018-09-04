@@ -7,43 +7,47 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/att/deadline/common"
+	com "github.com/att/deadline/common"
 	"github.com/stretchr/testify/assert"
 )
 
 var dao = cleanAndRefreshDAO(nil, randomTempDir())
 
-var simpleSchedule = common.Definition{
-	Name:   "sample_schedule",
-	Timing: "daily",
-	Handler: common.Handler{
-		Name:    "email handler",
-		Address: "kp755d@att.com",
-	},
-}
+// var simpleSchedule = common.blu{
+// 	Name:   "sample_schedule",
+// 	Timing: "daily",
+// 	Handler: common.Handler{
+// 		Name:    "email handler",
+// 		Address: "kp755d@att.com",
+// 	},
+// }
 
-var singleEventSchedule = ScheduleBlueprint{
+var singleEventSchedule = com.ScheduleBlueprint{
 	Timing: "daily",
 	Name:   "single_event_schedule",
-	Events: []EventBlueprint{
+	Events: []com.EventBlueprint{
 		{
 			Name: "onlyEvent",
-			Constraints: EventConstraints{
+			Constraints: com.EventConstraintsBlueprint{
 				ReceiveBy: "3h",
 			},
+			OkTo:    "scheduleEnd",
+			ErrorTo: "email error",
 		},
 	},
-	Handlers: []HandlerBlueprint{
+	Handlers: []com.HandlerBlueprint{
 		{
-			Email: EmailHandlerBlueprint{
-				To: "jo424n@att.com",
+			Email: com.EmailHandlerBlueprint{
+				EmailTo: "jo424n@att.com",
 			},
+			To:   "scheduleEnd",
+			Name: "email error",
 		},
 	},
-	Start: StartBlueprint{
+	Start: com.StartBlueprint{
 		To: "onlyEvent",
 	},
-	End: EndBlueprint{
+	End: com.EndBlueprint{
 		Name: "scheduleEnd",
 	},
 }
