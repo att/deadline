@@ -68,11 +68,11 @@ func TestEmptySchedule(test *testing.T) {
 	assert.NotNil(test, err, "should have thrown an error")
 }
 
-// func TestCyclicSchedule(test *testing.T) {
-// 	schedule, err := FromBlueprint(cyclicBlueprint)
-// 	assert.Nil(test, schedule, "schedule should be nil")
-// 	assert.NotNil(test, err, "should have thrown an error")
-// }
+func TestCyclicSchedule(test *testing.T) {
+	schedule, err := FromBlueprint(cyclicBlueprint)
+	assert.Nil(test, schedule, "schedule should be nil")
+	assert.NotNil(test, err, "should have thrown an error")
+}
 
 func TestSimpleSchedule(test *testing.T) {
 	schedule, err := FromBlueprint(simpleBlueprint)

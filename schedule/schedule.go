@@ -109,6 +109,10 @@ import (
 // 	s.ScheduleContent = bytes
 // }
 
+func validateBluePrint(blueprint *com.ScheduleBlueprint) error {
+	return nil
+}
+
 // FromBlueprint creates a Schedule struct from a blueprint.  Errors can occur for various reasons
 // like invalid business rules like an event node's error-to can only go to end or a handler
 // or just general malformed blueprints like nodes having cycles or hanging nodes.
@@ -133,11 +137,12 @@ func FromBlueprint(blueprint *com.ScheduleBlueprint) (*Schedule, error) {
 	}
 
 	schedule.nodes[blueprint.End.Name] = schedule.End
+	visited := make(map[string]bool)
 
 	if firstEvent, found := maps.Events[blueprint.Start.To]; !found {
 		return nil, errors.New("Start node needs to point to an event Node")
 
-	} else if err := schedule.addEventBlueprint(firstEvent); err != nil {
+	} else if err := schedule.addEventBlueprint(firstEvent, visited); err != nil {
 		return nil, err
 	}
 
@@ -158,18 +163,21 @@ func FromBlueprint(blueprint *com.ScheduleBlueprint) (*Schedule, error) {
 	return schedule, nil
 }
 
-func (schedule *Schedule) addEventBlueprint(blueprint com.EventBlueprint) error {
+func (schedule *Schedule) addEventBlueprint(blueprint com.EventBlueprint, visited map[string]bool) error {
 	if c, err := com.FromBlueprint(time.Now(), blueprint.Constraints); err != nil {
 		return err
+	} else if visited[blueprint.Name] {
+		return errors.New("Possible cycle, already visited " + blueprint.Name)
 	} else {
 
 		// look for and make the okTo node
+		visited[blueprint.Name] = true
 		if _, found := schedule.nodes[blueprint.OkTo]; !found {
 			okToBlueprint, isEvent := schedule.blueprintMaps.Events[blueprint.OkTo]
 			okToNode, foundOkTo := schedule.nodes[blueprint.OkTo]
 
 			if isEvent { //okTo not already made and is an event node
-				if err := schedule.addEventBlueprint(okToBlueprint); err != nil {
+				if err := schedule.addEventBlueprint(okToBlueprint, visited); err != nil {
 					return err
 				}
 			} else if foundOkTo && okToNode.NodeType == EndNodeType {
@@ -184,14 +192,14 @@ func (schedule *Schedule) addEventBlueprint(blueprint com.EventBlueprint) error 
 			errorToBlueprint, isEvent := schedule.blueprintMaps.Events[blueprint.ErrorTo]
 
 			if isEvent {
-				if err := schedule.addEventBlueprint(errorToBlueprint); err != nil {
+				if err := schedule.addEventBlueprint(errorToBlueprint, visited); err != nil {
 					return err
 				}
 			}
 
 			errorToHandlerBlueprint, isHandler := schedule.blueprintMaps.Handlers[blueprint.ErrorTo]
 			if isHandler {
-				if err = schedule.addHandlerBlueprint(errorToHandlerBlueprint); err != nil {
+				if err = schedule.addHandlerBlueprint(errorToHandlerBlueprint, visited); err != nil {
 					return err
 				}
 			} else {
@@ -217,20 +225,26 @@ func (schedule *Schedule) addEventBlueprint(blueprint com.EventBlueprint) error 
 	}
 }
 
-func (schedule *Schedule) addHandlerBlueprint(blueprint com.HandlerBlueprint) error {
+func (schedule *Schedule) addHandlerBlueprint(blueprint com.HandlerBlueprint, visited map[string]bool) error {
+
+	if visited[blueprint.Name] {
+		return errors.New("Possible cycle, already visited " + blueprint.Name)
+	} else {
+		visited[blueprint.Name] = true
+	}
 
 	if _, found := schedule.nodes[blueprint.To]; !found {
 		okToEvent, isEvent := schedule.blueprintMaps.Events[blueprint.To]
 
 		if isEvent {
-			if err := schedule.addEventBlueprint(okToEvent); err != nil {
+			if err := schedule.addEventBlueprint(okToEvent, visited); err != nil {
 				return err
 			}
 		}
 
 		okToHandler, isHandler := schedule.blueprintMaps.Handlers[blueprint.To]
 		if isHandler {
-			if err := schedule.addHandlerBlueprint(okToHandler); err != nil {
+			if err := schedule.addHandlerBlueprint(okToHandler, visited); err != nil {
 				return err
 			}
 		} else {
