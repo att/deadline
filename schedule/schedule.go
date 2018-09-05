@@ -7,17 +7,6 @@ import (
 	com "github.com/att/deadline/common"
 )
 
-// import (
-// 	"bytes"
-// 	"encoding/xml"
-// 	"time"
-
-// 	"github.com/att/deadline/dao"
-
-// 	"github.com/att/deadline/common"
-// 	"github.com/att/deadline/notifier"
-// )
-
 // func ConvertTime(timing string) time.Time {
 // 	var m = int(time.Now().Month())
 // 	loc, err := time.LoadLocation("Local")
@@ -59,61 +48,7 @@ import (
 
 // }
 
-// func MakeNodes(s *dao.ScheduleBlueprint) {
-// 	fixSchedule(s)
-// 	var f common.Event
-// 	buf := bytes.NewBuffer(s.ScheduleContent)
-// 	dec := xml.NewDecoder(buf)
-// 	for dec.Decode(&f) == nil {
-// 		e := f
-// 		valid := e.ValidateEvent()
-// 		if valid != nil {
-// 			common.Debug.Println("You had an invalid event")
-// 			return
-// 		}
-// 		node1 := common.Node{
-// 			Event: &e,
-// 			Nodes: []common.Node{},
-// 		}
-// 		s.Start.Nodes = append(s.Start.Nodes, node1)
-// 	}
-// }
-
-// func fixSchedule(s *dao.ScheduleBlueprint) {
-// 	evnts := []common.Event{}
-// 	b := bytes.NewBuffer(s.ScheduleContent)
-// 	d := xml.NewDecoder(b)
-
-// 	for {
-// 		t, err := d.Token()
-// 		if err != nil {
-// 			break
-// 		}
-
-// 		switch et := t.(type) {
-
-// 		case xml.StartElement:
-// 			if et.Name.Local == "event" {
-// 				c := &common.Event{}
-// 				if err := d.DecodeElement(&c, &et); err != nil {
-// 					panic(err)
-// 				}
-// 				evnts = append(evnts, (*c))
-// 			}
-// 		case xml.EndElement:
-// 			break
-// 		}
-// 	}
-// 	bytes, err := xml.Marshal(evnts)
-// 	common.CheckError(err)
-// 	s.ScheduleContent = bytes
-// }
-
-func validateBluePrint(blueprint *com.ScheduleBlueprint) error {
-	return nil
-}
-
-// FromBlueprint creates a Schedule struct from a blueprint.  Errors can occur for various reasons
+// FromBlueprint creates a Schedule object from a blueprint.  Errors can occur for various reasons
 // like invalid business rules like an event node's error-to can only go to end or a handler
 // or just general malformed blueprints like nodes having cycles or hanging nodes.
 func FromBlueprint(blueprint *com.ScheduleBlueprint) (*Schedule, error) {
@@ -122,11 +57,18 @@ func FromBlueprint(blueprint *com.ScheduleBlueprint) (*Schedule, error) {
 
 	if maps, err = com.GetBlueprintMaps(blueprint); err != nil {
 		return nil, err
+	} else if blueprint.Name == "" {
+		return nil, errors.New("schedule names cannot be empty")
 	}
 
 	schedule := &Schedule{
 		nodes:         make(map[string]*NodeInstance),
 		blueprintMaps: *maps,
+		Name:          blueprint.Name,
+	}
+
+	if blueprint.End.Name == "" {
+		return nil, errors.New("end node must be specified with a valid name")
 	}
 
 	schedule.End = &NodeInstance{
@@ -138,26 +80,31 @@ func FromBlueprint(blueprint *com.ScheduleBlueprint) (*Schedule, error) {
 
 	schedule.nodes[blueprint.End.Name] = schedule.End
 	visited := make(map[string]bool)
+	var firstEvent *NodeInstance
+	var found bool
 
 	if firstEvent, found := maps.Events[blueprint.Start.To]; !found {
-		return nil, errors.New("Start node needs to point to an event Node")
-
+		return nil, errors.New("start node needs to point to an event Node")
 	} else if err := schedule.addEventBlueprint(firstEvent, visited); err != nil {
 		return nil, err
 	}
 
-	if firstEvent, found := schedule.nodes[blueprint.Start.To]; !found {
-		return nil, errors.New("Schedule built, but still no first node")
-	} else {
-		startNode := &NodeInstance{
-			NodeType: StartNodeType,
-			value: &StartNode{
-				to: firstEvent,
-			},
-		}
+	if firstEvent, found = schedule.nodes[blueprint.Start.To]; !found {
+		return nil, errors.New("schedule built, but still no first node")
+	}
 
-		schedule.nodes[startNode.value.Name()] = startNode
-		schedule.Start = startNode
+	startNode := &NodeInstance{
+		NodeType: StartNodeType,
+		value: &StartNode{
+			to: firstEvent,
+		},
+	}
+
+	schedule.nodes[startNode.value.Name()] = startNode
+	schedule.Start = startNode
+
+	if err := schedule.createdAll(); err != nil {
+		return nil, err
 	}
 
 	return schedule, nil
@@ -174,9 +121,9 @@ func (schedule *Schedule) makeOKToNode(blueprint com.EventBlueprint, visited map
 				return err
 			}
 		} else if foundOkTo && okToNode.NodeType == EndNodeType {
-			// do nothing, just having checked for it is enough
+			// found it, but it's the end node. that's ok
 		} else {
-			return errors.New("Events can only ok-to other events or the end node")
+			return errors.New("events can only ok-to other events or the end node")
 		}
 	}
 	return nil
@@ -200,50 +147,61 @@ func (schedule *Schedule) makeErrorToNode(blueprint com.EventBlueprint, visited 
 			}
 		} else {
 			// at this point it wasn't found, and it wasn't an event and it wasn't a handler
-			return errors.New("Couldn't find the error-to node for " + blueprint.Name)
+			return errors.New("couldn't find the error-to node for " + blueprint.Name)
 		}
 	}
 
 	return nil
 }
 
+// helper function to add an event blueprint to the schedule. This function may recursively call itself while updating
+// the visited map to indicate that the current node has been visited.  Can throw an error for various reasons.
 func (schedule *Schedule) addEventBlueprint(blueprint com.EventBlueprint, visited map[string]bool) error {
-	if c, err := com.FromBlueprint(time.Now(), blueprint.Constraints); err != nil {
+	var c com.EventConstraints
+	var err error
+
+	if c, err = com.FromBlueprint(time.Now(), blueprint.Constraints); err != nil {
 		return err
+	} else if blueprint.Name == "" {
+		return errors.New("node names cannot be empty")
 	} else if visited[blueprint.Name] {
-		return errors.New("Possible cycle, already visited " + blueprint.Name)
-	} else {
-
-		visited[blueprint.Name] = true
-		if err := schedule.makeOKToNode(blueprint, visited); err != nil {
-			return err
-		}
-
-		if err := schedule.makeErrorToNode(blueprint, visited); err != nil {
-			return err
-		}
-
-		node := &NodeInstance{
-			NodeType: EventNodeType,
-			value: EventNode{
-				name:        blueprint.Name,
-				events:      make([]*com.Event, 0),
-				constraints: c,
-				okTo:        schedule.nodes[blueprint.OkTo],
-				errorTo:     schedule.nodes[blueprint.ErrorTo],
-			},
-		}
-
-		schedule.nodes[node.value.Name()] = node
-		return nil
+		return errors.New("possible cycle, already visited " + blueprint.Name)
 	}
+
+	visited[blueprint.Name] = true
+	if err := schedule.makeOKToNode(blueprint, visited); err != nil {
+		return err
+	}
+
+	if err := schedule.makeErrorToNode(blueprint, visited); err != nil {
+		return err
+	}
+
+	node := &NodeInstance{
+		NodeType: EventNodeType,
+		value: EventNode{
+			name:        blueprint.Name,
+			events:      make([]*com.Event, 0),
+			constraints: c,
+			okTo:        schedule.nodes[blueprint.OkTo],
+			errorTo:     schedule.nodes[blueprint.ErrorTo],
+		},
+	}
+
+	schedule.nodes[node.value.Name()] = node
+	return nil
 }
 
+// helper function to add a handler blueprint to the schedule. This function may recursively call itself while updating
+// the visited map to indicate that the current node has been visited.  Can throw an error for various reasons.
 func (schedule *Schedule) addHandlerBlueprint(blueprint com.HandlerBlueprint, visited map[string]bool) error {
 
 	if visited[blueprint.Name] {
-		return errors.New("Possible cycle, already visited " + blueprint.Name)
+		return errors.New("possible cycle, already visited " + blueprint.Name)
+	} else if blueprint.Name == "" {
+		return errors.New("names of nodes cannot be empty")
 	}
+
 	visited[blueprint.Name] = true
 
 	if _, found := schedule.nodes[blueprint.To]; !found {
@@ -272,12 +230,30 @@ func (schedule *Schedule) addHandlerBlueprint(blueprint com.HandlerBlueprint, vi
 			value: EmailHandlerNode{
 				emailTo: blueprint.Email.EmailTo,
 				to:      schedule.nodes[blueprint.To],
+				name:    blueprint.Name,
 			},
 		}
 
 		schedule.nodes[node.value.Name()] = node
 	} else {
 		return errors.New("Handler " + blueprint.Name + " incorrectly defined.")
+	}
+
+	return nil
+}
+
+// helper function to be sure we've created all the nodes requried.
+func (schedule *Schedule) createdAll() error {
+	for _, event := range schedule.blueprintMaps.Events {
+		if _, created := schedule.nodes[event.Name]; !created {
+			return errors.New("didnt create event " + event.Name + ", no route to node")
+		}
+	}
+
+	for _, handler := range schedule.blueprintMaps.Handlers {
+		if _, created := schedule.nodes[handler.Name]; !created {
+			return errors.New("didnt create handler " + handler.Name + ", no route to node")
+		}
 	}
 
 	return nil
