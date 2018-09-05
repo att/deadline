@@ -163,6 +163,50 @@ func FromBlueprint(blueprint *com.ScheduleBlueprint) (*Schedule, error) {
 	return schedule, nil
 }
 
+// helper function to make the ok-to node sub-tree of the given blueprint
+func (schedule *Schedule) makeOKToNode(blueprint com.EventBlueprint, visited map[string]bool) error {
+	if _, found := schedule.nodes[blueprint.OkTo]; !found {
+		okToBlueprint, isEvent := schedule.blueprintMaps.Events[blueprint.OkTo]
+		okToNode, foundOkTo := schedule.nodes[blueprint.OkTo]
+
+		if isEvent { //okTo not already made and is an event node
+			if err := schedule.addEventBlueprint(okToBlueprint, visited); err != nil {
+				return err
+			}
+		} else if foundOkTo && okToNode.NodeType == EndNodeType {
+			// do nothing, just having checked for it is enough
+		} else {
+			return errors.New("Events can only ok-to other events or the end node")
+		}
+	}
+	return nil
+}
+
+// helper function to make the error-to node sub-tree of the given blueprint
+func (schedule *Schedule) makeErrorToNode(blueprint com.EventBlueprint, visited map[string]bool) error {
+	if _, found := schedule.nodes[blueprint.ErrorTo]; !found {
+		errorToBlueprint, isEvent := schedule.blueprintMaps.Events[blueprint.ErrorTo]
+
+		if isEvent {
+			if err := schedule.addEventBlueprint(errorToBlueprint, visited); err != nil {
+				return err
+			}
+		}
+
+		errorToHandlerBlueprint, isHandler := schedule.blueprintMaps.Handlers[blueprint.ErrorTo]
+		if isHandler {
+			if err := schedule.addHandlerBlueprint(errorToHandlerBlueprint, visited); err != nil {
+				return err
+			}
+		} else {
+			// at this point it wasn't found, and it wasn't an event and it wasn't a handler
+			return errors.New("Couldn't find the error-to node for " + blueprint.Name)
+		}
+	}
+
+	return nil
+}
+
 func (schedule *Schedule) addEventBlueprint(blueprint com.EventBlueprint, visited map[string]bool) error {
 	if c, err := com.FromBlueprint(time.Now(), blueprint.Constraints); err != nil {
 		return err
@@ -170,43 +214,13 @@ func (schedule *Schedule) addEventBlueprint(blueprint com.EventBlueprint, visite
 		return errors.New("Possible cycle, already visited " + blueprint.Name)
 	} else {
 
-		// look for and make the okTo node
 		visited[blueprint.Name] = true
-		if _, found := schedule.nodes[blueprint.OkTo]; !found {
-			okToBlueprint, isEvent := schedule.blueprintMaps.Events[blueprint.OkTo]
-			okToNode, foundOkTo := schedule.nodes[blueprint.OkTo]
-
-			if isEvent { //okTo not already made and is an event node
-				if err := schedule.addEventBlueprint(okToBlueprint, visited); err != nil {
-					return err
-				}
-			} else if foundOkTo && okToNode.NodeType == EndNodeType {
-				// do nothing, just having checked for it is enough
-			} else {
-				return errors.New("Events can only ok-to other events or the end node")
-			}
+		if err := schedule.makeOKToNode(blueprint, visited); err != nil {
+			return err
 		}
 
-		// look for and make the errorTo node
-		if _, found := schedule.nodes[blueprint.ErrorTo]; !found {
-			errorToBlueprint, isEvent := schedule.blueprintMaps.Events[blueprint.ErrorTo]
-
-			if isEvent {
-				if err := schedule.addEventBlueprint(errorToBlueprint, visited); err != nil {
-					return err
-				}
-			}
-
-			errorToHandlerBlueprint, isHandler := schedule.blueprintMaps.Handlers[blueprint.ErrorTo]
-			if isHandler {
-				if err = schedule.addHandlerBlueprint(errorToHandlerBlueprint, visited); err != nil {
-					return err
-				}
-			} else {
-				// at this point it wasn't found, and it wasn't an event and it wasn't a handler
-				return errors.New("Couldn't find the error-to node for " + blueprint.Name)
-			}
-
+		if err := schedule.makeErrorToNode(blueprint, visited); err != nil {
+			return err
 		}
 
 		node := &NodeInstance{
@@ -229,9 +243,8 @@ func (schedule *Schedule) addHandlerBlueprint(blueprint com.HandlerBlueprint, vi
 
 	if visited[blueprint.Name] {
 		return errors.New("Possible cycle, already visited " + blueprint.Name)
-	} else {
-		visited[blueprint.Name] = true
 	}
+	visited[blueprint.Name] = true
 
 	if _, found := schedule.nodes[blueprint.To]; !found {
 		okToEvent, isEvent := schedule.blueprintMaps.Events[blueprint.To]
