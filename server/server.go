@@ -13,17 +13,18 @@ import (
 	"github.com/att/deadline/schedule"
 )
 
-var M *schedule.ScheduleManager
+var manager *schedule.ScheduleManager
 
 type DeadlineServer struct {
 	server *http.Server
 }
 
-func NewDeadlineServer(c *config.Config) *DeadlineServer {
+func NewDeadlineServer(cfg *config.Config) *DeadlineServer {
+	manager = schedule.GetManagerInstance(cfg)
 
 	return &DeadlineServer{
 		server: &http.Server{
-			Addr:    ":" + c.Server.Port,
+			Addr:    ":" + cfg.Server.Port,
 			Handler: newDeadlineHandler(),
 		},
 	}
@@ -65,8 +66,8 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	event.ReceivedAt = time.Now().Unix()
-	M.Update(&event)
-	err = schedule.Fd.SaveEvent(&event)
+	manager.Update(&event)
+	//err = schedule.Fd.SaveEvent(&event)
 	com.CheckError(err)
 	w.WriteHeader(http.StatusOK)
 
@@ -97,7 +98,7 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	schedule := M.GetSchedule(name)
+	schedule := manager.GetSchedule(name)
 	if schedule == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -124,7 +125,7 @@ func putBlueprint(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	M.AddSchedule(&blueprint)
+	manager.AddSchedule(&blueprint)
 	w.WriteHeader(http.StatusCreated)
 
 	return nil
@@ -136,7 +137,7 @@ func getBlueprint(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	blueprint, err := schedule.Fd.GetByName(name) //TODO pull from schedule manager not DAO
+	blueprint, err := manager.GetBlueprint(name) //TODO pull from schedule manager not DAO
 	if err != nil {
 		return err
 	}

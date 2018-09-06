@@ -32,21 +32,27 @@ import (
 // 	return EvaluateTime(e, h) && EvaluateSuccess(e)
 // }
 
-// func (s *Schedule) EventOccurred(e *common.Event) {
+func (s *Schedule) EventOccurred(e *com.Event) {
 
-// 	ev := findEvent(s.Start, e.Name)
+	// ev := findEvent(s.Start, e.Name)
 
-// 	if ev != nil {
-// 		ev.ReceiveAt = e.ReceiveAt
-// 		ev.IsLive = true
-// 		ev.Success = e.Success
-// 		s.Start.OkTo = &s.End
+	// if ev != nil {
+	// 	ev.ReceiveAt = e.ReceiveAt
+	// 	ev.IsLive = true
+	// 	ev.Success = e.Success
+	// 	s.Start.OkTo = &s.End
 
-// 	} else {
-// 		s.Start.ErrorTo = &s.Error
-// 	}
+	// } else {
+	// 	s.Start.ErrorTo = &s.Error
+	// }
 
-// }
+}
+
+// SubscribesTo returns the set of named events that this schedule subscribes to.  That is,
+// all the event nodes that this schedule expects to accept
+func (s *Schedule) SubscribesTo() map[string]bool {
+	return s.subscribesTo
+}
 
 // FromBlueprint creates a Schedule object from a blueprint.  Errors can occur for various reasons
 // like invalid business rules like an event node's error-to can only go to end or a handler
@@ -63,6 +69,7 @@ func FromBlueprint(blueprint *com.ScheduleBlueprint) (*Schedule, error) {
 
 	schedule := &Schedule{
 		nodes:         make(map[string]*NodeInstance),
+		subscribesTo:  make(map[string]bool),
 		blueprintMaps: *maps,
 		Name:          blueprint.Name,
 	}
@@ -189,6 +196,7 @@ func (schedule *Schedule) addEventBlueprint(blueprint com.EventBlueprint, visite
 	}
 
 	schedule.nodes[node.value.Name()] = node
+	schedule.subscribesTo[node.value.Name()] = true
 	return nil
 }
 

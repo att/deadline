@@ -1,9 +1,8 @@
 package schedule
 
 import (
-	"time"
-
 	com "github.com/att/deadline/common"
+	"github.com/att/deadline/dao"
 )
 
 type NodeType int
@@ -21,6 +20,7 @@ type Schedule struct {
 	End           *NodeInstance `json:"-"`
 	nodes         map[string]*NodeInstance
 	blueprintMaps com.BlueprintMaps
+	subscribesTo  map[string]bool
 }
 
 type ScheduledHandler struct {
@@ -31,15 +31,9 @@ type ScheduledHandler struct {
 
 type ScheduleManager struct {
 	subscriptionTable map[string][]*Schedule
-	ScheduleTable     map[string]*Schedule
-	EvaluationTime    time.Time
+	schedules         map[string]*Schedule
+	db                dao.ScheduleDAO
 }
-
-// type innerbytes struct {
-// 	XMLName xml.Name       `xml:"innerbytes"`
-// 	Hander  common.Handler `xml:"handler"`
-// 	Events  []common.Event `xml:"event"`
-// }
 
 type Node interface {
 	// Type() string
@@ -64,11 +58,6 @@ type EventNode struct {
 	okTo        *NodeInstance
 	errorTo     *NodeInstance
 }
-
-// type HandlerNode struct {
-// 	name    string
-// 	Handler Handler
-// }
 
 type StartNode struct {
 	to *NodeInstance

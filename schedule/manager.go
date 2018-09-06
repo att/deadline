@@ -1,25 +1,61 @@
 package schedule
 
 import (
-	"time"
+	"sync"
 
 	com "github.com/att/deadline/common"
+	"github.com/att/deadline/config"
 	"github.com/att/deadline/dao"
 )
 
-var Fd dao.ScheduleDAO
-var m *ScheduleManager
+var manager *ScheduleManager
+var once sync.Once
 
-func GetManagerInstance() *ScheduleManager {
-	if m == nil {
-		m = &ScheduleManager{
-			subscriptionTable: make(map[string][]*Schedule),
-			ScheduleTable:     make(map[string]*Schedule),
-			EvaluationTime:    time.Now(),
+// GetManagerInstance will return the singleton of the ScheduleManager object
+func GetManagerInstance(cfg *config.Config) *ScheduleManager {
+	once.Do(func() {
+		manager = &ScheduleManager{
+			db: dao.NewScheduleDAO(cfg),
+		}
+
+		manager.loadAllSchedules()
+	})
+	return manager
+}
+
+func (manager *ScheduleManager) loadAllSchedules() {
+	manager.schedules = make(map[string]*Schedule)
+	manager.subscriptionTable = make(map[string][]*Schedule)
+
+	blueprints, err := manager.db.LoadScheduleBlueprints()
+	if err != nil {
+		//log that you couldn't load events and return
+	}
+
+	for _, blueprint := range blueprints {
+		if schedule, err := FromBlueprint(&blueprint); err != nil {
+			// log error
+		} else {
+			// TODO check and log duplicates entries
+			manager.schedules[schedule.Name] = schedule
+			for subscription := range schedule.SubscribesTo() {
+				entry := manager.subscriptionTable[subscription]
+				manager.subscriptionTable[subscription] = append(entry, schedule)
+			}
 		}
 	}
-	return m
 
+	events, err := manager.db.LoadEvents()
+	if err != nil {
+		//log that you couldn't load events
+	} else {
+		for _, event := range events {
+			schedules := manager.subscriptionTable[event.Name]
+			for _, schedule := range schedules {
+				schedule.EventOccurred(&event)
+			}
+		}
+	}
 }
 
 // func (m *ScheduleManager) Init(cfg *config.Config) *ScheduleManager {
@@ -58,11 +94,15 @@ func (m *ScheduleManager) Update(e *com.Event) {
 	if scheds == nil {
 		com.Info.Println("No subscribers.")
 	}
-	// for s := 0; s < len(scheds); s++ {
-	// 	scheds[s].EventOccurred(e)
 
-	// }
+	for _, schedule := range scheds {
+		schedule.EventOccurred(e)
+	}
+}
 
+// GetBlueprint gets a blueprint for a schedule given the name of the blueprint
+func (manager *ScheduleManager) GetBlueprint(name string) (*com.ScheduleBlueprint, error) {
+	return manager.db.GetByName(name)
 }
 
 func (m *ScheduleManager) AddSchedule(blueprint *com.ScheduleBlueprint) {
@@ -132,7 +172,7 @@ func (m *ScheduleManager) AddSchedule(blueprint *com.ScheduleBlueprint) {
 
 func (m *ScheduleManager) GetSchedule(name string) *Schedule {
 
-	if s, ok := m.ScheduleTable[name]; !ok {
+	if s, ok := m.schedules[name]; !ok {
 		return nil
 	} else {
 		return s
