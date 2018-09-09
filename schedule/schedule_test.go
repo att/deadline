@@ -9,7 +9,9 @@ import (
 )
 
 var cyclicBlueprint = &com.ScheduleBlueprint{
-	Name: "cyclicBlueprint",
+	Name:     "cyclicBlueprint",
+	StartsAt: "2018-09-03T00:00:00+07:00",
+	Timing:   "daily",
 	Start: com.StartBlueprint{
 		To: "firstEvent",
 	},
@@ -37,7 +39,9 @@ var cyclicBlueprint = &com.ScheduleBlueprint{
 }
 
 var simpleBlueprint = &com.ScheduleBlueprint{
-	Name: "simpleBlueprint",
+	Name:     "simpleBlueprint",
+	StartsAt: "2018-09-03T00:00:00+07:00",
+	Timing:   "daily",
 	Start: com.StartBlueprint{
 		To: "firstEvent",
 	},
@@ -74,7 +78,9 @@ var simpleBlueprint = &com.ScheduleBlueprint{
 }
 
 var hangingBlueprint = &com.ScheduleBlueprint{
-	Name: "hangingBlueprint",
+	Name:     "hangingBlueprint",
+	StartsAt: "2018-09-03T00:00:00+07:00",
+	Timing:   "daily",
 	Start: com.StartBlueprint{
 		To: "firstEvent",
 	},

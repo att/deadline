@@ -32,7 +32,7 @@ import (
 // 	return EvaluateTime(e, h) && EvaluateSuccess(e)
 // }
 
-func (s *Schedule) EventOccurred(e *com.Event) {
+func (schedule *Schedule) EventOccurred(e *com.Event) {
 
 	// ev := findEvent(s.Start, e.Name)
 
@@ -50,8 +50,8 @@ func (s *Schedule) EventOccurred(e *com.Event) {
 
 // SubscribesTo returns the set of named events that this schedule subscribes to.  That is,
 // all the event nodes that this schedule expects to accept
-func (s *Schedule) SubscribesTo() map[string]bool {
-	return s.subscribesTo
+func (schedule *Schedule) SubscribesTo() map[string]bool {
+	return schedule.subscribesTo
 }
 
 // FromBlueprint creates a Schedule object from a blueprint.  Errors can occur for various reasons
@@ -60,11 +60,14 @@ func (s *Schedule) SubscribesTo() map[string]bool {
 func FromBlueprint(blueprint *com.ScheduleBlueprint) (*Schedule, error) {
 	maps := &com.BlueprintMaps{}
 	var err error
+	var startTime time.Time
 
 	if maps, err = com.GetBlueprintMaps(blueprint); err != nil {
 		return nil, err
-	} else if blueprint.Name == "" {
-		return nil, errors.New("schedule names cannot be empty")
+	} else if err = checkEmptyFields(blueprint); err != nil {
+		return nil, err
+	} else if startTime, err = time.Parse(time.RFC3339, blueprint.StartsAt); err != nil {
+		return nil, err
 	}
 
 	schedule := &Schedule{
@@ -72,6 +75,7 @@ func FromBlueprint(blueprint *com.ScheduleBlueprint) (*Schedule, error) {
 		subscribesTo:  make(map[string]bool),
 		blueprintMaps: *maps,
 		Name:          blueprint.Name,
+		StartTime:     startTime,
 	}
 
 	if blueprint.End.Name == "" {
@@ -265,4 +269,16 @@ func (schedule *Schedule) createdAll() error {
 	}
 
 	return nil
+}
+
+func checkEmptyFields(blueprint *com.ScheduleBlueprint) error {
+	if blueprint.Name == "" {
+		return errors.New("node names cannot be empty")
+	} else if blueprint.StartsAt == "" {
+		return errors.New("starts at time cannot be empty")
+	} else if blueprint.Timing == "" {
+		return errors.New("timing cannot be empty")
+	} else {
+		return nil
+	}
 }

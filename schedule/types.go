@@ -1,6 +1,8 @@
 package schedule
 
 import (
+	"time"
+
 	com "github.com/att/deadline/common"
 	"github.com/att/deadline/dao"
 )
@@ -15,7 +17,8 @@ const (
 )
 
 type Schedule struct {
-	Name          string        `json:"name,attr,omitempty" db:"name"`
+	Name          string `json:"name,attr,omitempty" db:"name"`
+	StartTime     time.Time
 	Start         *NodeInstance `json:"-"`
 	End           *NodeInstance `json:"-"`
 	nodes         map[string]*NodeInstance

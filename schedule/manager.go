@@ -29,7 +29,7 @@ func (manager *ScheduleManager) loadAllSchedules() {
 
 	blueprints, err := manager.db.LoadScheduleBlueprints()
 	if err != nil {
-		//log that you couldn't load events and return
+		//log that you couldn't load blueprints. return?
 	}
 
 	for _, blueprint := range blueprints {
@@ -58,38 +58,9 @@ func (manager *ScheduleManager) loadAllSchedules() {
 	}
 }
 
-// func (m *ScheduleManager) Init(cfg *config.Config) *ScheduleManager {
-
-// 	currentManager := GetManagerInstance()
-
-// 	Fd = dao.NewScheduleDAO(cfg)
-// 	blueprints, err := Fd.LoadScheduleBlueprints()
-// 	if err != nil {
-// 		common.CheckError(err)
-// 		return currentManager
-// 	}
-
-// 	for _, bprint := range blueprints {
-
-// 		newSchedule := FromBlueprint(&bprint)
-
-// 		//newSchedule.LastRun = time.Time{}
-
-// 		//make sure pointers are different
-// 		currentManager.updateSubscriptions(newSchedule)
-
-// 	}
-
-// 	evnts, err := Fd.LoadEvents()
-// 	common.CheckError(err)
-// 	for _, e := range evnts {
-// 		currentManager.UpdateEvents(&e)
-// 	}
-// 	return currentManager
-// }
-
-func (m *ScheduleManager) Update(e *com.Event) {
-	scheds := m.subscriptionTable[e.Name]
+// Update updates any schedule currently alive with the event that you pass in
+func (manager *ScheduleManager) Update(e *com.Event) {
+	scheds := manager.subscriptionTable[e.Name]
 
 	if scheds == nil {
 		com.Info.Println("No subscribers.")
@@ -105,7 +76,10 @@ func (manager *ScheduleManager) GetBlueprint(name string) (*com.ScheduleBlueprin
 	return manager.db.GetByName(name)
 }
 
-func (m *ScheduleManager) AddSchedule(blueprint *com.ScheduleBlueprint) {
+// AddSchedule adds the schedule to the current list of schedules. If the schedule's start time
+// it will become live and the manager will start to evaluate it. Otherwise it will be scheduled
+// to become live at that time
+func (manager *ScheduleManager) AddSchedule(blueprint *com.ScheduleBlueprint) {
 
 	// 	err := Fd.Save(blueprint)
 	// 	common.CheckError(err)
@@ -170,9 +144,11 @@ func (m *ScheduleManager) AddSchedule(blueprint *com.ScheduleBlueprint) {
 // 	// m.ScheduleTable[s.Name] = s
 // }
 
-func (m *ScheduleManager) GetSchedule(name string) *Schedule {
+// GetSchedule gets the current running schedule by the given name. If it exists, it'll
+// return it, if not, it will return nil.
+func (manager *ScheduleManager) GetSchedule(name string) *Schedule {
 
-	if s, ok := m.schedules[name]; !ok {
+	if s, ok := manager.schedules[name]; !ok {
 		return nil
 	} else {
 		return s
