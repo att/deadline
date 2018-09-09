@@ -3,3 +3,4 @@ vendor/
 deadline-server
 
 *.test
+*.code-workspace

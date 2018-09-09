@@ -5,6 +5,7 @@ import "errors"
 type ScheduleBlueprint struct {
 	Timing   string             `xml:"timing,attr" db:"timing"`
 	Name     string             `xml:"name,attr" db:"name"`
+	StartsAt string             `xml:"starts-at,attr" db:"name"`
 	Events   []EventBlueprint   `xml:"event"`
 	Handlers []HandlerBlueprint `xml:"handler"`
 	Start    StartBlueprint     `xml:"start"`
