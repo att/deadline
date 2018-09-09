@@ -1,38 +1,29 @@
-package notifier 
-import (
-	"encoding/json"
-	"bytes"
-	"net/http"
-	"github.com/att/deadline/common"
-)
-
+package notifier
 
 func (w Webhook) Send(msg string) {
-	var str string
-	str = msg
-	jv, err := json.Marshal(str)
-	if err != nil {
-		common.CheckError(err)
-	}
-	_ , err = http.Post(w.Addr,"application/json", bytes.NewBuffer(jv))
-	common.CheckError(err)
-
+	// var str string
+	// str = msg
+	// jv, err := json.Marshal(str)
+	// if err != nil {
+	// 	common.CheckError(err)
+	// }
+	// _ , err = http.Post(w.Addr,"application/json", bytes.NewBuffer(jv))
+	// common.CheckError(err)
 
 }
-func NewNotifyHandler(handlerType string,addr string) NotifyHandler{
 
-	switch handlerType {
-	case "WEBHOOK":	
+// func NewNotifyHandler(handlerType string, addr string) NotifyHandler {
 
-		w := &Webhook{
-			Addr: addr,
-		}
-		w.TH.Name = handlerType
+// 	switch handlerType {
+// 	case "WEBHOOK":
 
-		return w
-	}
-	common.Info.Println("Did not give a valid handler.")
-	return &Webhook{}
-}
+// 		w := &Webhook{
+// 			Addr: addr,
+// 		}
+// 		w.TH.Name = handlerType
 
-
+// 		return w
+// 	}
+// 	common.Info.Println("Did not give a valid handler.")
+// 	return &Webhook{}
+// }

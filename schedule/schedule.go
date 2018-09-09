@@ -2,6 +2,7 @@ package schedule
 
 import (
 	"errors"
+	"sync"
 	"time"
 
 	com "github.com/att/deadline/common"
@@ -32,7 +33,13 @@ import (
 // 	return EvaluateTime(e, h) && EvaluateSuccess(e)
 // }
 
+func (schedule *Schedule) Evaluate() (State, error) {
+	return schedule.state, nil
+}
+
 func (schedule *Schedule) EventOccurred(e *com.Event) {
+	schedule.eventLock.RLock()
+	defer schedule.eventLock.Unlock()
 
 	// ev := findEvent(s.Start, e.Name)
 
@@ -76,6 +83,8 @@ func FromBlueprint(blueprint *com.ScheduleBlueprint) (*Schedule, error) {
 		blueprintMaps: *maps,
 		Name:          blueprint.Name,
 		StartTime:     startTime,
+		eventLock:     &sync.RWMutex{},
+		state:         Running,
 	}
 
 	if blueprint.End.Name == "" {
@@ -171,7 +180,7 @@ func (schedule *Schedule) addEventBlueprint(blueprint com.EventBlueprint, visite
 	var c com.EventConstraints
 	var err error
 
-	if c, err = com.FromBlueprint(time.Now(), blueprint.Constraints); err != nil {
+	if c, err = com.FromBlueprint(schedule.StartTime, blueprint.Constraints); err != nil {
 		return err
 	} else if blueprint.Name == "" {
 		return errors.New("node names cannot be empty")

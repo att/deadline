@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/att/deadline/common"
 	"github.com/att/deadline/config"
 	"github.com/att/deadline/server"
 	"github.com/jasonlvhit/gocron"
@@ -37,7 +36,6 @@ func main() {
 	cfg, err := config.LoadConfig(*configFile)
 
 	if err != nil {
-		common.Info.Println("We couldn't load the config, using defaults. Error was", err)
 		cfg = &config.DefaultConfig
 	}
 
@@ -50,6 +48,6 @@ func main() {
 
 	err = dlsvr.Start()
 	if err != nil {
-		common.Info.Println("Server exited with error:", err)
+
 	}
 }

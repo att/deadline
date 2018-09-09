@@ -51,7 +51,6 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 
 	event := com.Event{}
 	if r.Body == nil {
-		com.Info.Println("No request body sent")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -60,7 +59,6 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 
 	valid := event.ValidateEvent()
 	if err != nil || valid != nil {
-		com.Info.Println("Cannot accept request. decoding error:", err, "validation error:", valid)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -68,7 +66,6 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 	event.ReceivedAt = time.Now().Unix()
 	manager.Update(&event)
 	//err = schedule.Fd.SaveEvent(&event)
-	com.CheckError(err)
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -93,7 +90,6 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 
 	name, err := getParams(r)
 	if err != nil {
-		com.Info.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -112,7 +108,6 @@ func scheduleHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(bytes)
 
 	if err != nil {
-		com.Info.Println(err)
 		return
 	}
 }

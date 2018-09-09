@@ -73,7 +73,6 @@ func (dao fileDAO) LoadScheduleBlueprints() ([]com.ScheduleBlueprint, error) {
 	defer directory.Close()
 
 	if err != nil {
-		com.Info.Println("Could not open directory.")
 		return blueprints, err
 	}
 
@@ -83,7 +82,6 @@ func (dao fileDAO) LoadScheduleBlueprints() ([]com.ScheduleBlueprint, error) {
 			scheduleName := strings.TrimSuffix(scheduleFile, ".xml")
 
 			if blueprint, err := dao.GetByName(scheduleName); err != nil {
-				com.Info.Println(scheduleName + " wasn't translated")
 			} else {
 				blueprints = append(blueprints, *blueprint)
 			}
