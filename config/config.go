@@ -4,7 +4,9 @@ import (
 	"errors"
 	"os"
 
-	"github.com/BurntSushi/toml"
+	"io/ioutil"
+
+	"gopkg.in/yaml.v2"
 )
 
 func validateConfig(c Config) error {
@@ -15,23 +17,20 @@ func validateConfig(c Config) error {
 	return nil
 }
 
-func LoadConfig(file string) (*Config, error) {
+func LoadConfig(filename string) (*Config, error) {
 
-	_, err := os.Stat(file)
-	if err != nil {
+	var config = &Config{}
+
+	if data, err := ioutil.ReadFile(filename); err != nil {
 		return nil, err
+	} else {
+		if err := yaml.Unmarshal(data, config); err != nil {
+			return nil, err
+		} else {
+			return config, nil
+		}
 	}
 
-	var conf Config
-	if _, err := toml.DecodeFile(file, &conf); err != nil {
-		return &DefaultConfig, err
-	}
-	err = validateConfig(conf)
-	if err != nil {
-		return &DefaultConfig, err
-	}
-	checkMissingConfigs(&conf)
-	return &conf, nil
 }
 
 func checkMissingConfigs(c *Config) {

@@ -11,16 +11,16 @@ import (
 )
 
 var (
-	configFile  *string = flag.String("config.file", "config.toml", "The Config file this binary is to run with")
-	showVersion *bool   = flag.Bool("version", false, "Show the version of this binary")
+	configFile  = flag.String("config.file", "config.toml", "The Config file this binary is to run with")
+	showVersion = flag.Bool("version", false, "Show the version of this binary")
 
-	version string = NOT_DEFINED
-	commit  string = NOT_DEFINED
-	builtby string = NOT_DEFINED
+	version = NotDefined
+	commit  = NotDefined
+	builtby = NotDefined
 )
 
 const (
-	NOT_DEFINED string = "Not defined"
+	NotDefined = "Not defined"
 )
 
 func main() {

@@ -1,30 +1,30 @@
 package config
 
 type Config struct {
-	FileConfig  FileConfig  `toml:"fileconfig"`
-	DBConfig    DBConfig    `toml:"dbconfig"`
-	DAO         string      `toml:"dao"`
-	Server      ServConfig  `toml:"serverconfig"`
-	EmailConfig EmailConfig `toml:"emailconfig"`
+	FileConfig  FileConfig  `yaml:"fileconfig"`
+	DBConfig    DBConfig    `yaml:"dbconfig"`
+	DAO         string      `yaml:"dao"`
+	Server      ServConfig  `yaml:"serverconfig"`
+	EmailConfig EmailConfig `yaml:"emailconfig"`
 }
 
 type FileConfig struct {
-	Directory string `toml:"directory"`
+	Directory string `yaml:"directory"`
 }
 type DBConfig struct {
-	ConnectionString string `toml:"connection_string"`
+	ConnectionString string `yaml:"connection_string"`
 }
 
 type ServConfig struct {
-	Port string `toml:"port"`
+	Port string `yaml:"port"`
 }
 
 type HandlerConfig struct {
-	EmailConfig EmailConfig `toml:"emailconfig"`
+	EmailConfig EmailConfig `yaml:"emailconfig"`
 }
 
 type EmailConfig struct {
-	From       string `toml:"from"`
-	RelayHost string `toml:"relay_host"`
-	RelayPort int    `toml:"relay_port"`
+	From      string `yaml:"from"`
+	RelayHost string `yaml:"relay_host"`
+	RelayPort int    `yaml:"relay_port"`
 }

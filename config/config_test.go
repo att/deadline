@@ -1,7 +1,6 @@
 package config
 
 import (
-
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,14 +20,13 @@ var good = Config{
 }
 
 func TestGoodConfig(test *testing.T) {
-	g, err := LoadConfig("testdata/goodfile.toml")
+	cfg, err := LoadConfig("testdata/goodfile.yml")
 	assert.Nil(test, err, "Could not load a good file")
-	assert.Equal(test, g, &good)
-
+	assert.Equal(test, &good, cfg)
 }
 
-func TestBadConfig(test *testing.T) {
-	g, err := LoadConfig("testdata/badfile.toml")
+func TestCantFindConfig(test *testing.T) {
+	cfg, err := LoadConfig("testdata/cantfindfile.yml")
 	assert.NotNil(test, err, "Loaded a bad file")
-	assert.Equal(test, &DefaultConfig, g)
+	assert.Nil(test, cfg, "")
 }

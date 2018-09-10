@@ -1,0 +1,8 @@
+#this one is used to test DB functions
+daa: "DB"
+fileconfig:
+    directory: ""
+dbconfig:
+    connection_string: "root:password@tcp(localhost:3306)/webdb"
+serverconfig:
+    port: "8082"
