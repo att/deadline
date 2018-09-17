@@ -17,12 +17,14 @@ var good = Config{
 	Server: ServConfig{
 		Port: "8081",
 	},
+	Logconfig: make(map[string]string),
 }
 
 func TestGoodConfig(test *testing.T) {
 	cfg, err := LoadConfig("testdata/goodfile.yml")
 	assert.Nil(test, err, "Could not load a good file")
 	assert.Equal(test, &good, cfg)
+	assert.NotNil(test, cfg.Logconfig, "")
 }
 
 func TestCantFindConfig(test *testing.T) {

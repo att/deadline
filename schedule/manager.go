@@ -41,7 +41,7 @@ func (manager *ScheduleManager) loadAllSchedules() {
 	}
 
 	for _, blueprint := range blueprints {
-		if err := manager.AddSchedule(&blueprint); err != nil {
+		if err := manager.AddSchedule(blueprint); err != nil {
 			//TODO log error
 		}
 	}
@@ -84,7 +84,7 @@ func (manager *ScheduleManager) AddScheduleAndSave(blueprint *com.ScheduleBluepr
 	// TODO rollback the save if the other errors out
 	if err := manager.db.Save(blueprint); err != nil {
 		return err
-	} else if err := manager.AddSchedule(blueprint); err != nil {
+	} else if err := manager.AddSchedule(*blueprint); err != nil {
 		return err
 	} else {
 		return nil
@@ -94,9 +94,9 @@ func (manager *ScheduleManager) AddScheduleAndSave(blueprint *com.ScheduleBluepr
 // AddSchedule adds the schedule to the current list of schedules. If the schedule's start time
 // it will become live and the manager will start to evaluate it. Otherwise it will be scheduled
 // to become live at that time
-func (manager *ScheduleManager) AddSchedule(blueprint *com.ScheduleBlueprint) error {
+func (manager *ScheduleManager) AddSchedule(blueprint com.ScheduleBlueprint) error {
 
-	if schedule, err := FromBlueprint(blueprint); err != nil {
+	if schedule, err := FromBlueprint(&blueprint); err != nil {
 		return err
 	} else if nextTime, err := timingToDuration(blueprint.Timing); err != nil {
 		return err

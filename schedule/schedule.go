@@ -8,31 +8,6 @@ import (
 	com "github.com/att/deadline/common"
 )
 
-// func ConvertTime(timing string) time.Time {
-// 	var m = int(time.Now().Month())
-// 	loc, err := time.LoadLocation("Local")
-// 	common.CheckError(err)
-// 	parsedTime, err := time.ParseInLocation("15:04:05", timing, loc)
-// 	if err != nil {
-// 		parsedTime = time.Time{}
-// 	}
-// 	if !parsedTime.IsZero() {
-// 		parsedTime = parsedTime.AddDate(time.Now().Year(), m-1, time.Now().Day()-1)
-// 	}
-// 	return parsedTime
-
-// }
-
-// func EvaluateSuccess(e *common.Event) bool {
-// 	if !e.IsLive {
-// 		return true
-// 	}
-// 	return e.Success
-// }
-// func EvaluateEvent(e *common.Event, h notifier.NotifyHandler) bool {
-// 	return EvaluateTime(e, h) && EvaluateSuccess(e)
-// }
-
 func (schedule *Schedule) Evaluate() (State, error) {
 	return schedule.state, nil
 }

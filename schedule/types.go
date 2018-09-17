@@ -8,7 +8,10 @@ import (
 	"github.com/att/deadline/dao"
 )
 
+// NodeType is the type of node
 type NodeType int
+
+// State is the state of a schedule, like Running
 type State int
 
 const (
@@ -33,6 +36,7 @@ const (
 )
 
 var (
+	// TimingAilias are aliases for timings. Example: weekly = 168h. That is the string 'weekly' is 168 hours.
 	TimingAilias = map[string]string{
 		"weekly": "168h",
 		"daily":  "24h",
@@ -40,6 +44,7 @@ var (
 	}
 )
 
+// Schedule is the type that represents a running schedule
 type Schedule struct {
 	Name          string `json:"name,attr,omitempty" db:"name"`
 	StartTime     time.Time
@@ -52,12 +57,15 @@ type Schedule struct {
 	state         State
 }
 
+// ScheduledHandler is the type that handles failures in a schedule
 type ScheduledHandler struct {
 	ScheduleName string `db:"schedulename"`
 	Name         string `db:"name"`
 	Address      string `db:"address"`
 }
 
+// ScheduleManager is tasked with running and maintaing all the schedules. There should only be 1 per process.
+// It's tasked with the creation, destruction and evaulation of all schedules.
 type ScheduleManager struct {
 	subscriptionTable map[string][]*Schedule
 	schedules         map[string]*Schedule
@@ -66,6 +74,8 @@ type ScheduleManager struct {
 	blueprints        chan com.ScheduleBlueprint
 }
 
+// Node is the interface for nodes in the schedules and provides ways to see what they are and how they connect
+// to other Nodes.
 type Node interface {
 	// Type() string
 	//Next() ([]*NodeInstance, error)
@@ -73,15 +83,18 @@ type Node interface {
 	Name() string
 }
 
+// Handler is the interface for handlers to implement so the can handle failures in a uniform way.
 type Handler interface {
 	Handle() error
 }
 
+// NodeInstance is the actual instance of a Node interface.
 type NodeInstance struct {
 	NodeType NodeType
 	value    Node
 }
 
+// EventNode is the Node implementing type for an event.
 type EventNode struct {
 	name        string
 	constraints com.EventConstraints
@@ -90,14 +103,17 @@ type EventNode struct {
 	errorTo     *NodeInstance
 }
 
+// StartNode is the Node implementing type for the start of a schedule.
 type StartNode struct {
 	to *NodeInstance
 }
 
+// EndNode is the Node implementing type for the end of a schedule.
 type EndNode struct {
 	name string
 }
 
+// EmailHandlerNode is the Node & Handler implementing type for the handler that emails failures.
 type EmailHandlerNode struct {
 	to      *NodeInstance
 	name    string

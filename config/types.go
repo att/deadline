@@ -1,11 +1,20 @@
 package config
 
+import (
+	"sync"
+
+	"github.com/sirupsen/logrus"
+)
+
 type Config struct {
-	FileConfig  FileConfig  `yaml:"fileconfig"`
-	DBConfig    DBConfig    `yaml:"dbconfig"`
-	DAO         string      `yaml:"dao"`
-	Server      ServConfig  `yaml:"serverconfig"`
-	EmailConfig EmailConfig `yaml:"emailconfig"`
+	FileConfig  FileConfig        `yaml:"fileconfig"`
+	DBConfig    DBConfig          `yaml:"dbconfig"`
+	DAO         string            `yaml:"dao"`
+	Server      ServConfig        `yaml:"serverconfig"`
+	EmailConfig EmailConfig       `yaml:"emailconfig"`
+	Logconfig   map[string]string `yaml:"logs"`
+	loggers     map[string]*logrus.Logger
+	logLock     sync.Mutex
 }
 
 type FileConfig struct {

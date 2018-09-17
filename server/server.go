@@ -120,7 +120,7 @@ func putBlueprint(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	manager.AddSchedule(&blueprint)
+	manager.AddSchedule(blueprint)
 	w.WriteHeader(http.StatusCreated)
 
 	return nil
