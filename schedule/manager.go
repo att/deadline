@@ -12,7 +12,7 @@ import (
 
 var manager *ScheduleManager
 var once sync.Once
-var log = logrus.New()
+var log *logrus.Logger
 
 // GetManagerInstance will return the singleton of the ScheduleManager object
 func GetManagerInstance(cfg *config.Config) *ScheduleManager {
@@ -25,6 +25,7 @@ func GetManagerInstance(cfg *config.Config) *ScheduleManager {
 		manager.schedules = make(map[string]*Schedule)
 		manager.subscriptionTable = make(map[string][]*Schedule)
 		manager.blueprints = make(chan com.ScheduleBlueprint)
+		log = cfg.GetLogger("manager")
 
 		manager.loadAllSchedules()
 	})
@@ -34,6 +35,7 @@ func GetManagerInstance(cfg *config.Config) *ScheduleManager {
 // part of the initialization cycle, this function should only be called once per instance of the
 // ScheduleManager.  It is not likely thread safe at this time.
 func (manager *ScheduleManager) loadAllSchedules() {
+	log.Info("loading all schedules.")
 
 	blueprints, err := manager.db.LoadScheduleBlueprints()
 	if err != nil {

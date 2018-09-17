@@ -54,5 +54,7 @@ var DefaultConfig = Config{
 	Server: ServerConfig{
 		Port: "8080",
 	},
-	DAO: "file",
+	DAO:       "file",
+	loggers:   make(map[string]*logrus.Logger),
+	Logconfig: make(map[string]string),
 }

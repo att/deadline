@@ -39,6 +39,10 @@ func LoadConfig(filename string) (*Config, error) {
 		config.Logconfig = make(map[string]string)
 	}
 
+	if config.loggers == nil {
+		config.loggers = make(map[string]*logrus.Logger)
+	}
+
 	return config, nil
 
 }
