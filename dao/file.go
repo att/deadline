@@ -26,9 +26,9 @@ func newFileDAO(path string) *fileDAO {
 	return dao
 }
 
-func (fd fileDAO) GetByName(name string) (*com.ScheduleBlueprint, error) {
+func (dao fileDAO) GetByName(name string) (*com.ScheduleBlueprint, error) {
 
-	file, err := os.Open(fd.path + "/" + name + ".xml")
+	file, err := os.Open(dao.path + "/" + name + ".xml")
 	defer file.Close()
 	if err != nil {
 		return nil, err
@@ -67,7 +67,6 @@ func (dao fileDAO) Save(blueprint *com.ScheduleBlueprint) error {
 
 func (dao fileDAO) LoadScheduleBlueprints() ([]com.ScheduleBlueprint, error) {
 	blueprints := []com.ScheduleBlueprint{}
-	//blueprint := ScheduleBlueprint{}
 
 	directory, err := os.Open(dao.path)
 	defer directory.Close()
@@ -91,7 +90,7 @@ func (dao fileDAO) LoadScheduleBlueprints() ([]com.ScheduleBlueprint, error) {
 	return blueprints, nil
 }
 
-func (fd fileDAO) LoadEvents() ([]com.Event, error) {
+func (dao fileDAO) LoadEvents() ([]com.Event, error) {
 	liveEvents := []com.Event{}
 	// liveEvent := common.Event{}
 	// file, err := makeOrOpenDirectory(fd.path + "/" + "events")
@@ -137,9 +136,9 @@ func makeOrOpenDirectory(path string) (*os.File, error) {
 	return os.Open(path)
 }
 
-func (fd fileDAO) SaveEvent(e *com.Event) error {
+func (dao fileDAO) SaveEvent(e *com.Event) error {
 	str := e.Name + ".xml"
-	f, err := os.Create(fd.path + "/events/" + str)
+	f, err := os.Create(dao.path + "/events/" + str)
 	if err != nil {
 		return err
 	}

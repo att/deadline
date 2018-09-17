@@ -20,6 +20,7 @@ var (
 )
 
 const (
+	// NotDefined is a simple const string for things that are not defined
 	NotDefined = "Not defined"
 )
 

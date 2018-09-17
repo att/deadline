@@ -15,10 +15,12 @@ import (
 
 var manager *schedule.ScheduleManager
 
+// DeadlineServer is the http server for the deadline application.
 type DeadlineServer struct {
 	server *http.Server
 }
 
+// NewDeadlineServer returns a new deadline server based on the configuration given.
 func NewDeadlineServer(cfg *config.Config) *DeadlineServer {
 	manager = schedule.GetManagerInstance(cfg)
 
@@ -30,10 +32,12 @@ func NewDeadlineServer(cfg *config.Config) *DeadlineServer {
 	}
 }
 
+// Start starts the http server.
 func (dlsvr *DeadlineServer) Start() error {
 	return dlsvr.server.ListenAndServe()
 }
 
+// Stop stops the http server.
 func (dlsvr *DeadlineServer) Stop() error {
 	return dlsvr.server.Close()
 }

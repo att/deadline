@@ -14,7 +14,7 @@ var good = Config{
 	DBConfig: DBConfig{
 		ConnectionString: "N/A",
 	},
-	Server: ServConfig{
+	Server: ServerConfig{
 		Port: "8081",
 	},
 	Logconfig: make(map[string]string),

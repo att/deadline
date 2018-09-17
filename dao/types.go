@@ -5,6 +5,7 @@ import (
 	"github.com/att/deadline/config"
 )
 
+// NewScheduleDAO returns a new NewScheduleDAO based on the given configuration.
 func NewScheduleDAO(cfg *config.Config) ScheduleDAO { //TODO fix interface to throw errors
 	// if cfg.DAO == "file" {
 	return newFileDAO(cfg.FileConfig.Directory)
@@ -14,6 +15,7 @@ func NewScheduleDAO(cfg *config.Config) ScheduleDAO { //TODO fix interface to th
 	// }
 }
 
+// ScheduleDAO is the interface to store and retrieve schedueles from some type of storage.
 type ScheduleDAO interface {
 	GetByName(string) (*com.ScheduleBlueprint, error)
 	Save(s *com.ScheduleBlueprint) error
