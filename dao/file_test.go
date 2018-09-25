@@ -25,7 +25,7 @@ var dao = cleanAndRefreshDAO(nil, randomTempDir())
 var singleEventSchedule = com.ScheduleBlueprint{
 	Timing:   "daily",
 	Name:     "single_event_schedule",
-	StartsAt: "2018-09-08 00:00:00",
+	StartsAt: "2018-09-08T00:00:00Z",
 	Events: []com.EventBlueprint{
 		{
 			Name: "onlyEvent",

@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/sirupsen/logrus"
 
 	"io/ioutil"
@@ -8,17 +10,20 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var levelLookup = map[string]logrus.Level{
-	"warn":  logrus.WarnLevel,
-	"info":  logrus.InfoLevel,
-	"debug": logrus.DebugLevel,
-	"error": logrus.ErrorLevel,
-}
+var (
+	levelLookup = map[string]logrus.Level{
+		"warn":  logrus.WarnLevel,
+		"info":  logrus.InfoLevel,
+		"debug": logrus.DebugLevel,
+		"error": logrus.ErrorLevel,
+	}
 
-func init() {
-	logrus.SetFormatter(&logrus.TextFormatter{})
-	logrus.SetLevel(logrus.InfoLevel)
-}
+	formatter = &logrus.TextFormatter{
+		FullTimestamp:    true,
+		DisableTimestamp: false,
+		TimestampFormat:  time.RFC3339,
+	}
+)
 
 // LoadConfig loads the configuration based on the input file. Errors can occur for various
 // i/o or marshalling related reasons. Defaults will be returned for primitive types, like strings.
@@ -59,6 +64,7 @@ func (c *Config) GetLogger(name string) *logrus.Logger {
 	if logger, found = c.loggers[name]; !found {
 
 		logger := logrus.New()
+		logger.Formatter = formatter
 		logger.SetLevel(c.getLoggerLevel(name))
 		c.loggers[name] = logger
 

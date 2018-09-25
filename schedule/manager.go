@@ -46,7 +46,7 @@ func (manager *ScheduleManager) loadAllSchedules() {
 
 	for _, blueprint := range blueprints {
 		if err := manager.AddSchedule(blueprint); err != nil {
-			log.Info("didn't create schedule from blueprint because of error", err)
+			log.Info("didn't create schedule from blueprint because of error ", err)
 		}
 	}
 
@@ -103,7 +103,7 @@ func (manager *ScheduleManager) AddScheduleAndSave(blueprint *com.ScheduleBluepr
 // it will become live and the manager will start to evaluate it. Otherwise it will be scheduled
 // to become live at that time
 func (manager *ScheduleManager) AddSchedule(blueprint com.ScheduleBlueprint) error {
-	log.Debug("adding schedule", blueprint.Name)
+	log.WithField("name", blueprint.Name).Debug("adding schedule")
 
 	if schedule, err := FromBlueprint(&blueprint); err != nil {
 		return err
