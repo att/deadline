@@ -3,6 +3,8 @@ package server
 import (
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -14,6 +16,7 @@ import (
 )
 
 var manager *schedule.ScheduleManager
+var log *logrus.Logger
 
 // DeadlineServer is the http server for the deadline application.
 type DeadlineServer struct {
@@ -23,6 +26,7 @@ type DeadlineServer struct {
 // NewDeadlineServer returns a new deadline server based on the configuration given.
 func NewDeadlineServer(cfg *config.Config) *DeadlineServer {
 	manager = schedule.GetManagerInstance(cfg)
+	log = cfg.GetLogger("server")
 
 	return &DeadlineServer{
 		server: &http.Server{

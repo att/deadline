@@ -8,25 +8,62 @@ import (
 	com "github.com/att/deadline/common"
 )
 
-func (schedule *Schedule) Evaluate() (State, error) {
-	return schedule.state, nil
+// Evaluate the schedule completely.
+func (schedule *Schedule) Evaluate() State {
+	schedule.walk(schedule.Start)
+
+	return schedule.state
 }
 
-func (schedule *Schedule) EventOccurred(e *com.Event) {
-	schedule.eventLock.RLock()
-	defer schedule.eventLock.Unlock()
+func (schedule *Schedule) walk(instance *NodeInstance) {
+	if schedule.state != Running {
+		return
+	}
 
-	// ev := findEvent(s.Start, e.Name)
+	switch node := instance.value.(type) {
+	case nil:
+		// TODO log
+	case StartNode:
+		schedule.walk(node.to)
+	case EventNode:
+		next, _ := node.Next()
+		if next[0] == node.errorTo {
+			schedule.state = Failed
+		}
 
-	// if ev != nil {
-	// 	ev.ReceiveAt = e.ReceiveAt
-	// 	ev.IsLive = true
-	// 	ev.Success = e.Success
-	// 	s.Start.OkTo = &s.End
+		schedule.walk(next[0])
 
-	// } else {
-	// 	s.Start.ErrorTo = &s.Error
-	// }
+	case EmailHandlerNode:
+		//handle
+		schedule.walk(node.to)
+	case EndNode:
+		if schedule.state != Failed {
+			schedule.state = Ended
+		}
+	default:
+		// TODO log
+	}
+}
+
+// EventOccurred is the interface into the schedule to tell it that an event
+// has occured. The schedule must find the appropriate node that's listening for
+// the event and update it.
+func (schedule *Schedule) EventOccurred(event *com.Event) {
+
+	for _, node := range schedule.nodes {
+		if node.value.Name() == event.Name {
+
+			if eventNode, ok := node.value.(EventNode); ok {
+				schedule.eventLock.RLock()
+				eventNode.AddEvent(event)
+				schedule.eventLock.Unlock()
+
+			} else {
+				// log cast failure
+			}
+
+		}
+	}
 
 }
 

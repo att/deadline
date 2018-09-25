@@ -25,9 +25,11 @@ func GetManagerInstance(cfg *config.Config) *ScheduleManager {
 		manager.schedules = make(map[string]*Schedule)
 		manager.subscriptionTable = make(map[string][]*Schedule)
 		manager.blueprints = make(chan com.ScheduleBlueprint)
-		log = cfg.GetLogger("manager")
+		manager.evalTicker = time.NewTicker(time.Minute * 5)
 
+		log = cfg.GetLogger("manager")
 		manager.loadAllSchedules()
+		go manager.evaluateAllSchedules()
 	})
 	return manager
 }
@@ -39,18 +41,18 @@ func (manager *ScheduleManager) loadAllSchedules() {
 
 	blueprints, err := manager.db.LoadScheduleBlueprints()
 	if err != nil {
-		//log that you couldn't load blueprints. return?
+		log.Info("couldn't load any blueprints because of error", err)
 	}
 
 	for _, blueprint := range blueprints {
 		if err := manager.AddSchedule(blueprint); err != nil {
-			//TODO log error
+			log.Info("didn't create schedule from blueprint because of error", err)
 		}
 	}
 
 	events, err := manager.db.LoadEvents()
 	if err != nil {
-		//log that you couldn't load events
+		log.Info("couldn't load any events because of error", err)
 	} else {
 		for _, event := range events {
 			schedules := manager.subscriptionTable[event.Name]
@@ -59,6 +61,8 @@ func (manager *ScheduleManager) loadAllSchedules() {
 			}
 		}
 	}
+
+	log.WithField("total", len(manager.schedules)).Info("schedule load complete.")
 }
 
 // Update updates any schedule currently alive with the event that you pass in
@@ -82,6 +86,8 @@ func (manager *ScheduleManager) GetBlueprint(name string) (*com.ScheduleBlueprin
 	return manager.db.GetByName(name)
 }
 
+// AddScheduleAndSave is just like AddSchedule but has the added benefit of saving the blueprint
+// to some sort of persistance layer.
 func (manager *ScheduleManager) AddScheduleAndSave(blueprint *com.ScheduleBlueprint) error {
 	// TODO rollback the save if the other errors out
 	if err := manager.db.Save(blueprint); err != nil {
@@ -97,6 +103,7 @@ func (manager *ScheduleManager) AddScheduleAndSave(blueprint *com.ScheduleBluepr
 // it will become live and the manager will start to evaluate it. Otherwise it will be scheduled
 // to become live at that time
 func (manager *ScheduleManager) AddSchedule(blueprint com.ScheduleBlueprint) error {
+	log.Debug("adding schedule", blueprint.Name)
 
 	if schedule, err := FromBlueprint(&blueprint); err != nil {
 		return err
@@ -167,5 +174,27 @@ func timingToDuration(timing string) (time.Duration, error) {
 		return time.ParseDuration(alias)
 	} else {
 		return time.ParseDuration(timing)
+	}
+}
+
+func (manager *ScheduleManager) evaluateAllSchedules() {
+	for range manager.evalTicker.C {
+		log.Info("starting to evaluate new schedules.")
+		for name, sched := range manager.schedules {
+			log.WithField("name", name).Debug("evaluating schedule")
+			state := sched.Evaluate()
+
+			switch state {
+			case Running:
+
+			case Ended, Failed:
+				delete(manager.schedules, "name")
+
+			default:
+
+			}
+
+		}
+		log.Info("completed evaluating schedules.")
 	}
 }

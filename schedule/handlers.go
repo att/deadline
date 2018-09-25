@@ -9,3 +9,8 @@ func (h EmailHandlerNode) Handle() error {
 func (h EmailHandlerNode) Name() string {
 	return h.name
 }
+
+// Next defines what's after this node completes.
+func (h EmailHandlerNode) Next() ([]*NodeInstance, error) {
+	return nil, nil
+}

@@ -72,14 +72,13 @@ type ScheduleManager struct {
 	db                dao.ScheduleDAO
 	rwLock            *sync.RWMutex
 	blueprints        chan com.ScheduleBlueprint
+	evalTicker        *time.Ticker
 }
 
 // Node is the interface for nodes in the schedules and provides ways to see what they are and how they connect
 // to other Nodes.
 type Node interface {
-	// Type() string
-	//Next() ([]*NodeInstance, error)
-	// AddEdge(node *Node) error
+	Next() ([]*NodeInstance, error)
 	Name() string
 }
 
