@@ -33,10 +33,10 @@ func TestTiming(test *testing.T) {
 
 func TestNormalizeGood(test *testing.T) {
 	now := time.Now()
-	timeString, err := normailizeTime("2010-03-14T15:38:05+00:00", time.Hour*3)
+	t, err := normailizeTime("2010-03-14T15:38:05+00:00", time.Hour*3)
 	assert.Nil(test, err, "")
 
-	t, err := time.Parse(ExpectedTimeLayout, timeString)
+	//t, err := time.Parse(ExpectedTimeLayout, timeString)
 	assert.Nil(test, err, "")
 	assert.True(test, now.Year() == t.Year(), "")
 	assert.True(test, now.Month() == t.Month(), "")

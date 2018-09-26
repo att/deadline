@@ -72,7 +72,7 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	event.ReceivedAt = time.Now().Unix()
-	manager.Update(&event)
+	manager.Update(event)
 	//err = schedule.Fd.SaveEvent(&event)
 	w.WriteHeader(http.StatusOK)
 

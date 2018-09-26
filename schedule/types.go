@@ -42,7 +42,22 @@ var (
 		"daily":  "24h",
 		"hourly": "1h",
 	}
+
+	// StateStringLookup is a lookuptable for the State iota which
+	StateStringLookup = map[State]string{
+		Running: "running",
+		Ended:   "ended",
+		Failed:  "failed",
+	}
 )
+
+func (state State) String() string {
+	if ret, found := StateStringLookup[state]; found {
+		return ret
+	}
+
+	return "unknown"
+}
 
 // Schedule is the type that represents a running schedule
 type Schedule struct {
@@ -97,7 +112,7 @@ type NodeInstance struct {
 type EventNode struct {
 	name        string
 	constraints com.EventConstraints
-	events      []*com.Event
+	events      []com.Event
 	okTo        *NodeInstance
 	errorTo     *NodeInstance
 }

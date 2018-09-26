@@ -25,7 +25,7 @@ func GetManagerInstance(cfg *config.Config) *ScheduleManager {
 		manager.schedules = make(map[string]*Schedule)
 		manager.subscriptionTable = make(map[string][]*Schedule)
 		manager.blueprints = make(chan com.ScheduleBlueprint)
-		manager.evalTicker = time.NewTicker(time.Minute * 5)
+		manager.evalTicker = time.NewTicker(time.Minute * 1)
 
 		log = cfg.GetLogger("manager")
 		manager.loadAllSchedules()
@@ -57,7 +57,7 @@ func (manager *ScheduleManager) loadAllSchedules() {
 		for _, event := range events {
 			schedules := manager.subscriptionTable[event.Name]
 			for _, schedule := range schedules {
-				schedule.EventOccurred(&event)
+				schedule.EventOccurred(event)
 			}
 		}
 	}
@@ -66,7 +66,7 @@ func (manager *ScheduleManager) loadAllSchedules() {
 }
 
 // Update updates any schedule currently alive with the event that you pass in
-func (manager *ScheduleManager) Update(e *com.Event) {
+func (manager *ScheduleManager) Update(e com.Event) {
 	manager.rwLock.Lock()
 	defer manager.rwLock.Unlock()
 
@@ -112,7 +112,7 @@ func (manager *ScheduleManager) AddSchedule(blueprint com.ScheduleBlueprint) err
 	} else if startTime, err := normailizeTime(blueprint.StartsAt, nextTime); err != nil {
 		return err
 	} else {
-		blueprint.StartsAt = startTime
+		schedule.StartTime = startTime
 
 		// TODO check and log duplicates entries
 		manager.rwLock.Lock()
@@ -139,7 +139,7 @@ func (manager *ScheduleManager) AddSchedule(blueprint com.ScheduleBlueprint) err
 // return it, if not, it will return nil.
 func (manager *ScheduleManager) GetSchedule(name string) *Schedule {
 	manager.rwLock.RLock()
-	defer manager.rwLock.Unlock()
+	defer manager.rwLock.RUnlock()
 
 	if s, ok := manager.schedules[name]; !ok {
 		return nil
@@ -148,12 +148,12 @@ func (manager *ScheduleManager) GetSchedule(name string) *Schedule {
 	}
 }
 
-func normailizeTime(startTime string, timing time.Duration) (string, error) {
+func normailizeTime(startTime string, timing time.Duration) (time.Time, error) {
 	var start time.Time
 	var err error
 
 	if start, err = time.Parse(time.RFC3339, startTime); err != nil {
-		return "", err
+		return start, err
 	}
 
 	now := time.Now()
@@ -166,7 +166,7 @@ func normailizeTime(startTime string, timing time.Duration) (string, error) {
 		next = last.Add(timing)
 	}
 
-	return last.Format(ExpectedTimeLayout), nil
+	return last, nil
 }
 
 func timingToDuration(timing string) (time.Duration, error) {
@@ -181,8 +181,14 @@ func (manager *ScheduleManager) evaluateAllSchedules() {
 	for range manager.evalTicker.C {
 		log.Info("starting to evaluate new schedules.")
 		for name, sched := range manager.schedules {
-			log.WithField("name", name).Debug("evaluating schedule")
+
 			state := sched.Evaluate()
+
+			log.WithFields(logrus.Fields{
+				"name":       name,
+				"state":      state,
+				"start-time": sched.StartTime,
+			}).Debug("evaluated schedule")
 
 			switch state {
 			case Running:

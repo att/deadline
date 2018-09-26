@@ -32,9 +32,9 @@ func (node EventNode) Next() ([]*NodeInstance, error) {
 }
 
 // AddEvent adds an event to the EventNode
-func (node *EventNode) AddEvent(e *com.Event) {
+func (node *EventNode) AddEvent(e com.Event) {
 	if node.events == nil {
-		node.events = make([]*com.Event, 0)
+		node.events = make([]com.Event, 0)
 	}
 
 	node.events = append(node.events, e)

@@ -2,6 +2,7 @@ package schedule
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -59,7 +60,7 @@ var simpleBlueprint = &com.ScheduleBlueprint{
 			OkTo:    "endNode",
 			ErrorTo: "emailHandler",
 			Constraints: com.EventConstraintsBlueprint{
-				ReceiveBy: "4h",
+				ReceiveBy: "12h",
 			},
 		},
 	},
@@ -134,7 +135,7 @@ func TestHangingSchedule(test *testing.T) {
 	assert.NotNil(test, err, "should have thrown an error")
 }
 
-func TestSimpleSchedule(test *testing.T) {
+func TestNodeConnections(test *testing.T) {
 	schedule, err := FromBlueprint(simpleBlueprint)
 	assert.NotNil(test, schedule, "schedule should be not nil")
 	assert.Nil(test, err, "should not have thrown an error")
@@ -142,20 +143,58 @@ func TestSimpleSchedule(test *testing.T) {
 	assert.NotEmpty(test, schedule.nodes, "node list should not be empty")
 	assert.Equal(test, 5, len(schedule.nodes), "nodes should be 5 items long")
 
-	node, _ := schedule.nodes["firstEvent"]
-	assertOnEventNode(test, node, "firstEvent")
+	first, _ := schedule.nodes["firstEvent"]
+	second, _ := schedule.nodes["secondEvent"]
+	email, _ := schedule.nodes["emailHandler"]
+	end := schedule.End
 
-	node, _ = schedule.nodes["secondEvent"]
-	assertOnEventNode(test, node, "secondEvent")
+	assertOnEventNode(test, first, "firstEvent", second, end)
+	assertOnEventNode(test, second, "secondEvent", end, email)
 
-	node, _ = schedule.nodes["emailHandler"]
-	assertOnHandlerNode(test, node, "emailHandler")
+	assertOnHandlerNode(test, email, "emailHandler", end)
 }
 
-func assertOnEventNode(test *testing.T, node *NodeInstance, name string) {
-	assert.NotNil(test, node, name+" node should not be nil")
+func TestFailedSchedule(test *testing.T) {
+	schedule, err := FromBlueprint(simpleBlueprint)
+	assert.NotNil(test, schedule, "schedule should be not nil")
+	assert.Nil(test, err, "should not have thrown an error")
+
+	schedule.StartTime = time.Now().Add(-23 * time.Hour)
+	state := schedule.Evaluate()
+	assert.Equal(test, Failed, state)
+
 }
 
-func assertOnHandlerNode(test *testing.T, node *NodeInstance, name string) {
+func TestEndedSchedule(test *testing.T) {
+	schedule, err := FromBlueprint(simpleBlueprint)
+	assert.NotNil(test, schedule, "schedule should be not nil")
+	assert.Nil(test, err, "should not have thrown an error")
+
+	schedule.StartTime = time.Now().Add(-24 * time.Hour)
+	schedule.EventOccurred(com.Event{
+		ReceivedAt: time.Now().Add(-22 * time.Hour).Unix(),
+		Name:       "firstEvent",
+	})
+	schedule.EventOccurred(com.Event{
+		ReceivedAt: time.Now().Add(-14 * time.Hour).Unix(),
+		Name:       "secondEvent",
+	})
+	state := schedule.Evaluate()
+	assert.Equal(test, "ended", state.String())
+
+}
+
+func assertOnEventNode(test *testing.T, node *NodeInstance, name string, okTo *NodeInstance, errTo *NodeInstance) {
 	assert.NotNil(test, node, name+" node should not be nil")
+	ev, ok := node.value.(EventNode)
+	assert.True(test, ok, "")
+	assert.Equal(test, okTo, ev.okTo, "")
+	assert.Equal(test, errTo, ev.errorTo, "")
+}
+
+func assertOnHandlerNode(test *testing.T, node *NodeInstance, name string, to *NodeInstance) {
+	assert.NotNil(test, node, name+" node should not be nil")
+	email, ok := node.value.(EmailHandlerNode)
+	assert.True(test, ok, "")
+	assert.Equal(test, to, email.to, "")
 }

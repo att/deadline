@@ -56,7 +56,7 @@ func TestEventOKTo(test *testing.T) {
 		test.FailNow()
 	} else {
 
-		node.AddEvent(&e)
+		node.AddEvent(e)
 		next, err := node.Next()
 
 		assert.Nil(test, err, "")
@@ -74,7 +74,7 @@ func TestEventErrorTo(test *testing.T) {
 		test.FailNow()
 	} else {
 
-		node.AddEvent(&e)
+		node.AddEvent(e)
 		next, err := node.Next()
 
 		assert.Nil(test, err, "")
