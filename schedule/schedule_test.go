@@ -161,21 +161,21 @@ func TestFailedSchedule(test *testing.T) {
 
 	schedule.StartTime = time.Now().Add(-23 * time.Hour)
 	state := schedule.Evaluate()
-	assert.Equal(test, Failed, state)
+	assert.Equal(test, "failed", state.String())
 
 }
 
 func TestEndedSchedule(test *testing.T) {
+	simpleBlueprint.StartsAt = time.Now().Add(-24 * time.Hour).Format(time.RFC3339)
 	schedule, err := FromBlueprint(simpleBlueprint)
 	assert.NotNil(test, schedule, "schedule should be not nil")
 	assert.Nil(test, err, "should not have thrown an error")
 
-	schedule.StartTime = time.Now().Add(-24 * time.Hour)
-	schedule.EventOccurred(com.Event{
+	schedule.EventOccurred(&com.Event{
 		ReceivedAt: time.Now().Add(-22 * time.Hour).Unix(),
 		Name:       "firstEvent",
 	})
-	schedule.EventOccurred(com.Event{
+	schedule.EventOccurred(&com.Event{
 		ReceivedAt: time.Now().Add(-14 * time.Hour).Unix(),
 		Name:       "secondEvent",
 	})
@@ -186,7 +186,7 @@ func TestEndedSchedule(test *testing.T) {
 
 func assertOnEventNode(test *testing.T, node *NodeInstance, name string, okTo *NodeInstance, errTo *NodeInstance) {
 	assert.NotNil(test, node, name+" node should not be nil")
-	ev, ok := node.value.(EventNode)
+	ev, ok := node.value.(*EventNode)
 	assert.True(test, ok, "")
 	assert.Equal(test, okTo, ev.okTo, "")
 	assert.Equal(test, errTo, ev.errorTo, "")

@@ -57,7 +57,7 @@ func (manager *ScheduleManager) loadAllSchedules() {
 		for _, event := range events {
 			schedules := manager.subscriptionTable[event.Name]
 			for _, schedule := range schedules {
-				schedule.EventOccurred(event)
+				schedule.EventOccurred(&event)
 			}
 		}
 	}
@@ -66,7 +66,7 @@ func (manager *ScheduleManager) loadAllSchedules() {
 }
 
 // Update updates any schedule currently alive with the event that you pass in
-func (manager *ScheduleManager) Update(e com.Event) {
+func (manager *ScheduleManager) Update(e *com.Event) {
 	manager.rwLock.Lock()
 	defer manager.rwLock.Unlock()
 

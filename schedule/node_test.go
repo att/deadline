@@ -11,7 +11,7 @@ import (
 
 var (
 	simpleEventNode = &NodeInstance{
-		value: EventNode{
+		value: &EventNode{
 			okTo:    secondEventNode,
 			errorTo: endNode,
 			constraints: com.EventConstraints{
@@ -21,7 +21,7 @@ var (
 	}
 
 	secondEventNode = &NodeInstance{
-		value: EventNode{
+		value: &EventNode{
 			okTo:    nil,
 			errorTo: endNode,
 			constraints: com.EventConstraints{
@@ -35,7 +35,7 @@ var (
 	}
 
 	endNode = &NodeInstance{
-		value: EndNode{},
+		value: &EndNode{},
 	}
 )
 
@@ -52,11 +52,11 @@ func TestEventOKTo(test *testing.T) {
 		ReceivedAt: time.Now().Unix() - int64(time.Hour.Seconds()*2*1000), // 2 hrs ago
 	}
 
-	if node, ok := simpleEventNode.value.(EventNode); !ok {
+	if node, ok := simpleEventNode.value.(*EventNode); !ok {
 		test.FailNow()
 	} else {
 
-		node.AddEvent(e)
+		node.AddEvent(&e)
 		next, err := node.Next()
 
 		assert.Nil(test, err, "")
@@ -70,11 +70,11 @@ func TestEventErrorTo(test *testing.T) {
 		ReceivedAt: time.Now().Unix(),
 	}
 
-	if node, ok := secondEventNode.value.(EventNode); !ok {
+	if node, ok := secondEventNode.value.(*EventNode); !ok {
 		test.FailNow()
 	} else {
 
-		node.AddEvent(e)
+		node.AddEvent(&e)
 		next, err := node.Next()
 
 		assert.Nil(test, err, "")

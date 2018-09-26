@@ -24,7 +24,7 @@ func (schedule *Schedule) walk(instance *NodeInstance) {
 
 	case *StartNode:
 		schedule.walk(node.to)
-	case EventNode:
+	case *EventNode:
 		next, _ := node.Next()
 		if next[0] == node.errorTo {
 			schedule.state = Failed
@@ -40,21 +40,21 @@ func (schedule *Schedule) walk(instance *NodeInstance) {
 			schedule.state = Ended
 		}
 	case nil:
-		log.Info("nil node type")
+		//log.Info("nil node type")
 	default:
-		log.Info("unknown node type")
+		//log.Info("unknown node type")
 	}
 }
 
 // EventOccurred is the interface into the schedule to tell it that an event
 // has occured. The schedule must find the appropriate node that's listening for
 // the event and update it.
-func (schedule *Schedule) EventOccurred(event com.Event) {
+func (schedule *Schedule) EventOccurred(event *com.Event) {
 
 	for _, node := range schedule.nodes {
 		if node.value.Name() == event.Name {
 
-			if eventNode, ok := node.value.(EventNode); ok {
+			if eventNode, ok := node.value.(*EventNode); ok {
 				schedule.eventLock.Lock()
 				eventNode.AddEvent(event)
 				schedule.eventLock.Unlock()
@@ -212,9 +212,10 @@ func (schedule *Schedule) addEventBlueprint(blueprint com.EventBlueprint, visite
 
 	node := &NodeInstance{
 		NodeType: EventNodeType,
-		value: EventNode{
-			name:        blueprint.Name,
-			events:      make([]com.Event, 0),
+		value: &EventNode{
+			name: blueprint.Name,
+			//events:      make([]com.Event, 0),
+			event:       nil,
 			constraints: c,
 			okTo:        schedule.nodes[blueprint.OkTo],
 			errorTo:     schedule.nodes[blueprint.ErrorTo],

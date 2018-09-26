@@ -112,9 +112,10 @@ type NodeInstance struct {
 type EventNode struct {
 	name        string
 	constraints com.EventConstraints
-	events      []com.Event
-	okTo        *NodeInstance
-	errorTo     *NodeInstance
+	//events      []com.Event
+	event   *com.Event
+	okTo    *NodeInstance
+	errorTo *NodeInstance
 }
 
 // StartNode is the Node implementing type for the start of a schedule.
