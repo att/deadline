@@ -184,6 +184,21 @@ func TestEndedSchedule(test *testing.T) {
 
 }
 
+func TestRunningSchedule(test *testing.T) {
+	simpleBlueprint.StartsAt = time.Now().Add(-6 * time.Hour).Format(time.RFC3339)
+	schedule, err := FromBlueprint(simpleBlueprint)
+	assert.NotNil(test, schedule, "schedule should be not nil")
+	assert.Nil(test, err, "should not have thrown an error")
+
+	schedule.EventOccurred(&com.Event{
+		ReceivedAt: time.Now().Add(-3 * time.Hour).Unix(),
+		Name:       "firstEvent",
+	})
+	state := schedule.Evaluate()
+	assert.Equal(test, "running", state.String())
+
+}
+
 func assertOnEventNode(test *testing.T, node *NodeInstance, name string, okTo *NodeInstance, errTo *NodeInstance) {
 	assert.NotNil(test, node, name+" node should not be nil")
 	ev, ok := node.value.(*EventNode)

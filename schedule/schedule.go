@@ -26,12 +26,14 @@ func (schedule *Schedule) walk(instance *NodeInstance) {
 		schedule.walk(node.to)
 	case *EventNode:
 		next, _ := node.Next()
-		if next[0] == node.errorTo {
-			schedule.state = Failed
+		if next != nil && len(next) > 0 {
+
+			if next[0] == node.errorTo {
+				schedule.state = Failed
+			}
+
+			schedule.walk(next[0])
 		}
-
-		schedule.walk(next[0])
-
 	case *EmailHandlerNode:
 		//handle
 		schedule.walk(node.to)
@@ -277,7 +279,7 @@ func (schedule *Schedule) addHandlerBlueprint(blueprint com.HandlerBlueprint, vi
 	return nil
 }
 
-// helper function to be sure we've created all the nodes requried.
+// helper function validate if we've created all the nodes requried.
 func (schedule *Schedule) createdAll() error {
 	for _, event := range schedule.blueprintMaps.Events {
 		if _, created := schedule.nodes[event.Name]; !created {
@@ -294,6 +296,7 @@ func (schedule *Schedule) createdAll() error {
 	return nil
 }
 
+// helper function to validate some business rules about empty fields
 func checkEmptyFields(blueprint *com.ScheduleBlueprint) error {
 	if blueprint.Name == "" {
 		return errors.New("node names cannot be empty")

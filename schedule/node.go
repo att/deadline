@@ -3,6 +3,8 @@ package schedule
 import (
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	com "github.com/att/deadline/common"
 )
 
@@ -14,21 +16,32 @@ func (node *EventNode) Name() string {
 // Next returns the next nodes for an event node. Can return an empty array if
 // you cannot yet move past this node.
 func (node *EventNode) Next() ([]*NodeInstance, error) {
-
 	next := make([]*NodeInstance, 0)
+	var successful bool
+	var pastDue = time.Now().Unix() > node.constraints.ReceiveBy
+	var received = node.event != nil
 
-	// try to validate the events
-	// for _, event := range node.events {
-	// 	if event.IsSuccessful(node.constraints) {
-	// 		return append(next, node.okTo), nil
-	// 	}
-	// }
-	if node.event != nil && node.event.IsSuccessful(node.constraints) {
-		return append(next, node.okTo), nil
+	if !received && !pastDue {
+		return next, nil
 	}
 
-	if time.Now().Unix() > node.constraints.ReceiveBy {
-		return append(next, node.errorTo), nil
+	if received {
+		successful = node.event.IsSuccessful(node.constraints)
+
+	} else if pastDue { // not received and past due
+		log.WithFields(logrus.Fields{
+			"node":       node.name,
+			"reason":     "event never arrived",
+			"recieve-by": time.Unix(node.constraints.ReceiveBy, 0).Format(time.RFC3339),
+		}).Debug("node failed")
+
+		next = append(next, node.errorTo)
+	}
+
+	if successful {
+		next = append(next, node.okTo)
+	} else {
+		next = append(next, node.errorTo)
 	}
 
 	return next, nil

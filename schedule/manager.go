@@ -103,34 +103,44 @@ func (manager *ScheduleManager) AddScheduleAndSave(blueprint *com.ScheduleBluepr
 // it will become live and the manager will start to evaluate it. Otherwise it will be scheduled
 // to become live at that time
 func (manager *ScheduleManager) AddSchedule(blueprint com.ScheduleBlueprint) error {
-	log.WithField("name", blueprint.Name).Debug("adding schedule")
+	var startTime time.Time
+	var timing time.Duration
+	var err error
+	var schedule *Schedule
 
-	if schedule, err := FromBlueprint(&blueprint); err != nil {
+	if timing, err = timingToDuration(blueprint.Timing); err != nil {
 		return err
-	} else if nextTime, err := timingToDuration(blueprint.Timing); err != nil {
+	} else if startTime, _, err = normailizeTime(blueprint.StartsAt, timing); err != nil {
 		return err
-	} else if startTime, err := normailizeTime(blueprint.StartsAt, nextTime); err != nil {
-		return err
-	} else {
-		schedule.StartTime = startTime
-
-		// TODO check and log duplicates entries
-		manager.rwLock.Lock()
-		defer manager.rwLock.Unlock()
-
-		timer := time.NewTimer(nextTime)
-		go func() {
-			// TODO:bug - what happens when you remove the blueprint/stop the schedule?
-			<-timer.C
-			manager.AddSchedule(blueprint)
-		}()
-
-		manager.schedules[schedule.Name] = schedule
-		for subscription := range schedule.SubscribesTo() {
-			entry := manager.subscriptionTable[subscription]
-			manager.subscriptionTable[subscription] = append(entry, schedule)
-		}
 	}
+
+	blueprint.StartsAt = startTime.Format(time.RFC3339)
+	if schedule, err = FromBlueprint(&blueprint); err != nil {
+		return err
+	}
+
+	log.WithFields(logrus.Fields{
+		"name":       schedule.Name,
+		"start-time": schedule.StartTime.Format(time.RFC3339),
+		"next-time":  timing,
+	}).Debug("adding schedule")
+
+	// go func() {
+	// 	timer := time.NewTimer(nextTime)
+	// 	// TODO:bug - what happens when you remove the blueprint/stop the schedule?
+	// 	<-timer.C
+	// 	manager.AddSchedule(blueprint)
+	// }()
+
+	// TODO check and log duplicates entries
+	manager.rwLock.Lock()
+	manager.schedules[schedule.Name] = schedule
+	for subscription := range schedule.SubscribesTo() {
+		entry := manager.subscriptionTable[subscription]
+		manager.subscriptionTable[subscription] = append(entry, schedule)
+	}
+	manager.rwLock.Unlock()
+	// }
 
 	return nil
 }
@@ -148,12 +158,16 @@ func (manager *ScheduleManager) GetSchedule(name string) *Schedule {
 	}
 }
 
-func normailizeTime(startTime string, timing time.Duration) (time.Time, error) {
+// blueprints have a start time and a timing which are the inputs to this. For example a start
+// time is 3 days ago at midnight and the timing is daily. This function normalizes the time to
+// midnight today.
+func normailizeTime(startTime string, timing time.Duration) (time.Time, time.Duration, error) {
 	var start time.Time
+	var nextTime time.Duration
 	var err error
 
 	if start, err = time.Parse(time.RFC3339, startTime); err != nil {
-		return start, err
+		return start, nextTime, err
 	}
 
 	now := time.Now()
@@ -166,9 +180,10 @@ func normailizeTime(startTime string, timing time.Duration) (time.Time, error) {
 		next = last.Add(timing)
 	}
 
-	return last, nil
+	return last, nextTime, nil
 }
 
+// helper function to turn a string like '3h' or 'daily' into a duration.
 func timingToDuration(timing string) (time.Duration, error) {
 	if alias, found := TimingAilias[timing]; found {
 		return time.ParseDuration(alias)
@@ -179,7 +194,7 @@ func timingToDuration(timing string) (time.Duration, error) {
 
 func (manager *ScheduleManager) evaluateAllSchedules() {
 	for range manager.evalTicker.C {
-		log.Info("starting to evaluate new schedules.")
+		log.WithField("total", len(manager.schedules)).Info("starting to evaluate new schedules.")
 		for name, sched := range manager.schedules {
 
 			state := sched.Evaluate()
@@ -194,13 +209,13 @@ func (manager *ScheduleManager) evaluateAllSchedules() {
 			case Running:
 
 			case Ended, Failed:
-				delete(manager.schedules, "name")
+				delete(manager.schedules, name)
 
 			default:
 
 			}
 
 		}
-		log.Info("completed evaluating schedules.")
+		log.WithField("total", len(manager.schedules)).Info("completed evaluating schedules.")
 	}
 }
