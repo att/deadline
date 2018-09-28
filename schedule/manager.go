@@ -105,12 +105,13 @@ func (manager *ScheduleManager) AddScheduleAndSave(blueprint *com.ScheduleBluepr
 func (manager *ScheduleManager) AddSchedule(blueprint com.ScheduleBlueprint) error {
 	var startTime time.Time
 	var timing time.Duration
+	var nextTime time.Duration
 	var err error
 	var schedule *Schedule
 
 	if timing, err = timingToDuration(blueprint.Timing); err != nil {
 		return err
-	} else if startTime, _, err = normailizeTime(blueprint.StartsAt, timing); err != nil {
+	} else if startTime, nextTime, err = normailizeTime(blueprint.StartsAt, timing); err != nil {
 		return err
 	}
 
@@ -122,15 +123,15 @@ func (manager *ScheduleManager) AddSchedule(blueprint com.ScheduleBlueprint) err
 	log.WithFields(logrus.Fields{
 		"name":       schedule.Name,
 		"start-time": schedule.StartTime.Format(time.RFC3339),
-		"next-time":  timing,
+		"next-time":  nextTime,
 	}).Debug("adding schedule")
 
-	// go func() {
-	// 	timer := time.NewTimer(nextTime)
-	// 	// TODO:bug - what happens when you remove the blueprint/stop the schedule?
-	// 	<-timer.C
-	// 	manager.AddSchedule(blueprint)
-	// }()
+	go func() {
+		timer := time.NewTimer(nextTime)
+		// TODO:bug - what happens when you remove the blueprint/stop the schedule?
+		<-timer.C
+		manager.AddSchedule(blueprint)
+	}()
 
 	// TODO check and log duplicates entries
 	manager.rwLock.Lock()
@@ -140,7 +141,6 @@ func (manager *ScheduleManager) AddSchedule(blueprint com.ScheduleBlueprint) err
 		manager.subscriptionTable[subscription] = append(entry, schedule)
 	}
 	manager.rwLock.Unlock()
-	// }
 
 	return nil
 }
@@ -160,7 +160,7 @@ func (manager *ScheduleManager) GetSchedule(name string) *Schedule {
 
 // blueprints have a start time and a timing which are the inputs to this. For example a start
 // time is 3 days ago at midnight and the timing is daily. This function normalizes the time to
-// midnight today.
+// midnight today (the 1st return parameter) and the duration for when then next schedule start (the 2nd).
 func normailizeTime(startTime string, timing time.Duration) (time.Time, time.Duration, error) {
 	var start time.Time
 	var nextTime time.Duration
@@ -180,6 +180,7 @@ func normailizeTime(startTime string, timing time.Duration) (time.Time, time.Dur
 		next = last.Add(timing)
 	}
 
+	nextTime = next.Sub(now)
 	return last, nextTime, nil
 }
 
@@ -187,14 +188,13 @@ func normailizeTime(startTime string, timing time.Duration) (time.Time, time.Dur
 func timingToDuration(timing string) (time.Duration, error) {
 	if alias, found := TimingAilias[timing]; found {
 		return time.ParseDuration(alias)
-	} else {
-		return time.ParseDuration(timing)
 	}
+	return time.ParseDuration(timing)
 }
 
 func (manager *ScheduleManager) evaluateAllSchedules() {
 	for range manager.evalTicker.C {
-		log.WithField("total", len(manager.schedules)).Info("starting to evaluate new schedules.")
+		log.WithField("total", len(manager.schedules)).Debug("starting to evaluate schedules.")
 		for name, sched := range manager.schedules {
 
 			state := sched.Evaluate()
@@ -216,6 +216,5 @@ func (manager *ScheduleManager) evaluateAllSchedules() {
 			}
 
 		}
-		log.WithField("total", len(manager.schedules)).Info("completed evaluating schedules.")
 	}
 }
