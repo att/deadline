@@ -3,15 +3,34 @@ package config
 import (
 	"os"
 	"sync"
+	"time"
 
 	"github.com/sirupsen/logrus"
+)
+
+const (
+	// FileStorage is the static configuration string for file storage
+	FileStorage string = "file"
+
+	// DBStorage is the static configuration string for database storage
+	DBStorage string = "db"
+
+	// DefaultPort is the default server port
+	DefaultPort string = "8080"
+
+	// DefaultEvalString is the default evaluation time as a string
+	DefaultEvalString string = "5m"
+
+	// DefaultEvalDuration is the default evaulation time as a Duration
+	DefaultEvalDuration time.Duration = time.Minute * 5
 )
 
 // Config represents the configuration struct for the entire deadline application
 type Config struct {
 	FileConfig  FileConfig        `yaml:"fileconfig"`
 	DBConfig    DBConfig          `yaml:"dbconfig"`
-	DAO         string            `yaml:"dao"`
+	Storage     string            `yaml:"storage"`
+	EvalTime    string            `yaml:"eval_timing"`
 	Server      ServerConfig      `yaml:"serverconfig"`
 	EmailConfig EmailConfig       `yaml:"emailconfig"`
 	Logconfig   map[string]string `yaml:"logs"`
@@ -52,9 +71,10 @@ var DefaultConfig = Config{
 		Directory: os.TempDir() + "/deadline",
 	},
 	Server: ServerConfig{
-		Port: "8080",
+		Port: DefaultPort,
 	},
-	DAO:       "file",
+	EvalTime:  DefaultEvalString,
+	Storage:   FileStorage,
 	loggers:   make(map[string]*logrus.Logger),
 	Logconfig: make(map[string]string),
 }

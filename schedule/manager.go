@@ -17,17 +17,23 @@ var log *logrus.Logger
 // GetManagerInstance will return the singleton of the ScheduleManager object
 func GetManagerInstance(cfg *config.Config) *ScheduleManager {
 	once.Do(func() {
+		db, err := dao.NewScheduleDAO(cfg)
+		log = cfg.GetLogger("manager")
+
+		if err != nil {
+			log.WithError(err).Fatal("cannot load configs")
+		}
+
 		manager = &ScheduleManager{
-			db:     dao.NewScheduleDAO(cfg),
+			db:     db,
 			rwLock: &sync.RWMutex{},
 		}
 
 		manager.schedules = make(map[string]*Schedule)
 		manager.subscriptionTable = make(map[string][]*Schedule)
 		manager.blueprints = make(chan com.ScheduleBlueprint)
-		manager.evalTicker = time.NewTicker(time.Minute * 1)
+		manager.evalTicker = time.NewTicker(cfg.GetEvalTime())
 
-		log = cfg.GetLogger("manager")
 		manager.loadAllSchedules()
 		go manager.evaluateAllSchedules()
 	})
@@ -41,12 +47,12 @@ func (manager *ScheduleManager) loadAllSchedules() {
 
 	blueprints, err := manager.db.LoadScheduleBlueprints()
 	if err != nil {
-		log.Info("couldn't load any blueprints because of error", err)
+		log.WithError(err).Info("couldn't load any blueprints because of error")
 	}
 
 	for _, blueprint := range blueprints {
 		if err := manager.AddSchedule(blueprint); err != nil {
-			log.Info("didn't create schedule from blueprint because of error ", err)
+			log.WithError(err).Info("didn't create schedule from blueprint because of error ")
 		}
 	}
 

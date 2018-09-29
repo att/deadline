@@ -1,5 +1,5 @@
 
-daa: "file"
+storage: "file"
 fileconfig:
     directory: "/tmp/deadline"
 serverconfig:

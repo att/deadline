@@ -1,5 +1,5 @@
 
-dao: "file"
+storage: "file"
 fileconfig:
     directory: "../server/"
 dbconfig:

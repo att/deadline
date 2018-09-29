@@ -69,7 +69,7 @@ func TestGetFile(test *testing.T) {
 
 func cleanAndRefreshDAO(dao *fileDAO, path string) *fileDAO {
 	if dao == nil {
-		dao = newFileDAO(path)
+		dao, _ = newFileDAO(path)
 
 	} else {
 		oldPath := dao.path
@@ -77,8 +77,8 @@ func cleanAndRefreshDAO(dao *fileDAO, path string) *fileDAO {
 			_ = os.RemoveAll(oldPath)
 		}
 	}
-
-	return newFileDAO(path)
+	dao, _ = newFileDAO(path)
+	return dao
 }
 
 func randomTempDir() string {

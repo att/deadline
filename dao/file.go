@@ -15,18 +15,21 @@ type fileDAO struct {
 	path string
 }
 
-func newFileDAO(path string) *fileDAO {
+func newFileDAO(path string) (*fileDAO, error) {
 	dao := &fileDAO{
 		path: path,
 	}
 
 	// init the directory
-	makeOrOpenDirectory(dao.path) // if err, return it
+	if _, err := makeOrOpenDirectory(dao.path); err != nil {
+		return nil, err
+	}
 
-	return dao
+	return dao, nil
 }
 
 func (dao fileDAO) GetByName(name string) (*com.ScheduleBlueprint, error) {
+	var bytes []byte
 
 	file, err := os.Open(dao.path + "/" + name + ".xml")
 	defer file.Close()
@@ -34,16 +37,16 @@ func (dao fileDAO) GetByName(name string) (*com.ScheduleBlueprint, error) {
 		return nil, err
 	}
 
-	if bytes, err := ioutil.ReadAll(file); err != nil {
+	if bytes, err = ioutil.ReadAll(file); err != nil {
 		return nil, err
-	} else {
-		blueprint := &com.ScheduleBlueprint{}
-		if xml.Unmarshal(bytes, blueprint); err != nil {
-			return nil, err
-		} else {
-			return blueprint, nil
-		}
 	}
+
+	blueprint := &com.ScheduleBlueprint{}
+	if xml.Unmarshal(bytes, blueprint); err != nil {
+		return nil, err
+	}
+
+	return blueprint, nil
 }
 
 func (dao fileDAO) Save(blueprint *com.ScheduleBlueprint) error {
@@ -59,9 +62,9 @@ func (dao fileDAO) Save(blueprint *com.ScheduleBlueprint) error {
 	encoder := xml.NewEncoder(file)
 	if err = encoder.Encode(blueprint); err != nil {
 		return err
-	} else {
-		return nil
 	}
+
+	return nil
 
 }
 
@@ -92,12 +95,12 @@ func (dao fileDAO) LoadScheduleBlueprints() ([]com.ScheduleBlueprint, error) {
 
 func (dao fileDAO) LoadEvents() ([]com.Event, error) {
 	liveEvents := []com.Event{}
-	// liveEvent := common.Event{}
-	// file, err := makeOrOpenDirectory(fd.path + "/" + "events")
+	// liveEvent := com.Event{}
+	// file, err := makeOrOpenDirectory(dao.path + "/" + "events")
 	// defer file.Close()
 
 	// if err != nil {
-	// 	common.Info.Println("Cannot read events because", err)
+
 	// 	return []common.Event{}, err
 	// }
 
