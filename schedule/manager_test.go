@@ -39,9 +39,9 @@ func TestTiming(test *testing.T) {
 func TestNormalizeGood(test *testing.T) {
 	now := time.Now()
 	t, _, err := normailizeTime("2010-03-14T15:38:05+00:00", time.Hour*3)
-	assert.Nil(test, err, "")
+	assert.Nil(test, err)
 
-	assert.Nil(test, err, "")
+	assert.Nil(test, err)
 	assert.True(test, now.Year() == t.Year())
 	assert.True(test, now.Month() == t.Month())
 	assert.True(test, t.Unix() < now.Unix())
@@ -49,7 +49,7 @@ func TestNormalizeGood(test *testing.T) {
 }
 
 func TestManagerInitSched(test *testing.T) {
-	yr, m, d := time.Now().Date()
+	yr, m, d := time.Now().In(time.UTC).Date()
 	past := time.Date(2018, 5, 8, 0, 0, 0, 0, time.UTC)
 	midnight := time.Date(yr, m, d, 0, 0, 0, 0, time.UTC)
 
