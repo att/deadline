@@ -1,0 +1,18 @@
+
+<schedule timing="daily" name="single_event_schedule" starts-at="2018-09-08T00:00:00Z">
+    <start to="onlyEvent" />
+
+    <event name="onlyEvent" ok="scheduleEnd" error="email error">
+        <constraints>
+            <receive-by>3h</receive-by>
+        </constraints>
+    </event>
+
+    <handler name="email error" to="scheduleEnd">
+        <email>
+            <to>jo424n@att.com</to>
+        </email>
+    </handler>
+
+    <end name="scheduleEnd" />
+</schedule>

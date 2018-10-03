@@ -1,30 +1,60 @@
 package config
 
+import (
+	"os"
+	"sync"
+
+	"github.com/sirupsen/logrus"
+)
+
+// Config represents the configuration struct for the entire deadline application
 type Config struct {
-	FileConfig  FileConfig  `toml:"fileconfig"`
-	DBConfig    DBConfig    `toml:"dbconfig"`
-	DAO         string      `toml:"dao"`
-	Server      ServConfig  `toml:"serverconfig"`
-	EmailConfig EmailConfig `toml:"emailconfig"`
+	FileConfig  FileConfig        `yaml:"fileconfig"`
+	DBConfig    DBConfig          `yaml:"dbconfig"`
+	DAO         string            `yaml:"dao"`
+	Server      ServerConfig      `yaml:"serverconfig"`
+	EmailConfig EmailConfig       `yaml:"emailconfig"`
+	Logconfig   map[string]string `yaml:"logs"`
+	loggers     map[string]*logrus.Logger
+	logLock     sync.Mutex
 }
 
+// FileConfig is the configuration type for file storage
 type FileConfig struct {
-	Directory string `toml:"directory"`
+	Directory string `yaml:"directory"`
 }
+
+// DBConfig is the configuration type for relational database storage
 type DBConfig struct {
-	ConnectionString string `toml:"connection_string"`
+	ConnectionString string `yaml:"connection_string"`
 }
 
-type ServConfig struct {
-	Port string `toml:"port"`
+// ServerConfig is the configuration type for the deadline server
+type ServerConfig struct {
+	Port string `yaml:"port"`
 }
 
+// HandlerConfig is the configuration type for handlers
 type HandlerConfig struct {
-	EmailConfig EmailConfig `toml:"emailconfig"`
+	EmailConfig EmailConfig `yaml:"emailconfig"`
 }
 
+// EmailConfig is the configuration type for handlers that email
 type EmailConfig struct {
-	From       string `toml:"from"`
-	RelayHost string `toml:"relay_host"`
-	RelayPort int    `toml:"relay_port"`
+	From      string `yaml:"from"`
+	RelayHost string `yaml:"relay_host"`
+	RelayPort int    `yaml:"relay_port"`
+}
+
+// DefaultConfig is the default configuration
+var DefaultConfig = Config{
+	FileConfig: FileConfig{
+		Directory: os.TempDir() + "/deadline",
+	},
+	Server: ServerConfig{
+		Port: "8080",
+	},
+	DAO:       "file",
+	loggers:   make(map[string]*logrus.Logger),
+	Logconfig: make(map[string]string),
 }

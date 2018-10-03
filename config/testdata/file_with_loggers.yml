@@ -1,0 +1,9 @@
+
+daa: "file"
+fileconfig:
+    directory: "/tmp/deadline"
+serverconfig:
+    port: "8082"
+logs:
+    manager: "debug"
+    server: "info"

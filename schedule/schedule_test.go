@@ -1,233 +1,215 @@
 package schedule
 
 import (
-	"time"
-	"log"
 	"testing"
-	"github.com/att/deadline/config"
-	"github.com/att/deadline/notifier"
+	"time"
+
 	"github.com/stretchr/testify/assert"
+
+	com "github.com/att/deadline/common"
 )
 
-
-var c = config.Config{
-	DAO: "file",
-	FileConfig: config.FileConfig{
-		Directory: "../server/testdata",
+var cyclicBlueprint = &com.ScheduleBlueprint{
+	Name:     "cyclicBlueprint",
+	StartsAt: "2018-09-03T00:00:00+07:00",
+	Timing:   "daily",
+	Start: com.StartBlueprint{
+		To: "firstEvent",
 	},
-	DBConfig: config.DBConfig{
-		ConnectionString: "somethintoo",
-	},
-	Server: config.ServConfig{
-		Port: "8081",
-	},
-
-} 
-var m *ScheduleManager
-
-var e1 = Event{
-	Name:      "first event",
-	ReceiveBy: "18:00:00",
-	ReceiveAt: "19:00:00",
-	Success:   true,
-}
-var e2 = Event{
-	Name:      "second event",
-	ReceiveBy: "18:00:00",
-	ReceiveAt: "17:00:00",
-	Success:   true,
-}
-
-var e3 = Event{
-	Name:      "third event",
-	ReceiveBy: "18:00:00",
-	ReceiveAt: "18:00:00",
-	Success:   true,
-}
-
-var s1 = Definition{
-	Name: "First Schedule",
-	Timing: "24h",
-	Start: Node{
-		Nodes: []Node{
-			Node{
-
-				Event: &e1,
+	Events: []com.EventBlueprint{
+		com.EventBlueprint{
+			Name:    "firstEvent",
+			OkTo:    "secondEvent",
+			ErrorTo: "endNode",
+			Constraints: com.EventConstraintsBlueprint{
+				ReceiveBy: "3h",
 			},
-			Node{
-				Event: &e3,
+		},
+		com.EventBlueprint{
+			Name:    "secondEvent",
+			OkTo:    "firstEvent",
+			ErrorTo: "endNode",
+			Constraints: com.EventConstraintsBlueprint{
+				ReceiveBy: "4h",
 			},
 		},
 	},
-	Handler: Handler{
-			Name: "WEBHOOK",
-			Address: "http://localhost:8081/api/v1/msg",
+	End: com.EndBlueprint{
+		Name: "endNode",
 	},
-
 }
 
-var s2 = Definition{
-	Name: "Second Schedule",
-	Start: Node{
-		Nodes: []Node{
-			Node{
-
-				Event: &e1,
+var simpleBlueprint = &com.ScheduleBlueprint{
+	Name:     "simpleBlueprint",
+	StartsAt: "2018-09-03T00:00:00+07:00",
+	Timing:   "daily",
+	Start: com.StartBlueprint{
+		To: "firstEvent",
+	},
+	Events: []com.EventBlueprint{
+		com.EventBlueprint{
+			Name:    "firstEvent",
+			OkTo:    "secondEvent",
+			ErrorTo: "endNode",
+			Constraints: com.EventConstraintsBlueprint{
+				ReceiveBy: "4h",
 			},
-			Node{
-				Event: &e2,
+		},
+		com.EventBlueprint{
+			Name:    "secondEvent",
+			OkTo:    "endNode",
+			ErrorTo: "emailHandler",
+			Constraints: com.EventConstraintsBlueprint{
+				ReceiveBy: "12h",
 			},
 		},
 	},
+	Handlers: []com.HandlerBlueprint{
+		com.HandlerBlueprint{
+			Name: "emailHandler",
+			Email: com.EmailHandlerBlueprint{
+				EmailTo: "jo424n@att.com",
+			},
+			To: "endNode",
+		},
+	},
+	End: com.EndBlueprint{
+		Name: "endNode",
+	},
 }
 
-var s3 = Definition{
-	Name: "Third Schedule",
-	Start: Node{
-		Nodes: []Node{
-			Node{
-
-				Event: &e2,
+var hangingBlueprint = &com.ScheduleBlueprint{
+	Name:     "hangingBlueprint",
+	StartsAt: "2018-09-03T00:00:00+07:00",
+	Timing:   "daily",
+	Start: com.StartBlueprint{
+		To: "firstEvent",
+	},
+	Events: []com.EventBlueprint{
+		com.EventBlueprint{
+			Name:    "firstEvent",
+			OkTo:    "secondEvent",
+			ErrorTo: "endNode",
+			Constraints: com.EventConstraintsBlueprint{
+				ReceiveBy: "4h",
+			},
+		},
+		com.EventBlueprint{
+			Name:    "secondEvent",
+			OkTo:    "endNode",
+			ErrorTo: "endNode",
+			Constraints: com.EventConstraintsBlueprint{
+				ReceiveBy: "4h",
 			},
 		},
 	},
-}
-
-var fd = NewScheduleDAO(&c)
-var s = Definition{
-	Name:   "sample_schedule",
-	Timing: "daily",
-	Handler: Handler{
-		Name:    "email handler",
-		Address: "kp755d@att.com",
-	},
-}
-func TestSendFile(test *testing.T) {
-	assert.Nil(test, fd.Save(&s), "Could not save the file.")
-}
-
-func TestGetFile(test *testing.T) {
-	f, err := fd.GetByName("sample_schedule")
-	assert.Nil(test, err, "Could not find the file.")
-	assert.NotNil(test, f, "Could not find the file.")
-
-}
-
-func TestManager(test *testing.T) {
-	m = m.Init(&c)
-	m.UpdateSchedule(&s1)
-	m.UpdateSchedule(&s2)
-	m.UpdateSchedule(&s3)
-	log.Println("Current map: ", m.subscriptionTable)
-	m.UpdateEvents(&e1)
-	m.UpdateEvents(&e2)
-}
-
-var f1 = Event{
-	Name:      "first event",
-	ReceiveBy: "18:00:00",
-	ReceiveAt: "19:00:00",
-	Success:   true,
-}
-var f2 = Event{
-	Name:      "second event",
-	ReceiveBy: "18:00:00",
-	ReceiveAt: "17:00:00",
-	Success:   true,
-}
-var f3 = Event{
-	Name:      "third event",
-	ReceiveBy: "18:00:00",
-	ReceiveAt: "18:00:00",
-	Success:   true,
-}
-
-func TestEvaluation(test *testing.T) {
-	assert.False(test, f1.EvaluateEvent(notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "It is coming back as true")
-	assert.True(test, f2.EvaluateEvent(notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "Came back as false")
-	assert.False(test, f3.EvaluateEvent(notifier.NewNotifyHandler(s1.Handler.Name, s1.Handler.Address)), "Came back as true")
-
-}
-
-
-var beforereset = Definition{
-	Name: "First Schedule",
-	Timing: "24h",
-	Start: Node{
-		Nodes: []Node{
-			Node{
-
-				Event: &Event{
-					Name:      "first event",
-					ReceiveBy: "18:00:00",
-					ReceiveAt: "19:00:00",
-					Success:   true,
-					
-				},
+	Handlers: []com.HandlerBlueprint{
+		com.HandlerBlueprint{
+			Name: "emailHandler",
+			Email: com.EmailHandlerBlueprint{
+				EmailTo: "jo424n@att.com",
 			},
-			Node{
-				Event: &Event{
-					Name:      "third event",
-					ReceiveBy: "18:00:00",
-					ReceiveAt: "12:00:00",
-					Success:   true,
-					
-				},
-			},
+			To: "endNode",
 		},
 	},
-	Handler: Handler{
-			Name: "WEBHOOK",
-			Address: "http://localhost:8081/api/v1/msg",
+	End: com.EndBlueprint{
+		Name: "endNode",
 	},
+}
+
+func TestEmptySchedule(test *testing.T) {
+	schedule, err := FromBlueprint(&com.ScheduleBlueprint{})
+	assert.Nil(test, schedule, "schedule should be nil")
+	assert.NotNil(test, err, "should have thrown an error")
+}
+
+func TestCyclicSchedule(test *testing.T) {
+	schedule, err := FromBlueprint(cyclicBlueprint)
+	assert.Nil(test, schedule, "schedule should be nil")
+	assert.NotNil(test, err, "should have thrown an error")
+}
+
+func TestHangingSchedule(test *testing.T) {
+	schedule, err := FromBlueprint(hangingBlueprint)
+	assert.Nil(test, schedule, "schedule should be  nil")
+	assert.NotNil(test, err, "should have thrown an error")
+}
+
+func TestNodeConnections(test *testing.T) {
+	schedule, err := FromBlueprint(simpleBlueprint)
+	assert.NotNil(test, schedule, "schedule should be not nil")
+	assert.Nil(test, err, "should not have thrown an error")
+	assert.NotNil(test, schedule.nodes, "node list should not be empty")
+	assert.NotEmpty(test, schedule.nodes, "node list should not be empty")
+	assert.Equal(test, 5, len(schedule.nodes), "nodes should be 5 items long")
+
+	first, _ := schedule.nodes["firstEvent"]
+	second, _ := schedule.nodes["secondEvent"]
+	email, _ := schedule.nodes["emailHandler"]
+	end := schedule.End
+
+	assertOnEventNode(test, first, "firstEvent", second, end)
+	assertOnEventNode(test, second, "secondEvent", end, email)
+
+	assertOnHandlerNode(test, email, "emailHandler", end)
+}
+
+func TestFailedSchedule(test *testing.T) {
+	schedule, err := FromBlueprint(simpleBlueprint)
+	assert.NotNil(test, schedule, "schedule should be not nil")
+	assert.Nil(test, err, "should not have thrown an error")
+
+	schedule.StartTime = time.Now().Add(-23 * time.Hour)
+	state := schedule.Evaluate()
+	assert.Equal(test, "failed", state.String())
 
 }
 
+func TestEndedSchedule(test *testing.T) {
+	simpleBlueprint.StartsAt = time.Now().Add(-24 * time.Hour).Format(time.RFC3339)
+	schedule, err := FromBlueprint(simpleBlueprint)
+	assert.NotNil(test, schedule, "schedule should be not nil")
+	assert.Nil(test, err, "should not have thrown an error")
 
-var afterreset  = Definition{
-	Name: "First Schedule",
-	Timing: "24h",
-	Start: Node{
-		Nodes: []Node{
-			Node{
-
-				Event: &Event{
-					Name:      "first event",
-					ReceiveBy: "18:00:00",
-					ReceiveAt: "",
-					Success:   true,
-					
-				},
-			},
-			Node{
-				Event: &Event{
-					Name:      "third event",
-					ReceiveBy: "18:00:00",
-					ReceiveAt: "",
-					Success:   true,
-					
-				},
-			},
-		},
-	},
-	Handler: Handler{
-			Name: "WEBHOOK",
-			Address: "http://localhost:8081/api/v1/msg",
-	},
+	schedule.EventOccurred(&com.Event{
+		ReceivedAt: time.Now().Add(-22 * time.Hour).Unix(),
+		Name:       "firstEvent",
+	})
+	schedule.EventOccurred(&com.Event{
+		ReceivedAt: time.Now().Add(-14 * time.Hour).Unix(),
+		Name:       "secondEvent",
+	})
+	state := schedule.Evaluate()
+	assert.Equal(test, "ended", state.String())
 
 }
-var n *ScheduleManager = &ScheduleManager{
-	subscriptionTable: make(map[string][]*Live),
-	EvaluationTime: time.Now(),
+
+func TestRunningSchedule(test *testing.T) {
+	simpleBlueprint.StartsAt = time.Now().Add(-6 * time.Hour).Format(time.RFC3339)
+	schedule, err := FromBlueprint(simpleBlueprint)
+	assert.NotNil(test, schedule, "schedule should be not nil")
+	assert.Nil(test, err, "should not have thrown an error")
+
+	schedule.EventOccurred(&com.Event{
+		ReceivedAt: time.Now().Add(-3 * time.Hour).Unix(),
+		Name:       "firstEvent",
+	})
+	state := schedule.Evaluate()
+	assert.Equal(test, "running", state.String())
+
 }
 
+func assertOnEventNode(test *testing.T, node *NodeInstance, name string, okTo *NodeInstance, errTo *NodeInstance) {
+	assert.NotNil(test, node, name+" node should not be nil")
+	ev, ok := node.value.(*EventNode)
+	assert.True(test, ok, "")
+	assert.Equal(test, okTo, ev.okTo, "")
+	assert.Equal(test, errTo, ev.errorTo, "")
+}
 
-
-func TestTimings(test *testing.T) {
-
-	//schedule := n.subscriptionTable["first event"]
-	//s := schedule[0]
-	//assert.Equal(test, &afterreset,s )
-	//bring back te assert equal, but one that functions properly with the function 
-	
-} 
+func assertOnHandlerNode(test *testing.T, node *NodeInstance, name string, to *NodeInstance) {
+	assert.NotNil(test, node, name+" node should not be nil")
+	email, ok := node.value.(EmailHandlerNode)
+	assert.True(test, ok, "")
+	assert.Equal(test, to, email.to, "")
+}

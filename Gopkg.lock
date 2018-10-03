@@ -2,22 +2,10 @@
 
 
 [[projects]]
-  name = "github.com/BurntSushi/toml"
-  packages = ["."]
-  revision = "b26d9c308763d68093482582cea63d69be07a0f0"
-  version = "v0.3.0"
-
-[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
-
-[[projects]]
-  name = "github.com/go-sql-driver/mysql"
-  packages = ["."]
-  revision = "d523deb1b23d913de5bdada721a6071e71283618"
-  version = "v1.4.0"
 
 [[projects]]
   branch = "master"
@@ -26,19 +14,16 @@
   revision = "54194c9749d48b073c9aeb2c787b6882e95dd0cd"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/jmoiron/sqlx"
-  packages = [
-    ".",
-    "reflectx"
-  ]
-  revision = "0dae4fefe7c0e190f7b5a78dac28a1c82cc8d849"
-
-[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "3e01752db0189b9157070a0e1668a620f9a85da2"
+  version = "v1.0.6"
 
 [[projects]]
   name = "github.com/stretchr/testify"
@@ -47,14 +32,26 @@
   version = "v1.2.2"
 
 [[projects]]
-  name = "google.golang.org/appengine"
-  packages = ["cloudsql"]
-  revision = "b1f26356af11148e710935ed1ac8a7f5702c7612"
-  version = "v1.1.0"
+  branch = "master"
+  name = "golang.org/x/crypto"
+  packages = ["ssh/terminal"]
+  revision = "0e37d006457bf46f9e6692014ba72ef82c33022c"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix","windows"]
+  revision = "d0be0721c37eeb5299f245a996a483160fc36940"
+
+[[projects]]
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  version = "v2.2.1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "473f84b7a06b8e7f50dc4cc7d73572b5a16d56906bc68a6793096741aafc2f8e"
+  inputs-digest = "b9da9d3b3191ba4c945dfa6abbe96970ac2b93586b1bfdc0ae04a01578e447c5"
   solver-name = "gps-cdcl"
   solver-version = 1

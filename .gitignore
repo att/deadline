@@ -1,0 +1,6 @@
+vendor/
+.vscode/
+deadline-server
+
+*.test
+*.code-workspace

@@ -1,106 +1,136 @@
 package schedule
 
 import (
-	"encoding/xml"
+	"sync"
 	"time"
+
+	com "github.com/att/deadline/common"
+	"github.com/att/deadline/dao"
 )
 
-type Definition struct {
-	XMLName  xml.Name       	`xml:"schedule"`
-	Handler  Handler 			`json:"handler" xml:"handler,omitempty" db:"handler"`
-	Timing   string         	`xml:"timing,attr,omitempty" db:"timing"`	
-	Name     string         	`xml:"name,attr,omitempty" db:"name"`
-	ScheduleContent []byte      `xml:",innerxml"`
-	Start    Node           	`xml:"-" json:"-"`
+// NodeType is the type of node
+type NodeType int
 
+// State is the state of a schedule, like Running
+type State int
+
+const (
+	// ExpectedTimeLayout is the expected time layout for schedules when unix time (int64) isn't used
+	ExpectedTimeLayout string = time.RFC3339
+
+	// EventNodeType are types of event nodes
+	EventNodeType NodeType = iota
+	// EndNodeType is an 'end' node
+	EndNodeType
+	// StartNodeType is a 'start' node
+	StartNodeType
+	// HandlerNodeType is a 'handler' node
+	HandlerNodeType
+
+	// Running is the running state
+	Running State = iota
+	// Ended is completed with success
+	Ended
+	// Failed is completed with failure
+	Failed
+)
+
+var (
+	// TimingAilias are aliases for timings. Example: weekly = 168h. That is the string 'weekly' is 168 hours.
+	TimingAilias = map[string]string{
+		"weekly": "168h",
+		"daily":  "24h",
+		"hourly": "1h",
+	}
+
+	// StateStringLookup is a lookuptable for the State iota which
+	StateStringLookup = map[State]string{
+		Running: "running",
+		Ended:   "ended",
+		Failed:  "failed",
+	}
+)
+
+func (state State) String() string {
+	if ret, found := StateStringLookup[state]; found {
+		return ret
+	}
+
+	return "unknown"
 }
 
-type Live struct {
-
-	Timing   string         	`json:"timing,attr,omitempty" db:"timing"`	
-	Name     string         	`json:"name,attr,omitempty" db:"name"`
-	LastRun	 time.Time			`json:"lastrun"`
-	Events []Event				`json:"events"`
-	Handler  Handler			`json:"handler"`
-	Start    Node           	`json:"-"`
-	End      Node           	`json:"-"`
-	Error    Node           	`json:"-"`
+// Schedule is the type that represents a running schedule
+type Schedule struct {
+	Name          string `json:"name,attr,omitempty" db:"name"`
+	StartTime     time.Time
+	Start         *NodeInstance `json:"-"`
+	End           *NodeInstance `json:"-"`
+	nodes         map[string]*NodeInstance
+	blueprintMaps com.BlueprintMaps
+	subscribesTo  map[string]bool
+	eventLock     *sync.RWMutex
+	state         State
 }
 
-type Event struct {
-	XMLName   xml.Name          `json:"-" xml:"event"`
-	Name      string            `json:"name" xml:"name,attr" db:"name"`
-	Success   bool              `json:"success" xml:"success" db:"success"`
-	Details   map[string]string `json:"details,omitempty" xml:"details,omitempty" db:"details"`
-	ReceiveBy string            `json:"receiveby" xml:"receiveby,attr" db:"receiveby"`
-	ReceiveAt string            `json:"receiveat" xml:"receiveat,attr" db:"receiveat"`
-	IsLive bool 				`json:"islive" xml:"islive"`
-}
-
-type ScheduledEvent struct {
-	ScheduleName 	string		`db:"schedulename"`
-	EName			string  	`db:"ename"` 
-	EReceiveBy		string  	`db:"ereceiveby"` 
-
-}
-
-type Handler struct {
-	XMLName xml.Name 			`json:"-" xml:"handler"`
-	Name    string   			`json:"name" xml:"name,attr" db:"name"`
-	Address string   			`json:"address" xml:"address" db:"address"`
-}
-
+// ScheduledHandler is the type that handles failures in a schedule
 type ScheduledHandler struct {
-	ScheduleName 	string		`db:"schedulename"`
-	Name			string  	`db:"name"` 
-	Address			string  	`db:"address"` 
-
+	ScheduleName string `db:"schedulename"`
+	Name         string `db:"name"`
+	Address      string `db:"address"`
 }
 
-type Node struct {
-	Event   *Event 				`xml:"event"`
-	Nodes   []Node       		`xml:"-"`
-	ErrorTo *Node        		`xml:"-"`
-	OkTo    *Node         		`xml:"-"`
-}
-
-type Start struct {
-	Node
-}
-
-type End struct {
-	Node
-}
-
+// ScheduleManager is tasked with running and maintaing all the schedules. There should only be 1 per process.
+// It's tasked with the creation, destruction and evaulation of all schedules.
 type ScheduleManager struct {
-	subscriptionTable map[string][]*Live
-	ScheduleTable 	  map[string]*Live
-	EvaluationTime	time.Time
+	subscriptionTable map[string][]*Schedule
+	schedules         map[string]*Schedule
+	db                dao.ScheduleDAO
+	rwLock            *sync.RWMutex
+	blueprints        chan com.ScheduleBlueprint
+	evalTicker        *time.Ticker
 }
 
-type Error struct {
-	To string 					`xml:"to,attr"`
+// Node is the interface for nodes in the schedules and provides ways to see what they are and how they connect
+// to other Nodes.
+type Node interface {
+	Next() ([]*NodeInstance, error)
+	Name() string
 }
 
-type ScheduleDAO interface {
-	GetByName(string) ([]byte, error)
-	Save(s *Definition) error
-	LoadSchedules() ([]Live,error)
-	LoadEvents() ([]Event,error)
-	SaveEvent( e *Event) error
+// Handler is the interface for handlers to implement so the can handle failures in a uniform way.
+type Handler interface {
+	Handle() error
 }
 
-type fileDAO struct{
-	Path string
-
+// NodeInstance is the actual instance of a Node interface.
+type NodeInstance struct {
+	NodeType NodeType
+	value    Node
 }
 
-type dbDAO struct {
-	ConnectionString string
+// EventNode is the Node implementing type for an event.
+type EventNode struct {
+	name        string
+	constraints com.EventConstraints
+	//events      []com.Event
+	event   *com.Event
+	okTo    *NodeInstance
+	errorTo *NodeInstance
 }
 
-type innerbytes struct {
-	XMLName xml.Name 			`xml:"innerbytes"`
-	Hander Handler 				`xml:"handler"`
-	Events []Event				`xml:"event"`
+// StartNode is the Node implementing type for the start of a schedule.
+type StartNode struct {
+	to *NodeInstance
+}
+
+// EndNode is the Node implementing type for the end of a schedule.
+type EndNode struct {
+	name string
+}
+
+// EmailHandlerNode is the Node & Handler implementing type for the handler that emails failures.
+type EmailHandlerNode struct {
+	to      *NodeInstance
+	name    string
+	emailTo string
 }

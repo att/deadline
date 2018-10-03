@@ -1,8 +1,0 @@
-#this one is used to test DB functions
-dao = "DB"
-[fileconfig]
-    directory = ""
-[dbconfig]
-    connection_string = "root:password@tcp(localhost:3306)/webdb"
-[serverconfig]
-    port = "8082"
