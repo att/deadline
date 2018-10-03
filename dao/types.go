@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"time"
+
 	com "github.com/att/deadline/common"
 	"github.com/att/deadline/config"
 	"github.com/sirupsen/logrus"
@@ -28,6 +30,6 @@ type ScheduleDAO interface {
 	GetByName(string) (*com.ScheduleBlueprint, error)
 	Save(s *com.ScheduleBlueprint) error
 	LoadScheduleBlueprints() ([]com.ScheduleBlueprint, error)
-	LoadEvents() ([]com.Event, error)
+	EventsAfter(t time.Time) (chan com.Event, error)
 	SaveEvent(e *com.Event) error
 }

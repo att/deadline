@@ -55,7 +55,9 @@ func LoadConfig(filename string) (*Config, error) {
 // GetEvalTime is a simple facade for getting the configuration's EvalTime while parsing
 // and checking for errors.
 func (c *Config) GetEvalTime() time.Duration {
-	if duration, err := time.ParseDuration(c.EvalTime); err != nil {
+	if c.EvalTime == "" {
+		return DefaultEvalDuration
+	} else if duration, err := time.ParseDuration(c.EvalTime); err != nil {
 		return duration
 	}
 	return DefaultEvalDuration

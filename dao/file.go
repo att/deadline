@@ -1,8 +1,13 @@
 package dao
 
 import (
+	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
+	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"encoding/xml"
 	"io/ioutil"
@@ -93,32 +98,56 @@ func (dao fileDAO) LoadScheduleBlueprints() ([]com.ScheduleBlueprint, error) {
 	return blueprints, nil
 }
 
-func (dao fileDAO) LoadEvents() ([]com.Event, error) {
-	liveEvents := []com.Event{}
-	// liveEvent := com.Event{}
-	// file, err := makeOrOpenDirectory(dao.path + "/" + "events")
-	// defer file.Close()
+func (dao fileDAO) EventsAfter(t time.Time) (chan com.Event, error) {
+	events := make(chan com.Event)
+	after := t.Unix()
 
-	// if err != nil {
+	eventDirectory := dao.path + "/" + "events"
+	dir, err := makeOrOpenDirectory(eventDirectory)
 
-	// 	return []common.Event{}, err
-	// }
+	if err != nil {
+		close(events)
+		dir.Close()
+		return events, nil
+	}
 
-	// list, _ := file.Readdirnames(0)
-	// for _, event := range list {
-	// 	if strings.Contains(event, ".xml") {
-	// 		event = strings.TrimSuffix(event, ".xml")
-	// 		bytes, _ := fd.GetByName("events/" + event)
-	// 		err = xml.Unmarshal(bytes, &liveEvent)
-	// 		if err != nil {
-	// 			common.Info.Println(event + " wasn't translated")
-	// 			continue
-	// 		}
-	// 		liveEvents = append(liveEvents, liveEvent)
-	// 	}
-	// }
+	go func() {
 
-	return liveEvents, nil
+		list, err := dir.Readdirnames(0)
+		defer dir.Close()
+
+		if err != nil {
+			log.WithError(err).Info("could not read from " + eventDirectory)
+			return
+		}
+
+		for _, eventFile := range list {
+			data, err := ioutil.ReadFile(eventDirectory + "/" + eventFile)
+			event := &com.Event{}
+
+			if err == nil {
+				if err = json.Unmarshal(data, event); err == nil {
+					if event.ReceivedAt >= after {
+						events <- *event
+					}
+				} else {
+					log.WithFields(logrus.Fields{
+						"error": err,
+						"file":  eventFile,
+					}).Debug("didn't load event file")
+				}
+			} else {
+				log.WithFields(logrus.Fields{
+					"error": err,
+					"file":  eventFile,
+				}).Debug("didn't load event file")
+			}
+		}
+
+		close(events)
+	}()
+
+	return events, nil
 }
 
 func makeOrOpenDirectory(path string) (*os.File, error) {
@@ -140,16 +169,18 @@ func makeOrOpenDirectory(path string) (*os.File, error) {
 }
 
 func (dao fileDAO) SaveEvent(e *com.Event) error {
-	str := e.Name + ".xml"
-	f, err := os.Create(dao.path + "/events/" + str)
+	fileName := e.Name + "_" + strconv.FormatInt(time.Now().Unix(), 10) + ".json"
+
+	file, err := os.Create(dao.path + "/events/" + fileName)
+	defer file.Close()
+
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	encoder := xml.NewEncoder(f)
-	err = encoder.Encode(e)
 
-	if err != nil {
+	encoder := json.NewEncoder(file)
+
+	if err := encoder.Encode(e); err != nil {
 		return err
 	}
 
