@@ -72,9 +72,9 @@ type Schedule struct {
 	state         State
 }
 
-// ScheduleManager is tasked with running and maintaing all the schedules. There should only be 1 per process.
+// Manager is tasked with running and maintaing all the schedules. There should only be 1 per process.
 // It's tasked with the creation, destruction and evaulation of all schedules.
-type ScheduleManager struct {
+type Manager struct {
 	subscriptionTable map[string][]*Schedule
 	schedules         map[string]*Schedule
 	db                dao.ScheduleDAO

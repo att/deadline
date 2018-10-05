@@ -15,7 +15,7 @@ import (
 	"github.com/att/deadline/schedule"
 )
 
-var manager *schedule.ScheduleManager
+var manager *schedule.Manager
 var log *logrus.Logger
 
 // DeadlineServer is the http server for the deadline application.

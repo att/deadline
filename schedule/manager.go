@@ -10,12 +10,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var manager *ScheduleManager
+var manager *Manager
 var once sync.Once
 var log *logrus.Logger
 
-// GetManagerInstance will return the singleton of the ScheduleManager object
-func GetManagerInstance(cfg *config.Config) *ScheduleManager {
+// GetManagerInstance will return the singleton of the Manager object
+func GetManagerInstance(cfg *config.Config) *Manager {
 	once.Do(func() {
 		db, err := dao.NewScheduleDAO(cfg)
 		log = cfg.GetLogger("manager")
@@ -24,7 +24,7 @@ func GetManagerInstance(cfg *config.Config) *ScheduleManager {
 			log.WithError(err).Fatal("cannot load configs")
 		}
 
-		manager = &ScheduleManager{
+		manager = &Manager{
 			db:     db,
 			rwLock: &sync.RWMutex{},
 		}
@@ -41,8 +41,8 @@ func GetManagerInstance(cfg *config.Config) *ScheduleManager {
 }
 
 // part of the initialization cycle, this function should only be called once per instance of the
-// ScheduleManager.  It is not likely thread safe at this time.
-func (manager *ScheduleManager) loadAllSchedules() {
+// Manager.  It is not likely thread safe at this time.
+func (manager *Manager) loadAllSchedules() {
 	log.Info("loading all schedules.")
 
 	blueprints, err := manager.db.LoadScheduleBlueprints()
@@ -84,7 +84,7 @@ func (manager *ScheduleManager) loadAllSchedules() {
 }
 
 // Update updates any schedule currently alive with the event that you pass in
-func (manager *ScheduleManager) Update(e *com.Event) {
+func (manager *Manager) Update(e *com.Event) {
 	manager.rwLock.Lock()
 	defer manager.rwLock.Unlock()
 
@@ -109,13 +109,13 @@ func (manager *ScheduleManager) Update(e *com.Event) {
 }
 
 // GetBlueprint gets a blueprint for a schedule given the name of the blueprint
-func (manager *ScheduleManager) GetBlueprint(name string) (*com.ScheduleBlueprint, error) {
+func (manager *Manager) GetBlueprint(name string) (*com.ScheduleBlueprint, error) {
 	return manager.db.GetByName(name)
 }
 
 // AddScheduleAndSave is just like AddSchedule but has the added benefit of saving the blueprint
 // to some sort of persistance layer.
-func (manager *ScheduleManager) AddScheduleAndSave(blueprint *com.ScheduleBlueprint) error {
+func (manager *Manager) AddScheduleAndSave(blueprint *com.ScheduleBlueprint) error {
 	// TODO rollback the save if the other errors out
 	if err := manager.db.Save(blueprint); err != nil {
 		return err
@@ -129,7 +129,7 @@ func (manager *ScheduleManager) AddScheduleAndSave(blueprint *com.ScheduleBluepr
 // AddSchedule adds the schedule to the current list of schedules. If the schedule's start time
 // it will become live and the manager will start to evaluate it. Otherwise it will be scheduled
 // to become live at that time
-func (manager *ScheduleManager) AddSchedule(blueprint com.ScheduleBlueprint) error {
+func (manager *Manager) AddSchedule(blueprint com.ScheduleBlueprint) error {
 	var startTime time.Time
 	var timing time.Duration
 	var nextTime time.Duration
@@ -174,7 +174,7 @@ func (manager *ScheduleManager) AddSchedule(blueprint com.ScheduleBlueprint) err
 
 // GetSchedule gets the current running schedule by the given name. If it exists, it'll
 // return it, if not, it will return nil.
-func (manager *ScheduleManager) GetSchedule(name string) *Schedule {
+func (manager *Manager) GetSchedule(name string) *Schedule {
 	manager.rwLock.RLock()
 	defer manager.rwLock.RUnlock()
 	var s *Schedule
@@ -221,7 +221,7 @@ func timingToDuration(timing string) (time.Duration, error) {
 	return time.ParseDuration(timing)
 }
 
-func (manager *ScheduleManager) evaluateAllSchedules() {
+func (manager *Manager) evaluateAllSchedules() {
 	for range manager.evalTicker.C {
 		log.WithField("total", len(manager.schedules)).Debug("starting to evaluate schedules.")
 		for name, sched := range manager.schedules {

@@ -38,7 +38,7 @@ func main() {
 	if err != nil {
 		cfg = &config.DefaultConfig
 		log := cfg.GetLogger("common")
-		log.Info("loaded default configs.")
+		log.WithError(err).Info("loaded default configs.")
 	}
 
 	dlsvr := server.NewDeadlineServer(cfg)
@@ -46,6 +46,6 @@ func main() {
 	err = dlsvr.Start()
 	if err != nil {
 		log := cfg.GetLogger("common")
-		log.WithField("error", err).Error("server didn't start")
+		log.WithError(err).Error("server didn't start")
 	}
 }
