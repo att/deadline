@@ -10,41 +10,38 @@ import (
 
 // Evaluate the schedule completely.
 func (schedule *Schedule) Evaluate() State {
-	schedule.walk(schedule.Start)
+	schedule.walk(schedule.Start, nil)
 
 	return schedule.state
 }
 
-func (schedule *Schedule) walk(instance *NodeInstance) {
-	if schedule.state != Running {
-		return
-	}
+func (schedule *Schedule) walk(instance *NodeInstance, context *Context) {
 
 	switch node := instance.value.(type) {
 
 	case *StartNode:
-		schedule.walk(node.to)
+		schedule.walk(node.to, nil)
 	case *EventNode:
-		next, _ := node.Next()
+		next, ctx := node.Next()
 		if next != nil && len(next) > 0 {
 
 			if next[0] == node.errorTo {
 				schedule.state = Failed
 			}
 
-			schedule.walk(next[0])
+			schedule.walk(next[0], ctx)
 		}
 	case *EmailHandlerNode:
-		//handle
-		schedule.walk(node.to)
+		go node.Handle(context)
+		schedule.walk(node.to, nil)
 	case *EndNode:
 		if schedule.state != Failed {
 			schedule.state = Ended
 		}
 	case nil:
-		//log.Info("nil node type")
+		log.Debug("nil node type")
 	default:
-		//log.Info("unknown node type")
+		log.Debug("unknown node type")
 	}
 }
 
@@ -308,3 +305,10 @@ func checkEmptyFields(blueprint *com.ScheduleBlueprint) error {
 		return nil
 	}
 }
+
+// func contextFromNode(node *EventNode) Context {
+// 	ctx := Context{
+// 		FailedNoded: node.name,
+// 		FailureTime: time.Now(),
+// 	}
+// }

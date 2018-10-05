@@ -75,10 +75,11 @@ func TestEventErrorTo(test *testing.T) {
 	} else {
 
 		node.AddEvent(&e)
-		next, err := node.Next()
+		next, ctx := node.Next()
 
-		assert.Nil(test, err, "")
 		assert.Equal(test, len(next), 1)
 		assert.Equal(test, next[0], endNode)
+		assert.NotNil(test, ctx)
+		assert.Equal(test, com.LateEvent, ctx.FailureReason)
 	}
 }

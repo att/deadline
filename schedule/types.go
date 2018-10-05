@@ -72,13 +72,6 @@ type Schedule struct {
 	state         State
 }
 
-// ScheduledHandler is the type that handles failures in a schedule
-type ScheduledHandler struct {
-	ScheduleName string `db:"schedulename"`
-	Name         string `db:"name"`
-	Address      string `db:"address"`
-}
-
 // ScheduleManager is tasked with running and maintaing all the schedules. There should only be 1 per process.
 // It's tasked with the creation, destruction and evaulation of all schedules.
 type ScheduleManager struct {
@@ -90,16 +83,23 @@ type ScheduleManager struct {
 	evalTicker        *time.Ticker
 }
 
+// Context is the way to pass state between different nodes in a schedule
+type Context struct {
+	FailedNoded   string
+	FailureReason string
+	FailureTime   time.Time
+}
+
 // Node is the interface for nodes in the schedules and provides ways to see what they are and how they connect
 // to other Nodes.
 type Node interface {
-	Next() ([]*NodeInstance, error)
+	Next() ([]*NodeInstance, *Context)
 	Name() string
 }
 
 // Handler is the interface for handlers to implement so the can handle failures in a uniform way.
 type Handler interface {
-	Handle() error
+	Handle(*Context)
 }
 
 // NodeInstance is the actual instance of a Node interface.
@@ -112,10 +112,9 @@ type NodeInstance struct {
 type EventNode struct {
 	name        string
 	constraints com.EventConstraints
-	//events      []com.Event
-	event   *com.Event
-	okTo    *NodeInstance
-	errorTo *NodeInstance
+	event       *com.Event
+	okTo        *NodeInstance
+	errorTo     *NodeInstance
 }
 
 // StartNode is the Node implementing type for the start of a schedule.
