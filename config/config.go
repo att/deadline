@@ -52,6 +52,17 @@ func LoadConfig(filename string) (*Config, error) {
 
 }
 
+// GetEvalTime is a simple facade for getting the configuration's EvalTime while parsing
+// and checking for errors.
+func (c *Config) GetEvalTime() time.Duration {
+	if c.EvalTime == "" {
+		return DefaultEvalDuration
+	} else if duration, err := time.ParseDuration(c.EvalTime); err != nil {
+		return duration
+	}
+	return DefaultEvalDuration
+}
+
 // GetLogger gets a logger for a particular package or sub-component. Thread safe, but currently locks
 // pretty aggressively, so one should only call at the package/sub-component level, not like, per function call.
 func (c *Config) GetLogger(name string) *logrus.Logger {

@@ -1,8 +1,13 @@
 package dao
 
 import (
+	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
+	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"encoding/xml"
 	"io/ioutil"
@@ -15,18 +20,21 @@ type fileDAO struct {
 	path string
 }
 
-func newFileDAO(path string) *fileDAO {
+func newFileDAO(path string) (*fileDAO, error) {
 	dao := &fileDAO{
 		path: path,
 	}
 
 	// init the directory
-	makeOrOpenDirectory(dao.path) // if err, return it
+	if _, err := makeOrOpenDirectory(dao.path); err != nil {
+		return nil, err
+	}
 
-	return dao
+	return dao, nil
 }
 
 func (dao fileDAO) GetByName(name string) (*com.ScheduleBlueprint, error) {
+	var bytes []byte
 
 	file, err := os.Open(dao.path + "/" + name + ".xml")
 	defer file.Close()
@@ -34,16 +42,16 @@ func (dao fileDAO) GetByName(name string) (*com.ScheduleBlueprint, error) {
 		return nil, err
 	}
 
-	if bytes, err := ioutil.ReadAll(file); err != nil {
+	if bytes, err = ioutil.ReadAll(file); err != nil {
 		return nil, err
-	} else {
-		blueprint := &com.ScheduleBlueprint{}
-		if xml.Unmarshal(bytes, blueprint); err != nil {
-			return nil, err
-		} else {
-			return blueprint, nil
-		}
 	}
+
+	blueprint := &com.ScheduleBlueprint{}
+	if xml.Unmarshal(bytes, blueprint); err != nil {
+		return nil, err
+	}
+
+	return blueprint, nil
 }
 
 func (dao fileDAO) Save(blueprint *com.ScheduleBlueprint) error {
@@ -59,9 +67,9 @@ func (dao fileDAO) Save(blueprint *com.ScheduleBlueprint) error {
 	encoder := xml.NewEncoder(file)
 	if err = encoder.Encode(blueprint); err != nil {
 		return err
-	} else {
-		return nil
 	}
+
+	return nil
 
 }
 
@@ -90,32 +98,56 @@ func (dao fileDAO) LoadScheduleBlueprints() ([]com.ScheduleBlueprint, error) {
 	return blueprints, nil
 }
 
-func (dao fileDAO) LoadEvents() ([]com.Event, error) {
-	liveEvents := []com.Event{}
-	// liveEvent := common.Event{}
-	// file, err := makeOrOpenDirectory(fd.path + "/" + "events")
-	// defer file.Close()
+func (dao fileDAO) EventsAfter(t time.Time) (chan com.Event, error) {
+	events := make(chan com.Event)
+	after := t.Unix()
 
-	// if err != nil {
-	// 	common.Info.Println("Cannot read events because", err)
-	// 	return []common.Event{}, err
-	// }
+	eventDirectory := dao.path + "/" + "events"
+	dir, err := makeOrOpenDirectory(eventDirectory)
 
-	// list, _ := file.Readdirnames(0)
-	// for _, event := range list {
-	// 	if strings.Contains(event, ".xml") {
-	// 		event = strings.TrimSuffix(event, ".xml")
-	// 		bytes, _ := fd.GetByName("events/" + event)
-	// 		err = xml.Unmarshal(bytes, &liveEvent)
-	// 		if err != nil {
-	// 			common.Info.Println(event + " wasn't translated")
-	// 			continue
-	// 		}
-	// 		liveEvents = append(liveEvents, liveEvent)
-	// 	}
-	// }
+	if err != nil {
+		close(events)
+		dir.Close()
+		return events, nil
+	}
 
-	return liveEvents, nil
+	go func() {
+
+		list, err := dir.Readdirnames(0)
+		defer dir.Close()
+
+		if err != nil {
+			log.WithError(err).Info("could not read from " + eventDirectory)
+			return
+		}
+
+		for _, eventFile := range list {
+			data, err := ioutil.ReadFile(eventDirectory + "/" + eventFile)
+			event := &com.Event{}
+
+			if err == nil {
+				if err = json.Unmarshal(data, event); err == nil {
+					if event.ReceivedAt >= after {
+						events <- *event
+					}
+				} else {
+					log.WithFields(logrus.Fields{
+						"error": err,
+						"file":  eventFile,
+					}).Debug("didn't load event file")
+				}
+			} else {
+				log.WithFields(logrus.Fields{
+					"error": err,
+					"file":  eventFile,
+				}).Debug("didn't load event file")
+			}
+		}
+
+		close(events)
+	}()
+
+	return events, nil
 }
 
 func makeOrOpenDirectory(path string) (*os.File, error) {
@@ -137,16 +169,18 @@ func makeOrOpenDirectory(path string) (*os.File, error) {
 }
 
 func (dao fileDAO) SaveEvent(e *com.Event) error {
-	str := e.Name + ".xml"
-	f, err := os.Create(dao.path + "/events/" + str)
+	fileName := e.Name + "_" + strconv.FormatInt(time.Now().Unix(), 10) + ".json"
+
+	file, err := os.Create(dao.path + "/events/" + fileName)
+	defer file.Close()
+
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	encoder := xml.NewEncoder(f)
-	err = encoder.Encode(e)
 
-	if err != nil {
+	encoder := json.NewEncoder(file)
+
+	if err := encoder.Encode(e); err != nil {
 		return err
 	}
 

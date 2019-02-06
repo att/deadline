@@ -7,7 +7,6 @@ import (
 
 	"github.com/att/deadline/config"
 	"github.com/att/deadline/server"
-	"github.com/jasonlvhit/gocron"
 )
 
 var (
@@ -38,17 +37,15 @@ func main() {
 
 	if err != nil {
 		cfg = &config.DefaultConfig
+		log := cfg.GetLogger("common")
+		log.Info("loaded default configs.")
 	}
-
-	//server.M = server.M.Init(cfg)
-
-	//go gocron.Every(10).Seconds().Do(server.M.EvaluateAll)
-	go gocron.Start()
 
 	dlsvr := server.NewDeadlineServer(cfg)
 
 	err = dlsvr.Start()
 	if err != nil {
-
+		log := cfg.GetLogger("common")
+		log.WithField("error", err).Error("server didn't start")
 	}
 }

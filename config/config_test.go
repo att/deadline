@@ -9,7 +9,7 @@ import (
 )
 
 var good = Config{
-	DAO: "file",
+	Storage: FileStorage,
 	FileConfig: FileConfig{
 		Directory: "../server/",
 	},
@@ -27,21 +27,21 @@ func TestGoodConfig(test *testing.T) {
 	cfg, err := LoadConfig("testdata/goodfile.yml")
 	assert.Nil(test, err, "Could not load a good file")
 	assert.Equal(test, &good, cfg)
-	assert.NotNil(test, cfg.Logconfig, "")
+	assert.NotNil(test, cfg.Logconfig)
 }
 
 func TestCantFindConfig(test *testing.T) {
 	cfg, err := LoadConfig("testdata/cantfindfile.yml")
 	assert.NotNil(test, err, "Loaded a bad file")
-	assert.Nil(test, cfg, "")
+	assert.Nil(test, cfg)
 }
 
 func TestGetLogger(test *testing.T) {
 	cfg, err := LoadConfig("testdata/file_with_loggers.yml")
 	assert.Nil(test, err, "Could not load a good file")
-	assert.NotNil(test, cfg.loggers, "")
+	assert.NotNil(test, cfg.loggers)
 
 	managerLogger := cfg.GetLogger("manager")
-	assert.NotNil(test, managerLogger, "")
-	assert.True(test, managerLogger.Level == logrus.DebugLevel, "")
+	assert.NotNil(test, managerLogger)
+	assert.True(test, managerLogger.Level == logrus.DebugLevel)
 }

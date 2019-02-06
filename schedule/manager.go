@@ -17,17 +17,23 @@ var log *logrus.Logger
 // GetManagerInstance will return the singleton of the ScheduleManager object
 func GetManagerInstance(cfg *config.Config) *ScheduleManager {
 	once.Do(func() {
+		db, err := dao.NewScheduleDAO(cfg)
+		log = cfg.GetLogger("manager")
+
+		if err != nil {
+			log.WithError(err).Fatal("cannot load configs")
+		}
+
 		manager = &ScheduleManager{
-			db:     dao.NewScheduleDAO(cfg),
+			db:     db,
 			rwLock: &sync.RWMutex{},
 		}
 
 		manager.schedules = make(map[string]*Schedule)
 		manager.subscriptionTable = make(map[string][]*Schedule)
 		manager.blueprints = make(chan com.ScheduleBlueprint)
-		manager.evalTicker = time.NewTicker(time.Minute * 1)
+		manager.evalTicker = time.NewTicker(cfg.GetEvalTime())
 
-		log = cfg.GetLogger("manager")
 		manager.loadAllSchedules()
 		go manager.evaluateAllSchedules()
 	})
@@ -41,34 +47,55 @@ func (manager *ScheduleManager) loadAllSchedules() {
 
 	blueprints, err := manager.db.LoadScheduleBlueprints()
 	if err != nil {
-		log.Info("couldn't load any blueprints because of error", err)
+		log.WithError(err).Info("couldn't load any blueprints because of error")
 	}
 
+	oldestStartTime := time.Now()
 	for _, blueprint := range blueprints {
 		if err := manager.AddSchedule(blueprint); err != nil {
-			log.Info("didn't create schedule from blueprint because of error ", err)
-		}
-	}
-
-	events, err := manager.db.LoadEvents()
-	if err != nil {
-		log.Info("couldn't load any events because of error", err)
-	} else {
-		for _, event := range events {
-			schedules := manager.subscriptionTable[event.Name]
-			for _, schedule := range schedules {
-				schedule.EventOccurred(&event)
+			log.WithError(err).Info("didn't create schedule from blueprint because of error ")
+		} else {
+			start, err := time.Parse(time.RFC3339, blueprint.StartsAt)
+			if err != nil && start.Unix() < oldestStartTime.Unix() {
+				oldestStartTime = start
 			}
 		}
 	}
 
-	log.WithField("total", len(manager.schedules)).Info("schedule load complete.")
+	events, err := manager.db.EventsAfter(oldestStartTime)
+	var i = 0
+	if err != nil {
+		log.Info("couldn't load any events because of error", err)
+	} else {
+		for event := range events {
+			schedules := manager.subscriptionTable[event.Name]
+			for _, schedule := range schedules {
+				schedule.EventOccurred(&event)
+			}
+			i++
+		}
+	}
+
+	log.WithFields(logrus.Fields{
+		"schedules": len(manager.schedules),
+		"events":    i,
+	}).Info("load complete.")
+
 }
 
 // Update updates any schedule currently alive with the event that you pass in
 func (manager *ScheduleManager) Update(e *com.Event) {
 	manager.rwLock.Lock()
 	defer manager.rwLock.Unlock()
+
+	go func() {
+		if err := manager.db.SaveEvent(e); err != nil {
+			log.WithFields(logrus.Fields{
+				"error": err,
+				"name":  e.Name,
+			}).Info("didn't save event")
+		}
+	}()
 
 	scheds := manager.subscriptionTable[e.Name]
 
@@ -150,12 +177,14 @@ func (manager *ScheduleManager) AddSchedule(blueprint com.ScheduleBlueprint) err
 func (manager *ScheduleManager) GetSchedule(name string) *Schedule {
 	manager.rwLock.RLock()
 	defer manager.rwLock.RUnlock()
+	var s *Schedule
+	var ok bool
 
-	if s, ok := manager.schedules[name]; !ok {
+	if s, ok = manager.schedules[name]; !ok {
 		return nil
-	} else {
-		return s
 	}
+
+	return s
 }
 
 // blueprints have a start time and a timing which are the inputs to this. For example a start
@@ -175,12 +204,12 @@ func normailizeTime(startTime string, timing time.Duration) (time.Time, time.Dur
 	last := start
 
 	// TODO not the best way to do this if startTime is very far in the past
-	for next.Unix() < now.Unix() {
+	for next.Before(now) {
 		last = next
 		next = last.Add(timing)
 	}
 
-	nextTime = next.Sub(now)
+	nextTime = next.Sub(time.Now())
 	return last, nextTime, nil
 }
 

@@ -6,21 +6,14 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	com "github.com/att/deadline/common"
+	"github.com/att/deadline/config"
 	"github.com/stretchr/testify/assert"
 )
 
 var dao = cleanAndRefreshDAO(nil, randomTempDir())
-
-// var simpleSchedule = common.blu{
-// 	Name:   "sample_schedule",
-// 	Timing: "daily",
-// 	Handler: common.Handler{
-// 		Name:    "email handler",
-// 		Address: "kp755d@att.com",
-// 	},
-// }
 
 var singleEventSchedule = com.ScheduleBlueprint{
 	Timing:   "daily",
@@ -58,7 +51,7 @@ func TestSaveSchedule(test *testing.T) {
 	assert.Nil(test, dao.Save(&singleEventSchedule), "Could not save the file.")
 }
 
-func TestGetFile(test *testing.T) {
+func TestGetSchedule(test *testing.T) {
 	dao = cleanAndRefreshDAO(dao, "testdata/")
 
 	blueprint, err := dao.GetByName("single_event_schedule")
@@ -67,18 +60,72 @@ func TestGetFile(test *testing.T) {
 	assert.Equal(test, singleEventSchedule, *blueprint, "Read file, but result is not what's expected")
 }
 
-func cleanAndRefreshDAO(dao *fileDAO, path string) *fileDAO {
+func TestGetEvents(test *testing.T) {
+	dao = cleanAndRefreshDAO(dao, "testdata/")
+
+	events, err := dao.EventsAfter(time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC))
+	assert.Nil(test, err)
+
+	done := make(chan bool)
+	total := 0
+
+	go func() {
+		for {
+			_, more := <-events
+			if more {
+				total++
+			} else {
+				done <- true
+				return
+			}
+		}
+	}()
+
+	<-done
+	assert.Equal(test, 3, total)
+}
+
+func TestGetAfter(test *testing.T) {
+	dao = cleanAndRefreshDAO(dao, "testdata/")
+
+	events, err := dao.EventsAfter(time.Date(2018, time.January, 1, 0, 0, 0, 0, time.UTC))
+	assert.Nil(test, err)
+
+	done := make(chan bool)
+	total := 0
+
+	go func() {
+		for {
+			_, more := <-events
+			if more {
+				total++
+			} else {
+				done <- true
+				return
+			}
+		}
+	}()
+
+	<-done
+	assert.Equal(test, 1, total)
+}
+
+func cleanAndRefreshDAO(dao ScheduleDAO, path string) ScheduleDAO {
 	if dao == nil {
-		dao = newFileDAO(path)
+		dao, _ = NewScheduleDAO(&config.DefaultConfig)
 
 	} else {
-		oldPath := dao.path
+		oldPath := config.DefaultConfig.FileConfig.Directory
 		if strings.HasPrefix(oldPath, os.TempDir()) {
 			_ = os.RemoveAll(oldPath)
 		}
 	}
+	// TODO modifying the default, shouldn't happen in non-test code, but really should be
+	// function to GetDefault()
+	config.DefaultConfig.FileConfig.Directory = path
+	dao, _ = NewScheduleDAO(&config.DefaultConfig)
 
-	return newFileDAO(path)
+	return dao
 }
 
 func randomTempDir() string {
