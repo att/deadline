@@ -2,9 +2,6 @@ package schedule
 
 // Handle is the email handler's implementation of the Handler interface.
 func (handler EmailHandlerNode) Handle(ctx *Context) {
-	// cfg := config.GetEmailConfig()
-
-	// var client *smtp.Client
 
 }
 

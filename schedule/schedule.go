@@ -10,30 +10,34 @@ import (
 
 // Evaluate the schedule completely.
 func (schedule *Schedule) Evaluate() State {
-	schedule.walk(schedule.Start)
+	schedule.walk(schedule.Start, nil)
 
 	return schedule.state
 }
 
-func (schedule *Schedule) walk(instance *NodeInstance) {
+// walk will walk down the nodes from the instance you pass in.  The ctx is from
+// the previous step. The idea is, one calls this method with the start node and a nil
+// context.  This function is then recursively called with whatever the next node is
+// and the context that the node itself generated.
+func (schedule *Schedule) walk(instance *NodeInstance, ctx *Context) {
 
 	switch node := instance.value.(type) {
 
 	case *StartNode:
-		schedule.walk(node.to)
+		schedule.walk(node.to, nil)
 	case *EventNode:
-		next, _ := node.Next()
+		next, ctx := node.Next()
 		if next != nil && len(next) > 0 {
 
 			if next[0] == node.errorTo {
 				schedule.state = Failed
 			}
 
-			schedule.walk(next[0])
+			schedule.walk(next[0], ctx)
 		}
 	case *EmailHandlerNode:
-		//go node.Handle(context)
-		schedule.walk(node.to)
+		go node.Handle(ctx)
+		schedule.walk(node.to, nil)
 	case *EndNode:
 		if schedule.state != Failed {
 			schedule.state = Ended
