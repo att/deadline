@@ -2,6 +2,7 @@ package schedule
 
 import (
 	"errors"
+	"reflect"
 	"sync"
 	"time"
 
@@ -43,9 +44,9 @@ func (schedule *Schedule) walk(instance *NodeInstance, ctx *Context) {
 			schedule.state = Ended
 		}
 	case nil:
-		log.Debug("nil node type")
+		log.Warn("nil node type")
 	default:
-		log.Debug("unknown node type")
+		log.Warn("unlisted node type ", reflect.TypeOf(node).String())
 	}
 }
 
@@ -265,7 +266,7 @@ func (schedule *Schedule) addHandlerBlueprint(blueprint com.HandlerBlueprint, vi
 	if blueprint.Email.EmailTo != "" {
 		node := &NodeInstance{
 			NodeType: HandlerNodeType,
-			value: EmailHandlerNode{
+			value: &EmailHandlerNode{
 				emailTo: blueprint.Email.EmailTo,
 				to:      schedule.nodes[blueprint.To],
 				name:    blueprint.Name,
@@ -308,8 +309,4 @@ func checkEmptyFields(blueprint *com.ScheduleBlueprint) error {
 	} else {
 		return nil
 	}
-}
-
-func addFailureContext(ctx FailureContext) {
-
 }
