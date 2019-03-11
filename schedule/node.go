@@ -24,36 +24,39 @@ func (node *EventNode) Next() ([]*NodeInstance, *Context) {
 	next := make([]*NodeInstance, 0)
 	var successful bool
 	var failureReason string
-	var ctx *Context
+	var ctx = newContext()
 	var pastDue = time.Now().Unix() > node.constraints.ReceiveBy
 	var received = node.event != nil
 
 	if !received && !pastDue {
-		return next, nil
+		return nil, &ctx
 	}
 
 	if received {
 		successful, failureReason = node.event.IsSuccessful(node.constraints)
 
 	} else if pastDue { // not received and past due
+
+		// logline here for debugging bc we can't currently see the schedule state through
+		// the api.  it will probably be redundant/much less useful when we can.
 		log.WithFields(logrus.Fields{
 			"node":       node.name,
 			"reason":     "event never arrived",
 			"recieve-by": time.Unix(node.constraints.ReceiveBy, 0).Format(time.RFC3339),
 		}).Debug("node failed")
 
-		ctx = newContext(node.name, EventNeverArrived)
+		ctx = newFailedContext(node.name, EventNeverArrived)
 		next = append(next, node.errorTo)
 	}
 
 	if successful {
 		next = append(next, node.okTo)
 	} else {
-		ctx = newContext(node.name, failureReason)
+		ctx = newFailedContext(node.name, failureReason)
 		next = append(next, node.errorTo)
 	}
 
-	return next, ctx
+	return next, &ctx
 }
 
 // AddEvent adds an event to the EventNode
@@ -66,7 +69,7 @@ func (node *EndNode) Name() string {
 	return node.name
 }
 
-// Next for an end node returns nil for both array and error
+// Next for an end node returns nil for both parameters
 func (node *EndNode) Next() ([]*NodeInstance, *Context) {
 	return nil, nil
 }
@@ -83,10 +86,20 @@ func (node *StartNode) Next() ([]*NodeInstance, *Context) {
 	return next, nil
 }
 
-func newContext(name string, reason string) *Context {
-	return &Context{
-		FailedNoded:   name,
-		FailureReason: reason,
-		FailureTime:   time.Now(),
+func newFailedContext(name string, reason string) Context {
+	return Context{
+		Successful: false,
+		FailureContext: &FailureContext{
+			Node:   name,
+			Reason: reason,
+			Time:   time.Now(),
+		},
+	}
+}
+
+func newContext() Context {
+	return Context{
+		Successful:     true,
+		FailureContext: nil,
 	}
 }

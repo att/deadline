@@ -43,7 +43,7 @@ var (
 		"hourly": "1h",
 	}
 
-	// StateStringLookup is a lookuptable for the State iota which
+	// StateStringLookup is a lookuptable for the State iota
 	StateStringLookup = map[State]string{
 		Running: "running",
 		Ended:   "ended",
@@ -59,7 +59,8 @@ func (state State) String() string {
 	return "unknown"
 }
 
-// Schedule is the type that represents a running schedule
+// Schedule is the workhorse struct of this application.  It *is* the runtime representation
+// of the schedule that is being evaluated.
 type Schedule struct {
 	Name          string `json:"name,attr,omitempty" db:"name"`
 	StartTime     time.Time
@@ -83,11 +84,17 @@ type Manager struct {
 	evalTicker        *time.Ticker
 }
 
-// Context is the way to pass state between different nodes in a schedule
+// Context is the way to pass state of what occurs in a node back to the caller.
 type Context struct {
-	FailedNoded   string
-	FailureReason string
-	FailureTime   time.Time
+	Successful     bool
+	FailureContext *FailureContext
+}
+
+// FailureContext describes a node failure
+type FailureContext struct {
+	Node   string
+	Reason string
+	Time   time.Time
 }
 
 // Node is the interface for nodes in the schedules and provides ways to see what they are and how they connect

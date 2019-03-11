@@ -1,6 +1,7 @@
 package config
 
 import (
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -23,7 +24,36 @@ var (
 		DisableTimestamp: false,
 		TimestampFormat:  time.RFC3339,
 	}
+
+	globalConfig *Config
+
+	cfgLock = sync.RWMutex{}
 )
+
+// GetConfig will return a global instance of the configuration if it has ever been loaded through
+// LoadConfig. It can also return the default config if LoadConfig has never been called.
+func GetConfig() *Config {
+	cfgLock.RLock()
+	defer cfgLock.RUnlock()
+
+	if globalConfig == nil {
+		return &DefaultConfig
+	}
+
+	return globalConfig
+}
+
+// GetEmailConfig will the EmailConfig portion of the global config object.
+func GetEmailConfig() *EmailConfig {
+	cfgLock.RLock()
+	defer cfgLock.RUnlock()
+
+	if globalConfig == nil {
+		return &DefaultConfig.EmailConfig
+	}
+
+	return &globalConfig.EmailConfig
+}
 
 // LoadConfig loads the configuration based on the input file. Errors can occur for various
 // i/o or marshalling related reasons. Defaults will be returned for primitive types, like strings.
@@ -48,6 +78,10 @@ func LoadConfig(filename string) (*Config, error) {
 		config.loggers = make(map[string]*logrus.Logger)
 	}
 
+	cfgLock.Lock()
+	defer cfgLock.Unlock()
+
+	globalConfig = config
 	return config, nil
 
 }
@@ -69,10 +103,9 @@ func (c *Config) GetLogger(name string) *logrus.Logger {
 	var logger *logrus.Logger
 	var found bool
 
-	c.logLock.Lock() //locking strategy probably a bit aggressive
-	defer c.logLock.Unlock()
-
 	if logger, found = c.loggers[name]; !found {
+		c.modLock.Lock() //locking strategy probably a bit aggressive
+		defer c.modLock.Unlock()
 
 		logger := logrus.New()
 		logger.Formatter = formatter
