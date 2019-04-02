@@ -8,12 +8,6 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/jasonlvhit/gocron"
-  packages = ["."]
-  revision = "54194c9749d48b073c9aeb2c787b6882e95dd0cd"
-
-[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
@@ -52,6 +46,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b9da9d3b3191ba4c945dfa6abbe96970ac2b93586b1bfdc0ae04a01578e447c5"
+  inputs-digest = "645c0b81f09f2272ad583d044face9056cd37b1975c7cf84f6506c91cbebea9f"
   solver-name = "gps-cdcl"
   solver-version = 1

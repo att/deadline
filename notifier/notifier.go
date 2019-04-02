@@ -1,29 +1,24 @@
 package notifier
 
-func (w Webhook) Send(msg string) {
-	// var str string
-	// str = msg
-	// jv, err := json.Marshal(str)
-	// if err != nil {
-	// 	common.CheckError(err)
-	// }
-	// _ , err = http.Post(w.Addr,"application/json", bytes.NewBuffer(jv))
-	// common.CheckError(err)
+import (
+	"sync"
 
+	"github.com/att/deadline/config"
+)
+
+var once sync.Once
+var notifier *Notifier
+
+// GetInstance gets the current running instance of a Notifier class
+func GetInstance(cfg *config.Config) *Notifier {
+	once.Do(func() {
+		notifier = &Notifier{}
+	})
+
+	return notifier
 }
 
-// func NewNotifyHandler(handlerType string, addr string) NotifyHandler {
+// Notify is the main API to notify some entity with a message of some kind
+func (notifier *Notifier) Notify(notification Notification) {
 
-// 	switch handlerType {
-// 	case "WEBHOOK":
-
-// 		w := &Webhook{
-// 			Addr: addr,
-// 		}
-// 		w.TH.Name = handlerType
-
-// 		return w
-// 	}
-// 	common.Info.Println("Did not give a valid handler.")
-// 	return &Webhook{}
-// }
+}

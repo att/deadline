@@ -45,11 +45,11 @@ Event nodes hold `constraints` which is where a lot deadline's functionality com
 #### Handlers
 ```xml
 <handler name="email error" to="scheduleEnd">
-		<email>
-				<to>me@mycompany.com</to>
-				<message>That report we need didn't generate today.</message>
-				<subject>report generation failed</subject>
-		</email>
+	<email>
+		<to>me@mycompany.com</to>
+		<message>That report we need didn't generate today.</message>
+		<subject>report generation failed</subject>
+	</email>
 </handler>
 ```
 
@@ -80,8 +80,8 @@ End elements simply need a `name` and they denote the end of the schedule.
     <handler name="email error" to="scheduleEnd">
         <email>
             <to>me@mycompany.com</to>
-						<message>That report we need didn't generate today.</message>
-						<subject>report generation failed</subject>
+	    <message>That report we need didn't generate today.</message>
+	    <subject>report generation failed</subject>
         </email>
     </handler>
 

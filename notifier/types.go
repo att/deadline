@@ -1,18 +1,6 @@
-package notifier 
-import (
-	"net/http"
-)
+package notifier
 
-type NotifyHandler interface {
-	Send(string) 
+type Notifier struct {
 }
 
-type TypeHandler struct {
-	Name string
-}
-type Webhook struct {
-	TH 	 TypeHandler
-	Addr string
-	Handler http.Handler
-
-}
+type Notification map[string]string

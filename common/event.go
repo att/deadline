@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+const (
+	// LateEvent is the string returned for events that do not arrive on time
+	LateEvent string = "event did not arrive by the expected time"
+)
+
 // Event is the struct that represents something that has happened from some other system.
 type Event struct {
 	Name       string            `json:"name" xml:"name,attr" db:"name"`
@@ -28,10 +33,20 @@ func (e *Event) ValidateEvent() error {
 	return nil
 }
 
-// IsSuccessful returns true if the event has met it's set of contstraints.
-func (e *Event) IsSuccessful(c EventConstraints) bool {
+// IsSuccessful returns true if the event has met it's set of contstraints. If false,
+// it will also return a non-empty string as the reason for it's failure
+func (e *Event) IsSuccessful(c EventConstraints) (bool, string) {
+	var reason string
+	var success bool
+
 	onTime := e.ReceivedAt <= c.ReceiveBy
-	return onTime
+
+	success = onTime
+	if !onTime {
+		reason = LateEvent
+	}
+
+	return success, reason
 }
 
 // FromBlueprint returns constraints for an event based on the start time and blueprints

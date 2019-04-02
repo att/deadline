@@ -27,15 +27,15 @@ const (
 
 // Config represents the configuration struct for the entire deadline application
 type Config struct {
-	FileConfig  FileConfig        `yaml:"fileconfig"`
-	DBConfig    DBConfig          `yaml:"dbconfig"`
+	FileConfig  FileConfig        `yaml:"file_config"`
+	DBConfig    DBConfig          `yaml:"db_config"`
 	Storage     string            `yaml:"storage"`
 	EvalTime    string            `yaml:"eval_timing"`
-	Server      ServerConfig      `yaml:"serverconfig"`
-	EmailConfig EmailConfig       `yaml:"emailconfig"`
+	Server      ServerConfig      `yaml:"server_config"`
+	EmailConfig EmailConfig       `yaml:"email_config"`
 	Logconfig   map[string]string `yaml:"logs"`
 	loggers     map[string]*logrus.Logger
-	logLock     sync.Mutex
+	modLock     sync.RWMutex
 }
 
 // FileConfig is the configuration type for file storage

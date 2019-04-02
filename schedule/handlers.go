@@ -1,16 +1,18 @@
 package schedule
 
 // Handle is the email handler's implementation of the Handler interface.
-func (h EmailHandlerNode) Handle() error {
-	return nil
+func (handler EmailHandlerNode) Handle(ctx *Context) {
+
 }
 
 // Name is the email handlers implementation of the Node interface.
-func (h EmailHandlerNode) Name() string {
-	return h.name
+func (handler EmailHandlerNode) Name() string {
+	return handler.name
 }
 
-// Next defines what's after this node completes.
-func (h EmailHandlerNode) Next() ([]*NodeInstance, error) {
-	return nil, nil
+// Next for this type is simply defined. There's no logic computed. It
+// return nil context.
+func (handler EmailHandlerNode) Next() ([]*NodeInstance, *Context) {
+	var ret []*NodeInstance
+	return append(ret, handler.to), nil
 }

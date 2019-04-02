@@ -1,8 +1,8 @@
 
 storage: "file"
-fileconfig:
+file_config:
     directory: "../server/"
-dbconfig:
+db_config:
     connection_string: "N/A"
-serverconfig:
+server_config:
     port: "8081"

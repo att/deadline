@@ -43,7 +43,7 @@ var (
 		"hourly": "1h",
 	}
 
-	// StateStringLookup is a lookuptable for the State iota which
+	// StateStringLookup is a lookuptable for the State iota
 	StateStringLookup = map[State]string{
 		Running: "running",
 		Ended:   "ended",
@@ -59,7 +59,8 @@ func (state State) String() string {
 	return "unknown"
 }
 
-// Schedule is the type that represents a running schedule
+// Schedule is the workhorse struct of this application.  It *is* the runtime representation
+// of the schedule that is being evaluated.
 type Schedule struct {
 	Name          string `json:"name,attr,omitempty" db:"name"`
 	StartTime     time.Time
@@ -72,16 +73,9 @@ type Schedule struct {
 	state         State
 }
 
-// ScheduledHandler is the type that handles failures in a schedule
-type ScheduledHandler struct {
-	ScheduleName string `db:"schedulename"`
-	Name         string `db:"name"`
-	Address      string `db:"address"`
-}
-
-// ScheduleManager is tasked with running and maintaing all the schedules. There should only be 1 per process.
+// Manager is tasked with running and maintaing all the schedules. There should only be 1 per process.
 // It's tasked with the creation, destruction and evaulation of all schedules.
-type ScheduleManager struct {
+type Manager struct {
 	subscriptionTable map[string][]*Schedule
 	schedules         map[string]*Schedule
 	db                dao.ScheduleDAO
@@ -90,16 +84,29 @@ type ScheduleManager struct {
 	evalTicker        *time.Ticker
 }
 
+// Context is the way to pass state of what occurs in a node back to the caller.
+type Context struct {
+	Successful     bool
+	FailureContext *FailureContext
+}
+
+// FailureContext describes a node failure
+type FailureContext struct {
+	Node   string
+	Reason string
+	Time   time.Time
+}
+
 // Node is the interface for nodes in the schedules and provides ways to see what they are and how they connect
 // to other Nodes.
 type Node interface {
-	Next() ([]*NodeInstance, error)
+	Next() ([]*NodeInstance, *Context)
 	Name() string
 }
 
 // Handler is the interface for handlers to implement so the can handle failures in a uniform way.
 type Handler interface {
-	Handle() error
+	Handle(*Context)
 }
 
 // NodeInstance is the actual instance of a Node interface.
@@ -112,10 +119,9 @@ type NodeInstance struct {
 type EventNode struct {
 	name        string
 	constraints com.EventConstraints
-	//events      []com.Event
-	event   *com.Event
-	okTo    *NodeInstance
-	errorTo *NodeInstance
+	event       *com.Event
+	okTo        *NodeInstance
+	errorTo     *NodeInstance
 }
 
 // StartNode is the Node implementing type for the start of a schedule.

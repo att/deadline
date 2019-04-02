@@ -1,8 +1,8 @@
 
 storage: "file"
-fileconfig:
+file_config:
     directory: "/tmp/deadline"
-serverconfig:
+server_config:
     port: "8082"
 logs:
     manager: "debug"

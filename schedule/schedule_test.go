@@ -209,7 +209,7 @@ func assertOnEventNode(test *testing.T, node *NodeInstance, name string, okTo *N
 
 func assertOnHandlerNode(test *testing.T, node *NodeInstance, name string, to *NodeInstance) {
 	assert.NotNil(test, node, name+" node should not be nil")
-	email, ok := node.value.(EmailHandlerNode)
+	email, ok := node.value.(*EmailHandlerNode)
 	assert.True(test, ok, "")
 	assert.Equal(test, to, email.to, "")
 }
