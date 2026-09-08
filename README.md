@@ -1,7 +1,7 @@
 # Deadline
 
 # ---- **Notice** ----
-This is a work in progress. If it runs in an AT&T environment, it does so under the supervision of it's maintainers.
+This is a work in progress. If it runs in an AT&T environment, it does so under the supervision of its maintainers.
 
 It is by no means ready for production use.
 
@@ -26,7 +26,7 @@ This example is in fact a re-worded test cases, which you can find [here](/dao/t
 ```
 Looking at the `schedule` element we can see that the `timing` is 24h, meaning it recurs every 24 hours, and `starts-at` midnight.  The `name` of the schedule is my_daily_report.
 
-Every schedule must have at least a `start` and `end` node. The start node is the entry point of the schedule and it's only functionality is to designate where in the DAG to go at the very beginning of the schedule
+Every schedule must have at least a `start` and `end` node. The start node is the entry point of the schedule and its only functionality is to designate where in the DAG to go at the very beginning of the schedule
 
 In this case we want to go `to` (the xml attribute) a node named sys_x_generated_report.
 

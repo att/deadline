@@ -25,7 +25,7 @@ func NewScheduleDAO(cfg *config.Config) (ScheduleDAO, error) {
 	return newFileDAO(cfg.FileConfig.Directory)
 }
 
-// ScheduleDAO is the interface to store and retrieve schedueles from some type of storage.
+// ScheduleDAO is the interface to store and retrieve schedules from some type of storage.
 type ScheduleDAO interface {
 	GetByName(string) (*com.ScheduleBlueprint, error)
 	Save(s *com.ScheduleBlueprint) error

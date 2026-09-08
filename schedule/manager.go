@@ -114,7 +114,7 @@ func (manager *Manager) GetBlueprint(name string) (*com.ScheduleBlueprint, error
 }
 
 // AddScheduleAndSave is just like AddSchedule but has the added benefit of saving the blueprint
-// to some sort of persistance layer.
+// to some sort of persistence layer.
 func (manager *Manager) AddScheduleAndSave(blueprint *com.ScheduleBlueprint) error {
 	// TODO rollback the save if the other errors out
 	if err := manager.db.Save(blueprint); err != nil {
@@ -126,7 +126,7 @@ func (manager *Manager) AddScheduleAndSave(blueprint *com.ScheduleBlueprint) err
 	}
 }
 
-// AddSchedule adds the schedule to the current list of schedules. If the schedule's start time
+// AddSchedule adds the schedule to the current list of schedules. If the schedule's start time has passed,
 // it will become live and the manager will start to evaluate it. Otherwise it will be scheduled
 // to become live at that time
 func (manager *Manager) AddSchedule(blueprint com.ScheduleBlueprint) error {
@@ -189,7 +189,7 @@ func (manager *Manager) GetSchedule(name string) *Schedule {
 
 // blueprints have a start time and a timing which are the inputs to this. For example a start
 // time is 3 days ago at midnight and the timing is daily. This function normalizes the time to
-// midnight today (the 1st return parameter) and the duration for when then next schedule start (the 2nd).
+// midnight today (the 1st return parameter) and the duration for when the next schedule start (the 2nd).
 func normailizeTime(startTime string, timing time.Duration) (time.Time, time.Duration, error) {
 	var start time.Time
 	var nextTime time.Duration
