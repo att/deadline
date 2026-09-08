@@ -2,7 +2,7 @@ package common
 
 import "errors"
 
-// ScheduleBlueprint is the blueprint struct for a schedule. It is the serialable and static version of a
+// ScheduleBlueprint is the blueprint struct for a schedule. It is the serializable and static version of a
 // schedule.
 type ScheduleBlueprint struct {
 	Timing   string             `xml:"timing,attr" db:"timing"`
@@ -37,7 +37,7 @@ type EventConstraintsBlueprint struct {
 	ReceiveBy string `xml:"receive-by,omitempty"`
 }
 
-// HandlerBlueprint is a blueprint for handler node
+// HandlerBlueprint is a blueprint for a handler node
 type HandlerBlueprint struct {
 	Name  string                `xml:"name,attr"`
 	Email EmailHandlerBlueprint `xml:"email,omitempty"`

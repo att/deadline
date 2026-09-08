@@ -73,8 +73,8 @@ type Schedule struct {
 	state         State
 }
 
-// Manager is tasked with running and maintaing all the schedules. There should only be 1 per process.
-// It's tasked with the creation, destruction and evaulation of all schedules.
+// Manager is tasked with running and maintaining all the schedules. There should only be 1 per process.
+// It's tasked with the creation, destruction and evaluation of all schedules.
 type Manager struct {
 	subscriptionTable map[string][]*Schedule
 	schedules         map[string]*Schedule
@@ -104,7 +104,7 @@ type Node interface {
 	Name() string
 }
 
-// Handler is the interface for handlers to implement so the can handle failures in a uniform way.
+// Handler is the interface for handlers to implement so they can handle failures in a uniform way.
 type Handler interface {
 	Handle(*Context)
 }

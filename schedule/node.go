@@ -42,7 +42,7 @@ func (node *EventNode) Next() ([]*NodeInstance, *Context) {
 		log.WithFields(logrus.Fields{
 			"node":       node.name,
 			"reason":     "event never arrived",
-			"recieve-by": time.Unix(node.constraints.ReceiveBy, 0).Format(time.RFC3339),
+			"receive-by": time.Unix(node.constraints.ReceiveBy, 0).Format(time.RFC3339),
 		}).Debug("node failed")
 
 		ctx = newFailedContext(node.name, EventNeverArrived)
@@ -79,7 +79,7 @@ func (node *StartNode) Name() string {
 	return "start"
 }
 
-// Next for a start node returns an array of size 1 for it's 'to' value
+// Next for a start node returns an array of size 1 for its 'to' value
 func (node *StartNode) Next() ([]*NodeInstance, *Context) {
 	next := make([]*NodeInstance, 1)
 	next[0] = node.to

@@ -51,7 +51,7 @@ func (schedule *Schedule) walk(instance *NodeInstance, ctx *Context) {
 }
 
 // EventOccurred is the interface into the schedule to tell it that an event
-// has occured. The schedule must find the appropriate node that's listening for
+// has occurred. The schedule must find the appropriate node that's listening for
 // the event and update it.
 func (schedule *Schedule) EventOccurred(event *com.Event) {
 
@@ -281,7 +281,7 @@ func (schedule *Schedule) addHandlerBlueprint(blueprint com.HandlerBlueprint, vi
 	return nil
 }
 
-// helper function validate if we've created all the nodes requried.
+// helper function validate if we've created all the nodes required.
 func (schedule *Schedule) createdAll() error {
 	for _, event := range schedule.blueprintMaps.Events {
 		if _, created := schedule.nodes[event.Name]; !created {

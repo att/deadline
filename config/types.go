@@ -21,7 +21,7 @@ const (
 	// DefaultEvalString is the default evaluation time as a string
 	DefaultEvalString string = "5m"
 
-	// DefaultEvalDuration is the default evaulation time as a Duration
+	// DefaultEvalDuration is the default evaluation time as a Duration
 	DefaultEvalDuration time.Duration = time.Minute * 5
 )
 

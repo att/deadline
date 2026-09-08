@@ -17,13 +17,13 @@ type Event struct {
 	ReceivedAt int64             `json:"received-at" db:"receiveat"`
 }
 
-// EventConstraints represent contstaints that are placed on an event. For example 'RecieveBy' is the
-// constraint that says an event must be recieved by this time.
+// EventConstraints represent constraints that are placed on an event. For example 'ReceiveBy' is the
+// constraint that says an event must be received by this time.
 type EventConstraints struct {
 	ReceiveBy int64
 }
 
-// ValidateEvent is a helper function that validates that the event is correctly strutured. I.e.,
+// ValidateEvent is a helper function that validates that the event is correctly structured. I.e.,
 // the Name field must not be empty. This returns an error if the event is not valid.
 func (e *Event) ValidateEvent() error {
 	if e.Name == "" {
@@ -33,8 +33,8 @@ func (e *Event) ValidateEvent() error {
 	return nil
 }
 
-// IsSuccessful returns true if the event has met it's set of contstraints. If false,
-// it will also return a non-empty string as the reason for it's failure
+// IsSuccessful returns true if the event has met its set of constraints. If false,
+// it will also return a non-empty string as the reason for its failure
 func (e *Event) IsSuccessful(c EventConstraints) (bool, string) {
 	var reason string
 	var success bool
